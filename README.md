@@ -45,7 +45,7 @@ optional arguments:
 
 ## Systemd service
 
-Example of system service file for Centos7
+System service file for Centos7
 
 ```bash
 vim /etc/systemd/system/dnstap_receiver.service
@@ -73,9 +73,7 @@ systemctl enable dnstap_receiver
 
 ## Tests with DNS servers
 
-### PowerDNS
-
-PowerDNS's configuration
+### PowerDNS's configuration
 
 ```
 vim /etc/dnsdist/dnsdist.conf
