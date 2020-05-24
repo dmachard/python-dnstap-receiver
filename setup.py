@@ -17,7 +17,7 @@ setuptools.setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://github.com/dmachard/dnstap_receiver",
-    packages=['dnstap_receiver', 'tests'],
+    packages=['dnstap_receiver'],
     include_package_data=True,
     platforms='any',
     keywords=KEYWORDS,
