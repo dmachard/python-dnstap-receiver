@@ -23,7 +23,6 @@ parser.add_argument("-u", required=True,
                           help="read dnstap payloads from unix socket")
 parser.add_argument("-j", required=True,
                           help="write JSON payload to tcp/ip address")
-args = parser.parse_args()
 
 # http://dnstap.info/
 
@@ -80,12 +79,13 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
 async def cb_onconnect(reader, writer):
     """callback when a connection is established"""
     logging.info("connect accepted")
-    
+
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
     loop = asyncio.get_event_loop()
     dnstap_decoder = dnstap_pb2.Dnstap()
     
+    args = parser.parse_args()
     if ":" not in args.j:
         raise Exception("bad remote ip provided")
     dest_ip, dest_port = args.j.split(":", 1)
@@ -142,9 +142,10 @@ def start_receiver():
     """start dnstap receiver"""
     logging.info("Start dnstap receiver...")
     
+    args = parser.parse_args()
+    
     # asynchronous unix socket
-    unix_socket = args.u
-    socket_server = asyncio.start_unix_server(cb_onconnect, path=unix_socket)
+    socket_server = asyncio.start_unix_server(cb_onconnect, path=args.u)
 
     # run until complete
     loop = asyncio.get_event_loop()
