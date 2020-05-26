@@ -53,21 +53,19 @@ optional arguments:
 
 ```json
 {
-    "r_code" => "NOERROR",
-    "port" => 52782,
-    "q_name" => "rpc.gandi.net.",
-    "s_family" => "IPv4",
-    "@timestamp" => 2020-05-24T01:30:01.376Z,
-    "r_bytes" => 47,
-    "dt_reply" => "2020-05-24 03:30:01.411",
-    "q_addr" => "10.0.0.235",
-    "host" => "10.0.0.97",
-    "message" => "CLIENT_RESPONSE",
-    "q_type" => "A",
-    "s_proto" => "UDP",
-    "dt_query" => "2020-05-24 03:30:01.376",
-    "q_port" => 40311,
-    "@version" => "1",
+    "r_code": "NOERROR",
+    "port": 52782,
+    "q_name":"rpc.gandi.net.",
+    "s_family":"IPv4",
+    "r_bytes": 47,
+    "dt_reply": "2020-05-24 03:30:01.411",
+    "q_addr": "10.0.0.235",
+    "host": "10.0.0.97",
+    "message": "CLIENT_RESPONSE",
+    "q_type" "A",
+    "s_proto": "UDP",
+    "dt_query": "2020-05-24 03:30:01.376",
+    "q_port": 40311,
     "q_time" => 0.035
 }
 ```
