@@ -62,11 +62,11 @@ optional arguments:
     "q_addr": "10.0.0.235",
     "host": "10.0.0.97",
     "message": "CLIENT_RESPONSE",
-    "q_type" "A",
+    "q_type": "A",
     "s_proto": "UDP",
     "dt_query": "2020-05-24 03:30:01.376",
     "q_port": 40311,
-    "q_time" => 0.035
+    "q_time": 0.035
 }
 ```
 
