@@ -12,6 +12,9 @@
 | | |
 
 This Python module acts as a DNS tap receiver and streams as JSON payload to remote address. 
+It then allows the creation of dashboard for dns servers with Kibana for example.
+
+![kibana dashboard](https://github.com/dmachard/dnstap_receiver/blob/master/imgs/dashboard_kibana.png)
 
 ## Table of contents
 * [Installation](#installation)
@@ -28,6 +31,9 @@ pip install dnstap_receiver
 ```
 
 ## Start dnstap receiver
+
+The 'dnstap_receiver' binary takes in input a unix socket (dnsdist's configuration for example) 
+and as output a remote tcp json collector (logstash's configuration for example).
 
 ```
 dnstap_receiver -u /var/run/dnstap.sock -j 10.0.0.2:8000
@@ -75,10 +81,38 @@ systemctl enable dnstap_receiver
 
 ### PowerDNS's configuration
 
-```
 vim /etc/dnsdist/dnsdist.conf
 
+```
 fsul = newFrameStreamUnixLogger("/var/run/dnstap.sock")
 addResponseAction(AllRule(), DnstapLogResponseAction("dns", fsul))
 ```
 
+## Tests with Logs Collectors
+
+### Logstash's Configurations
+
+vim /etc/logstash/conf.d/00-dnstap.conf
+
+```
+input {
+  tcp {
+      port => 8192
+      codec => json
+  }
+}
+
+filter {
+  date {
+     match => [ "dt_query" , "yyyy-MM-dd HH:mm:ss.SSS" ]
+     target => "@timestamp"
+  }
+}
+
+output {
+   elasticsearch {
+    hosts => ["http://localhost:9200"]
+    index => "dnstap-lb"
+  }
+}
+```
