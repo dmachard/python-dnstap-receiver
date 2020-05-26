@@ -51,7 +51,7 @@ optional arguments:
 
 ## Output JSON format
 
-'''json
+```json
 {
     "r_code" => "NOERROR",
     "port" => 52782,
@@ -70,7 +70,7 @@ optional arguments:
     "@version" => "1",
     "q_time" => 0.035
 }
-'''
+```
 
 ## Systemd service
 
