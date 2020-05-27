@@ -19,7 +19,8 @@ It then allows the creation of dashboard for dns servers with Kibana for example
 ## Table of contents
 * [Installation](#installation)
 * [Start dnstap receiver](#start-dnstap-receiver)
-* [Systemd service](#systemd-service)
+* [Output JSON format](#output-json-format)
+* [Systemd service file configuration](#systemd-service-file-configuration)
 * [Tests with DNS servers](#tests-with-dns-servers)
 
 ## Installation
@@ -70,7 +71,7 @@ optional arguments:
 }
 ```
 
-## Systemd service
+## Systemd service file configuration
 
 System service file for Centos7
 

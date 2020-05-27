@@ -20,7 +20,7 @@ logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", required=True,
-                          help="read dnstap payloads from unix socket")
+                          help="read dnstap payloads using framestreams from unix socket")
 parser.add_argument("-j", required=True,
                           help="write JSON payload to tcp/ip address")
 
