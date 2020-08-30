@@ -17,7 +17,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install twine
-        pip install dnslib protobuf3
     - name: Build Python package
       run: |
         python setup.py sdist bdist_wheel

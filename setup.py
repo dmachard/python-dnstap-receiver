@@ -1,8 +1,12 @@
 #!/usr/bin/python
 
 import setuptools
-from dnstap_receiver import __version__
 
+with open("./dnstap_receiver/__init__.py", "r") as fh:
+    for line in fh.read().splitlines():
+        if line.startswith('__version__'):
+            PKG_VERSION = line.split('"')[1]
+            
 with open("README.md", "r") as fh:
     LONG_DESCRIPTION = fh.read()
     
@@ -10,7 +14,7 @@ KEYWORDS = ('dnstap receiver client json')
 
 setuptools.setup(
     name="dnstap_receiver",
-    version=__version__,
+    version=PKG_VERSION,
     author="Denis MACHARD",
     author_email="d.machard@gmail.com",
     description="Python Dnstap to JSON stream receiver",

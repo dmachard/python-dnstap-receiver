@@ -4,17 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
-| | |
-| ------------- | ------------- |
-| Author |  Denis Machard <d.machard@gmail.com> |
-| License |  MIT | 
-| PyPI |  https://pypi.org/project/dnstap_receiver/ |
-| | |
-
 This Python module acts as a DNS tap receiver and streams as JSON payload to remote address. 
-It then allows the creation of dashboard for dns servers with Kibana for example.
-
-![kibana dashboard](https://github.com/dmachard/dnstap_receiver/blob/master/imgs/dashboard_kibana.png)
 
 ## Table of contents
 * [Installation](#installation)
@@ -22,6 +12,7 @@ It then allows the creation of dashboard for dns servers with Kibana for example
 * [Output JSON format](#output-json-format)
 * [Systemd service file configuration](#systemd-service-file-configuration)
 * [Tests with DNS servers](#tests-with-dns-servers)
+* [About](#about)
 
 ## Installation
 
@@ -138,3 +129,16 @@ output {
   }
 }
 ```
+
+### Kibana dashboard 
+
+![kibana dashboard](https://github.com/dmachard/dnstap_receiver/blob/master/imgs/dashboard_kibana.png)
+
+# About
+
+| | |
+| ------------- | ------------- |
+| Author |  Denis Machard <d.machard@gmail.com> |
+| License |  MIT | 
+| PyPI |  https://pypi.org/project/dnstap_receiver/ |
+| | |
