@@ -24,8 +24,8 @@ pip install dnstap_receiver
 
 ## Start dnstap receiver
 
-The 'dnstap_receiver' binary takes in input a unix socket (dnsdist's configuration) 
-and as output a remote tcp json collector (logstash's configuration).
+The 'dnstap_receiver' binary takes in input a unix socket 
+and as output a remote tcp json collector.
 
 ```
 dnstap_receiver -u /var/run/dnstap.sock -j 10.0.0.2:8000
