@@ -3,6 +3,7 @@ import logging
 import asyncio
 import socket
 import json
+import sys
 
 from datetime import datetime
 
@@ -21,7 +22,7 @@ logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", required=True,
                           help="read dnstap payloads using framestreams from unix socket")
-parser.add_argument("-j", required=True,
+parser.add_argument("-j", required=False,
                           help="write JSON payload to tcp/ip address")
 
 # http://dnstap.info/
@@ -49,33 +50,48 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
     dm = dnstap_decoder.message
         
     dnstap_d = {}
-    if dm.type == dnstap_pb2.Message.Type.CLIENT_RESPONSE:
-        dnstap_d["message"] = DNSTAP_TYPE.get(dm.type.value, "?")
-        dnstap_d["s_family"] = DNSTAP_FAMILY.get(dm.socket_family.value, "?")
-        dnstap_d["s_proto"] = DNSTAP_PROTO.get(dm.socket_protocol.value, "?")
+    
+    dnstap_d["message"] = DNSTAP_TYPE.get(dm.type.value, "?")
+    dnstap_d["s_family"] = DNSTAP_FAMILY.get(dm.socket_family.value, "?")
+    dnstap_d["s_proto"] = DNSTAP_PROTO.get(dm.socket_protocol.value, "?")
+
+    if len(dm.query_address) and dm.socket_family.value == 1:
+        dnstap_d["q_addr"] = socket.inet_ntoa(dm.query_address)
+    elif len(dm.query_address) and dm.socket_family.value == 2:
+        dnstap_d["q_addr"] = socket.inet_ntop(socket.AF_INET6, dm.query_address)
+    else:
+        dnstap_d["q_addr"] = "?"
+    dnstap_d["q_port"] = dm.query_port
         
-        query_time_milli = (round(dm.query_time_nsec / 1000000) / 1000)
-        d1 = dm.query_time_sec +  query_time_milli
+    query_time_milli = (round(dm.query_time_nsec / 1000000) / 1000)
+    d1 = dm.query_time_sec +  query_time_milli
+    dnstap_d["dt_query"] = datetime.fromtimestamp(d1).strftime(DATETIME_FORMAT)[:-3]
+    
+    if dm.type in [ dnstap_pb2.Message.Type.CLIENT_QUERY,
+                    dnstap_pb2.Message.Type.RESOLVER_QUERY]:
+        query = dnslib.DNSRecord.parse(dm.query_message)
+        dnstap_d["q_name"] = str(query.questions[0].get_qname())
+        dnstap_d["q_type"] = dnslib.QTYPE[query.questions[0].qtype]
         
+    if dm.type in [ dnstap_pb2.Message.Type.CLIENT_RESPONSE,
+                    dnstap_pb2.Message.Type.RESOLVER_RESPONSE ]:
         reply_time_milli = (round(dm.response_time_nsec / 1000000) / 1000) 
         d2 = dm.response_time_sec + reply_time_milli
 
-        dnstap_d["dt_query"] = datetime.fromtimestamp(d1).strftime(DATETIME_FORMAT)[:-3]
         dnstap_d["dt_reply"] = datetime.fromtimestamp(d2).strftime(DATETIME_FORMAT)[:-3]
-        
         dnstap_d["q_time"] = round(d2-d1, 3)
-        
-        dnstap_d["q_addr"] = socket.inet_ntoa(dm.query_address)
-        dnstap_d["q_port"] = dm.query_port
-        
+
         response = dnslib.DNSRecord.parse(dm.response_message)
         dnstap_d["q_name"] = str(response.questions[0].get_qname())
         dnstap_d["q_type"] = dnslib.QTYPE[response.questions[0].qtype]
         dnstap_d["r_code"] = dnslib.RCODE[response.header.rcode]
         dnstap_d["r_bytes"] = len(dm.response_message)
     
-    tcp_writer.write(json.dumps(dnstap_d).encode() + b"\n")
-    
+    if tcp_writer is not None:
+        tcp_writer.write(json.dumps(dnstap_d).encode() + b"\n")
+    else:
+        print(json.dumps(dnstap_d))
+        
 async def cb_onconnect(reader, writer):
     """callback when a connection is established"""
     logging.info("connect accepted")
@@ -86,11 +102,14 @@ async def cb_onconnect(reader, writer):
     dnstap_decoder = dnstap_pb2.Dnstap()
     
     args = parser.parse_args()
-    if ":" not in args.j:
-        raise Exception("bad remote ip provided")
-    dest_ip, dest_port = args.j.split(":", 1)
-    
-    tcp_reader, tcp_writer = await asyncio.open_connection(dest_ip, int(dest_port), loop=loop)
+    if args.j is None:
+        tcp_writer = None
+    else:
+        if ":" not in args.j:
+            raise Exception("bad remote ip provided")
+        dest_ip, dest_port = args.j.split(":", 1)
+        
+        _, tcp_writer = await asyncio.open_connection(dest_ip, int(dest_port), loop=loop)
                                                    
     running = True
     while running:
@@ -135,15 +154,21 @@ async def cb_onconnect(reader, writer):
             running = False
             logging.error("something happened: %s" % e)
     
-    tcp_writer.close()
+    # close the remote tcp conn
+    if tcp_writer is not None:
+        tcp_writer.close()
+        
     logging.info("connection done")
     
 def start_receiver():
     """start dnstap receiver"""
+    try:
+        args = parser.parse_args()
+    except:
+        sys.exit(1)
+    
     logging.info("Start dnstap receiver...")
-    
-    args = parser.parse_args()
-    
+
     # asynchronous unix socket
     socket_server = asyncio.start_unix_server(cb_onconnect, path=args.u)
 
@@ -158,4 +183,3 @@ def start_receiver():
         loop.run_forever()
     except KeyboardInterrupt:
         pass
-        
