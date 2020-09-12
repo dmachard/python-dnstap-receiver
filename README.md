@@ -124,6 +124,8 @@ This dnstap receiver has been tested with success with the following dns servers
  
 ### dnsdist
 
+![dnsdist 1.4.0](https://img.shields.io/badge/1.4.0-tested-green)
+
 The following file `/etc/dnsdist/dnsdist.conf` must be updated like below:
 ```
 fsul = newFrameStreamUnixLogger("/var/run/dnstap.sock")
