@@ -137,7 +137,7 @@ addResponseAction(AllRule(), DnstapLogResponseAction(fsul))
 
 ![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green)
 
-Unbound must build with dnstap support `./configure --enable-dnstap`.
+Unbound must be build with dnstap support `./configure --enable-dnstap`.
 The following file `/etc/unbound/unbound.conf` must be updated too:
 
 ```

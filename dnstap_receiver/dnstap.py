@@ -1,5 +1,5 @@
 from protobuf3.message import Message
-from protobuf3.fields import UInt64Field, UInt32Field, BytesField, MessageField, EnumField, Fixed32Field
+from protobuf3.fields import Fixed32Field, UInt32Field, UInt64Field, EnumField, MessageField, BytesField
 from enum import Enum
 
 
@@ -42,7 +42,6 @@ Dnstap.add_field('version', BytesField(field_number=2, optional=True))
 Dnstap.add_field('extra', BytesField(field_number=3, optional=True))
 Dnstap.add_field('type', EnumField(field_number=15, required=True, enum_cls=Dnstap.Type))
 Dnstap.add_field('message', MessageField(field_number=14, optional=True, message_cls=Message))
-
 Message.add_field('type', EnumField(field_number=1, required=True, enum_cls=Message.Type))
 Message.add_field('socket_family', EnumField(field_number=2, optional=True, enum_cls=SocketFamily))
 Message.add_field('socket_protocol', EnumField(field_number=3, optional=True, enum_cls=SocketProtocol))

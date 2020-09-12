@@ -10,12 +10,13 @@ from datetime import datetime
 # python3 -m pip dnslib
 import dnslib
 
-from dnstap_receiver import fstrm
-from dnstap_receiver import dnstap_pb2
+# wget https://raw.githubusercontent.com/dnstap/dnstap.pb/master/dnstap.proto
+# wget https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip
+# python3 -m pip install protobuf
+# bin/protoc --python_out=. dnstap.proto
 
-# https://github.com/dnstap/dnstap.pb/blob/master/dnstap.proto
-# python3 -m pip install protobuf3
-# protoc --python3_out=. dnstap_pb2.proto
+from dnstap_receiver import dnstap as dnstap_pb2
+from dnstap_receiver import fstrm
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
@@ -72,6 +73,7 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
         query = dnslib.DNSRecord.parse(dm.query_message)
         dnstap_d["q_name"] = str(query.questions[0].get_qname())
         dnstap_d["q_type"] = dnslib.QTYPE[query.questions[0].qtype]
+        dnstap_d["q_bytes"] = len(dm.query_message)
         
     # handle response message
     if (dm.type.value % 2 ) == 0 :
@@ -88,8 +90,11 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
         dnstap_d["r_code"] = dnslib.RCODE[response.header.rcode]
         dnstap_d["r_bytes"] = len(dm.response_message)
     
+    # send json message to remote tcp
     if tcp_writer is not None:
         tcp_writer.write(json.dumps(dnstap_d).encode() + b"\n")
+    
+    # print json payload to stdout
     else:
         print(json.dumps(dnstap_d))
         

@@ -17,7 +17,7 @@ setuptools.setup(
     version=PKG_VERSION,
     author="Denis MACHARD",
     author_email="d.machard@gmail.com",
-    description="Python Dnstap to JSON stream receiver",
+    description="Python Dnstap receiver to JSON stream receiver",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://github.com/dmachard/dnstap_receiver",
@@ -34,6 +34,6 @@ setuptools.setup(
     entry_points={'console_scripts': ['dnstap_receiver = dnstap_receiver.receiver:start_receiver']},
     install_requires=[
         "dnslib",
-        "protobuf3"
+        "protobuf"
     ]
 )
