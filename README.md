@@ -153,10 +153,10 @@ systemctl enable dnstap_receiver
 ## Tested DNS servers
 
 This dnstap receiver has been tested with success with the following dns servers:
- - PowerDNS - dnsdist 
- - NLnet Labs - unbound
+ - **PowerDNS - dnsdist**
+ - **NLnet Labs - unbound**
  
-*dnsdist*
+### dnsdist
 
 The following file `/etc/dnsdist/dnsdist.conf` must be updated like below:
 ```
@@ -165,7 +165,7 @@ addAction(AllRule(), DnstapLogAction(fsul))
 addResponseAction(AllRule(), DnstapLogResponseAction(fsul))
 ```
 
-*unbound*
+### unbound
 
 ![unbound 1.11.0](https://img.shields.io/badge/version-1.11.0-green)
 
