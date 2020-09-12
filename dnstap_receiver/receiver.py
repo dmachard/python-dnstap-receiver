@@ -67,14 +67,14 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
     d1 = dm.query_time_sec +  query_time_milli
     dnstap_d["dt_query"] = datetime.fromtimestamp(d1).strftime(DATETIME_FORMAT)[:-3]
     
-    if dm.type in [ dnstap_pb2.Message.Type.CLIENT_QUERY,
-                    dnstap_pb2.Message.Type.RESOLVER_QUERY]:
+    # handle query message
+    if (dm.type.value % 2 ) == 1 :
         query = dnslib.DNSRecord.parse(dm.query_message)
         dnstap_d["q_name"] = str(query.questions[0].get_qname())
         dnstap_d["q_type"] = dnslib.QTYPE[query.questions[0].qtype]
         
-    if dm.type in [ dnstap_pb2.Message.Type.CLIENT_RESPONSE,
-                    dnstap_pb2.Message.Type.RESOLVER_RESPONSE ]:
+    # handle response message
+    if (dm.type.value % 2 ) == 0 :
         reply_time_milli = (round(dm.response_time_nsec / 1000000) / 1000) 
         d2 = dm.response_time_sec + reply_time_milli
 
@@ -82,8 +82,9 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
         dnstap_d["q_time"] = round(d2-d1, 3)
 
         response = dnslib.DNSRecord.parse(dm.response_message)
-        dnstap_d["q_name"] = str(response.questions[0].get_qname())
-        dnstap_d["q_type"] = dnslib.QTYPE[response.questions[0].qtype]
+        if len(response.questions):
+            dnstap_d["q_name"] = str(response.questions[0].get_qname())
+            dnstap_d["q_type"] = dnslib.QTYPE[response.questions[0].qtype]
         dnstap_d["r_code"] = dnslib.RCODE[response.header.rcode]
         dnstap_d["r_bytes"] = len(dm.response_message)
     

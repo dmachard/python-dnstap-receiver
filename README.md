@@ -52,7 +52,7 @@ dnstap_receiver -u /var/run/dnstap.sock -j 10.0.0.2:8192
 
 ## Output JSON format
 
-CLIENT_QUERY
+CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
 ```json
 {
@@ -67,7 +67,7 @@ CLIENT_QUERY
 }
 ```
 
-CLIENT_RESPONSE
+CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
 
 ```json
 {
@@ -85,40 +85,6 @@ CLIENT_RESPONSE
     "dt_query": "2020-05-24 03:30:01.376",
     "q_port": 40311,
     "q_time": 0.035
-}
-```
-
-RESOLVER_QUERY
-
-```json
-{
-    "message": "RESOLVER_QUERY",
-    "s_family": "IPv4",
-    "s_proto": "UDP",
-    "q_addr": "?",
-    "q_port": 0,
-    "dt_query": "2020-09-12 10:43:45.902",
-    "q_name": "n6dsce9.akamaiedge.net.",
-    "q_type": "AAAA"
-}
-```
-
-RESOLVER_RESPONSE
-
-```json
-{
-    "message": "RESOLVER_RESPONSE",
-    "s_family": "IPv4",
-    "s_proto": "UDP",
-    "q_addr": "?",
-    "q_port": 0,
-    "dt_query": "2020-09-12 10:43:45.866",
-    "dt_reply": "2020-09-12 10:43:45.920",
-    "q_time": 0.054,
-    "q_name": "n2dsce9.akamaiedge.net.",
-    "q_type": "A",
-    "r_code": "NOERROR",
-    "r_bytes": 67
 }
 ```
 
