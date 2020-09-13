@@ -3,6 +3,7 @@ import logging
 import asyncio
 import socket
 import json
+import yaml
 import sys
 
 from datetime import datetime
@@ -19,12 +20,12 @@ from dnstap_receiver import dnstap as dnstap_pb2
 from dnstap_receiver import fstrm
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-u", required=True,
-                          help="read dnstap payloads using framestreams from unix socket")
-parser.add_argument("-j", required=False,
-                          help="write JSON payload to tcp/ip address")
+parser.add_argument("-u", required=True, help="read dnstap payloads using framestreams from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")
-  
+parser.add_argument("-y", help="write YAML-formatted output", action='store_true')
+parser.add_argument("-j", help="write JSON-formatted output", action='store_true')                       
+parser.add_argument("-d", help="send dnstap message to remote tcp/ip address")   
+
 # http://dnstap.info/
 
 DNSTAP_TYPE = { 1: 'AUTH_QUERY',
@@ -39,64 +40,80 @@ DNSTAP_TYPE = { 1: 'AUTH_QUERY',
                 10: 'STUB_RESPONSE',
                 11: 'TOOL_QUERY',
                 12: 'TOOL_RESPONSE' }
-DNSTAP_FAMILY = {1: 'IPv4', 2: 'IPv6'}
+DNSTAP_FAMILY = {1: 'IP4', 2: 'IP6'}
 DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}    
 
 DATETIME_FORMAT ='%Y-%m-%d %H:%M:%S.%f'
 
-async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
+FMT_SHORT = "SHORT"
+FMT_JSON = "JSON"
+FMT_YAML = "YAML"
+
+async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     """on dnstap"""
+    # decode binary payload
     dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
         
-    dnstap_d = {}
+    tap = {"query-name": "-", "query-type": "-", "source-ip": "-"}
     
-    dnstap_d["message"] = DNSTAP_TYPE.get(dm.type.value, "?")
-    dnstap_d["s_family"] = DNSTAP_FAMILY.get(dm.socket_family.value, "?")
-    dnstap_d["s_proto"] = DNSTAP_PROTO.get(dm.socket_protocol.value, "?")
+    # decode type message
+    tap["message"] = DNSTAP_TYPE.get(dm.type.value, "-")
+    tap["protocol"] = DNSTAP_FAMILY.get(dm.socket_family.value, "-")
+    tap["transport"] = DNSTAP_PROTO.get(dm.socket_protocol.value, "-")
 
+    # decode query address
     if len(dm.query_address) and dm.socket_family.value == 1:
-        dnstap_d["q_addr"] = socket.inet_ntoa(dm.query_address)
-    elif len(dm.query_address) and dm.socket_family.value == 2:
-        dnstap_d["q_addr"] = socket.inet_ntop(socket.AF_INET6, dm.query_address)
-    else:
-        dnstap_d["q_addr"] = "?"
-    dnstap_d["q_port"] = dm.query_port
+        tap["source-ip"] = socket.inet_ntoa(dm.query_address)
+    if len(dm.query_address) and dm.socket_family.value == 2:
+        tap["source-ip"] = socket.inet_ntop(socket.AF_INET6, dm.query_address)
+    tap["source-port"] = dm.query_port
+    if tap["source-port"] == 0:
+        tap["source-port"] = "-"
         
-    query_time_milli = (round(dm.query_time_nsec / 1000000) / 1000)
-    d1 = dm.query_time_sec +  query_time_milli
-    dnstap_d["dt_query"] = datetime.fromtimestamp(d1).strftime(DATETIME_FORMAT)[:-3]
-    
     # handle query message
     if (dm.type.value % 2 ) == 1 :
-        query = dnslib.DNSRecord.parse(dm.query_message)
-        dnstap_d["q_name"] = str(query.questions[0].get_qname())
-        dnstap_d["q_type"] = dnslib.QTYPE[query.questions[0].qtype]
-        dnstap_d["q_bytes"] = len(dm.query_message)
+        dnstap_parsed = dnslib.DNSRecord.parse(dm.query_message)
+        tap["length"] = len(dm.query_message)
+        query_time_milli = (round(dm.query_time_nsec / 1000000) / 1000)
+        d1 = dm.query_time_sec +  query_time_milli
+        tap["timestamp"] = datetime.fromtimestamp(d1).strftime(DATETIME_FORMAT)[:-3]
         
     # handle response message
     if (dm.type.value % 2 ) == 0 :
+        dnstap_parsed = dnslib.DNSRecord.parse(dm.response_message)
+        tap["length"] = len(dm.response_message)
+
         reply_time_milli = (round(dm.response_time_nsec / 1000000) / 1000) 
         d2 = dm.response_time_sec + reply_time_milli
+        tap["timestamp"] = datetime.fromtimestamp(d2).strftime(DATETIME_FORMAT)[:-3]
 
-        dnstap_d["dt_reply"] = datetime.fromtimestamp(d2).strftime(DATETIME_FORMAT)[:-3]
-        dnstap_d["q_time"] = round(d2-d1, 3)
-
-        response = dnslib.DNSRecord.parse(dm.response_message)
-        if len(response.questions):
-            dnstap_d["q_name"] = str(response.questions[0].get_qname())
-            dnstap_d["q_type"] = dnslib.QTYPE[response.questions[0].qtype]
-        dnstap_d["r_code"] = dnslib.RCODE[response.header.rcode]
-        dnstap_d["r_bytes"] = len(dm.response_message)
+    # common params
+    if len(dnstap_parsed.questions):
+        tap["query-name"] = str(dnstap_parsed.questions[0].get_qname())
+        tap["query-type"] = dnslib.QTYPE[dnstap_parsed.questions[0].qtype]
+    tap["code"] = dnslib.RCODE[dnstap_parsed.header.rcode]
     
-    # send json message to remote tcp
-    if tcp_writer is not None:
-        tcp_writer.write(json.dumps(dnstap_d).encode() + b"\n")
     
-    # print json payload to stdout
-    else:
-        print(json.dumps(dnstap_d))
+    # reformat dnstap message
+    if output_fmt == FMT_SHORT:
+        msg = "%s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["message"], tap["code"],
+                                               tap["source-ip"], tap["source-port"],
+                                               tap["protocol"], tap["transport"], tap["length"],
+                                               tap["query-name"], tap["query-type"])
         
+    if output_fmt == FMT_JSON:
+        msg = json.dumps(tap)
+        
+    if output_fmt == FMT_YAML:
+        msg = yaml.dump(tap)
+
+    # final step, stdout or remote destination ? send json message to remote tcp
+    if tcp_writer is not None:
+        tcp_writer.write(msg.encode() + b"\n")
+    else:
+        print(msg)
+
 async def cb_onconnect(reader, writer):
     """callback when a connection is established"""
     logging.debug("connect accepted")
@@ -107,15 +124,21 @@ async def cb_onconnect(reader, writer):
     dnstap_decoder = dnstap_pb2.Dnstap()
     
     args = parser.parse_args()
-    if args.j is None:
+    if args.d is None:
         tcp_writer = None
     else:
-        if ":" not in args.j:
+        if ":" not in args.d:
             raise Exception("bad remote ip provided")
-        dest_ip, dest_port = args.j.split(":", 1)
+        dest_ip, dest_port = args.d.split(":", 1)
         
         _, tcp_writer = await asyncio.open_connection(dest_ip, int(dest_port), loop=loop)
-                                                   
+    
+    fmt = FMT_SHORT
+    if args.y:
+        fmt = FMT_YAML
+    if args.j:
+        fmt = FMT_JSON
+        
     running = True
     while running:
         try:
@@ -133,7 +156,7 @@ async def cb_onconnect(reader, writer):
             
             # handle the DATA frame
             if fs == fstrm.FSTRM_DATA_FRAME:
-                loop.create_task(cb_ondnstap(dnstap_decoder, payload, tcp_writer))
+                loop.create_task(cb_ondnstap(dnstap_decoder, payload, tcp_writer, fmt))
                 continue
             
             # handle the control frame READY

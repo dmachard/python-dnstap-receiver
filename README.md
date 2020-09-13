@@ -4,16 +4,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
-This Python module acts as a DNS tap receiver and streams as JSON payload to remote address or stdout. 
+This Python module acts as a DNS tap receiver and streams as JSON, YAML or text 
+payload to remote tcp address or directly to stdout. 
 
 ## Table of contents
 * [Installation](#installation)
 * [Show help usage](#show-help-usage)
 * [Start dnstap receiver](#start-dnstap-receiver)
-* [Output JSON format](#output-json-format)
-* [Systemd service file configuration](#systemd-service-file-configuration)
+* [Output formats](#output-jformats)
 * [Tested DNS servers](#tested-dns-servers)
 * [Tested Logs Collectors](#tested-dns-servers)
+* [Systemd service file configuration](#systemd-service-file-configuration)
 * [About](#about)
 
 ## Installation
@@ -28,29 +29,46 @@ pip install dnstap_receiver
 
 ```
 dnstap_receiver --help
-usage: dnstap_receiver.py [-h] -u U -j J
+usage: dnstap_receiver.py [-h] -u U [-v] [-y] [-j] [-d D]
 
 optional arguments:
   -h, --help  show this help message and exit
-  -u U        read dnstap payloads from unix socket
-  -j J        write JSON payload to tcp/ip address 
+  -u U        read dnstap payloads using framestreams from unix socket
+  -v          verbose mode
+  -y          write YAML-formatted output
+  -j          write JSON-formatted output
+  -d D        send dnstap message to remote tcp/ip address
 ```
 
 ## Start dnstap receiver
 
 The 'dnstap_receiver' binary takes in input a unix socket 
-
+In this case the output will be print directly to stdout with short text format.
 ```
 dnstap_receiver -u /var/run/dnstap.sock
 ```
 
-You can also add a remote tcp json collector to forward the log to another destination
+If you want to send the dnstap message as json to a remote tcp collector, 
+type the following command:
+```
+dnstap_receiver -u /var/run/dnstap.sock -j -d 10.0.0.2:8192
+```
+
+## Output formats
+
+Severals outputs format are supported:
+ - short text output
+ - JSON
+ - YAML
+ 
+### Short text
 
 ```
-dnstap_receiver -u /var/run/dnstap.sock -j 10.0.0.2:8192
+2020-09-12 14:15:00.551 CLIENT_QUERY NOERROR 192.168.1.114 46528 IP4 TCP 43b www.google.com. A
+2020-09-12 14:15:00.551 CLIENT_RESPONSE NOERROR 192.168.1.114 46528 IP4 TCP 101b www.google.com. A
 ```
 
-## Output JSON format
+### JSON-formatted
 
 CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
@@ -88,32 +106,38 @@ CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
 }
 ```
 
-## Systemd service file configuration
+### YAML-formatted
 
-System service file for CentOS:
+CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
-```bash
-vim /etc/systemd/system/dnstap_receiver.service
+```yaml
+code: NOERROR
+length: 49
+message: RESOLVER_QUERY
+protocol: IP4
+query-name: dns4.comlaude-dns.eu.
+query-type: AAAA
+source-ip: '-'
+source-port: '-'
+timestamp: '2020-09-12 14:13:53.948'
+transport: UDP
 
-[Unit]
-Description=Python DNS tap Service
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/dnstap_receiver -u /etc/dnsdist/dnstap.sock -j 10.0.0.2:8192
-Restart=on-abort
-Type=simple
-User=root
-
-[Install]
-WantedBy=multi-user.target
 ```
 
-```bash
-systemctl daemon-reload
-systemctl start dnstap_receiver
-systemctl status dnstap_receiver
-systemctl enable dnstap_receiver
+CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
+
+```yaml
+code: NOERROR
+length: 198
+message: RESOLVER_RESPONSE
+protocol: IP4
+query-name: dns3.comlaude-dns.co.uk.
+query-type: AAAA
+source-ip: '-'
+source-port: '-'
+timestamp: '2020-09-12 14:13:54.000'
+transport: UDP
+
 ```
 
 ## Tested DNS servers
@@ -181,6 +205,34 @@ output {
     index => "dnstap-lb"
   }
 }
+```
+
+## Systemd service file configuration
+
+System service file for CentOS:
+
+```bash
+vim /etc/systemd/system/dnstap_receiver.service
+
+[Unit]
+Description=Python DNS tap Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/dnstap_receiver -u /etc/dnsdist/dnstap.sock -j 10.0.0.2:8192
+Restart=on-abort
+Type=simple
+User=root
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+systemctl daemon-reload
+systemctl start dnstap_receiver
+systemctl status dnstap_receiver
+systemctl enable dnstap_receiver
 ```
 
 # About
