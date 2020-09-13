@@ -18,14 +18,13 @@ import dnslib
 from dnstap_receiver import dnstap as dnstap_pb2
 from dnstap_receiver import fstrm
 
-logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", required=True,
                           help="read dnstap payloads using framestreams from unix socket")
 parser.add_argument("-j", required=False,
                           help="write JSON payload to tcp/ip address")
-
+parser.add_argument('-v', action='store_true', help="verbose mode")
+  
 # http://dnstap.info/
 
 DNSTAP_TYPE = { 1: 'AUTH_QUERY',
@@ -100,7 +99,7 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer):
         
 async def cb_onconnect(reader, writer):
     """callback when a connection is established"""
-    logging.info("connect accepted")
+    logging.debug("connect accepted")
 
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
@@ -139,21 +138,21 @@ async def cb_onconnect(reader, writer):
             
             # handle the control frame READY
             if fs == fstrm.FSTRM_CONTROL_READY:
-                logging.info("<< control ready")
+                logging.debug("<< control ready")
                 ctrl_accept = fstrm_handler.encode(fs=fstrm.FSTRM_CONTROL_ACCEPT)
                 
                 # respond with accept only if the content type is dnstap
                 writer.write(ctrl_accept)
                 await writer.drain()
-                logging.info(">> control accept")
+                logging.debug(">> control accept")
             
             # handle the control frame READY
             if fs == fstrm.FSTRM_CONTROL_START:    
-                logging.info("<< control start")
+                logging.debug("<< control start")
             
             # handle the control frame STOP
             if fs == fstrm.FSTRM_CONTROL_STOP:
-                logging.info("<< control stop")
+                logging.debug("<< control stop")
                 running = False
             
         except Exception as e:
@@ -164,7 +163,7 @@ async def cb_onconnect(reader, writer):
     if tcp_writer is not None:
         tcp_writer.close()
         
-    logging.info("connection done")
+    logging.debug("connection done")
     
 def start_receiver():
     """start dnstap receiver"""
@@ -172,8 +171,14 @@ def start_receiver():
         args = parser.parse_args()
     except:
         sys.exit(1)
-    
-    logging.info("Start dnstap receiver...")
+
+    # init logging
+    level = logging.INFO
+    if args.v:
+        level = logging.DEBUG
+    logging.basicConfig(format='%(asctime)s %(message)s', level=level)
+
+    logging.debug("Start dnstap receiver...")
 
     # asynchronous unix socket
     socket_server = asyncio.start_unix_server(cb_onconnect, path=args.u)
