@@ -154,7 +154,7 @@ transport: UDP
 This dnstap receiver has been tested with success with the following dns servers:
  - **ISC - bind**
  - **PowerDNS - dnsdist, pdns-recursor**
- - **NLnet Labs - unbound**
+ - **NLnet Labs - nsd, unbound**
 
 ### bind
 
