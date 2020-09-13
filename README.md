@@ -19,6 +19,7 @@ payload to remote tcp address or directly to stdout.
     * [ISC - bind](#bind)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
     * [PowerDNS - dnsdist](#dnsdist)
+    * [NLnet Labs - nsd](#nsd)
     * [NLnet Labs - unbound](#unbound)
 * [Tested Logs Collectors](#tested-dns-servers)
     * [Logstash](#logstash-with-json-input)
@@ -164,6 +165,8 @@ Dnstap messages supported:
  - RESOLVER_RESPONSE
  - CLIENT_QUERY
  - CLIENT_RESPONSE
+ - AUTH_QUERY
+ - AUTH_RESPONSE
 
 Download latest source and build-it with dnstap support:
 
@@ -176,7 +179,7 @@ Update the configuration file `/etc/named.conf` to activate the dnstap feature:
 
 ```
 options {
-    dnstap { all; };
+    dnstap { client; auth; resolver; forwarder; };
     dnstap-output unix "/var/run/named/dnstap.sock";
     dnstap-identity "dns-bind";
     dnstap-version "bind";
@@ -210,7 +213,7 @@ dnstapFrameStreamServer("/var/run/pdns-recursor/dnstap.sock")
 Execute the dnstap receiver:
 
 ```bash
-su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock" -v"
+su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock" -v"
 ```
 
 ### dnsdist
@@ -242,6 +245,42 @@ Execute the dnstap receiver:
 su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/dnsdist/dnstap.sock" -v"
 ```
 
+### nsd
+
+![nsd 4.3.2](https://img.shields.io/badge/4.3.2-tested-green)
+
+Dnstap messages supported:
+ - AUTH_QUERY
+ - AUTH_RESPONSE
+ 
+Download latest source and build-it with dnstap support:
+
+```bash
+./configure --enable-dnstap
+make && make install
+```
+
+Update the configuration file `/etc/nsd/nsd.conf` to activate the dnstap feature:
+
+```yaml
+dnstap:
+    dnstap-enable: yes
+    dnstap-socket-path: "/var/run/nsd/dnstap.sock"
+    dnstap-send-identity: yes
+    dnstap-send-version: yes
+    dnstap-identity: "haha"
+    dnstap-version: "1"
+    dnstap-log-auth-query-messages: yes
+    dnstap-log-auth-response-messages: yes
+```
+
+Execute the dnstap receiver:
+
+```bash
+su - nsd -s /bin/bash -c "dnstap_receiver -u "/var/run/nsd/dnstap.sock" -v"
+```
+
+
 ### unbound
 
 ![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green)
@@ -264,7 +303,7 @@ make && make install
 
 Update the configuration file `/etc/unbound/unbound.conf` to activate the dnstap feature:
 
-```
+```yaml
 dnstap:
     dnstap-enable: yes
     dnstap-socket-path: "dnstap.sock"
@@ -281,7 +320,7 @@ dnstap:
 Execute the dnstap receiver:
 
 ```bash
-su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock" -v"
+su - unbound -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock" -v"
 ```
 
 ## Tested Logs Collectors
