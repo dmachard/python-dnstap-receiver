@@ -189,7 +189,7 @@ options {
 Execute the dnstap receiver:
 
 ```bash
-su - named -s /bin/bash -c "dnstap_receiver -u "/var/run/named/dnstap.sock" -v"
+su - named -s /bin/bash -c "dnstap_receiver -u "/var/run/named/dnstap.sock""
 ```
 
 ### pdns-recursor
@@ -213,7 +213,7 @@ dnstapFrameStreamServer("/var/run/pdns-recursor/dnstap.sock")
 Execute the dnstap receiver:
 
 ```bash
-su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock" -v"
+su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock""
 ```
 
 ### dnsdist
@@ -242,7 +242,7 @@ addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
 Execute the dnstap receiver:
 
 ```bash
-su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/dnsdist/dnstap.sock" -v"
+su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/dnsdist/dnstap.sock""
 ```
 
 ### nsd
@@ -277,7 +277,7 @@ dnstap:
 Execute the dnstap receiver:
 
 ```bash
-su - nsd -s /bin/bash -c "dnstap_receiver -u "/var/run/nsd/dnstap.sock" -v"
+su - nsd -s /bin/bash -c "dnstap_receiver -u "/var/run/nsd/dnstap.sock""
 ```
 
 
@@ -320,7 +320,7 @@ dnstap:
 Execute the dnstap receiver:
 
 ```bash
-su - unbound -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock" -v"
+su - unbound -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock""
 ```
 
 ## Tested Logs Collectors

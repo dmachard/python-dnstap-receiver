@@ -67,7 +67,10 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     # decode binary payload
     dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
-        
+      
+    logging.debug("< server information identity=%s version=%s" % (dnstap_decoder.identity,
+                                                                 dnstap_decoder.version))
+    
     tap = {"query-name": "-", "query-type": "-", "source-ip": "-"}
     
     # decode type message
