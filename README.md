@@ -1,4 +1,4 @@
-# Dnstap to JSON stream receiver
+# Dnstap receiver
  
 ![](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20PyPI/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
