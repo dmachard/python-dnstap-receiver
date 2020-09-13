@@ -9,11 +9,19 @@ payload to remote tcp address or directly to stdout.
 
 ## Table of contents
 * [Installation](#installation)
-* [Show help usage](#show-help-usage)
+* [Help usage](#show-help-usage)
 * [Start dnstap receiver](#start-dnstap-receiver)
-* [Output formats](#output-jformats)
+* [Output formats](#output-formats)
+    * [Text](#short-text)
+    * [JSON](#json-formatted)
+    * [YAML](#yaml-formatted)
 * [Tested DNS servers](#tested-dns-servers)
+    * [ISC - bind](#bind)
+    * [PowerDNS - pdns-recursor](#pdns-recursor)
+    * [PowerDNS - dnsdist](#dnsdist)
+    * [NLnet Labs - unbound](#unbound)
 * [Tested Logs Collectors](#tested-dns-servers)
+    * [Logstash](#logstash-with-json-input)
 * [Systemd service file configuration](#systemd-service-file-configuration)
 * [About](#about)
 
@@ -143,8 +151,43 @@ transport: UDP
 ## Tested DNS servers
 
 This dnstap receiver has been tested with success with the following dns servers:
+ - **ISC - bind**
  - **PowerDNS - dnsdist, pdns-recursor**
  - **NLnet Labs - unbound**
+
+### bind
+
+![pdns-recursor 9.11.22](https://img.shields.io/badge/9.11.22-tested-green)
+
+Dnstap messages supported:
+ - RESOLVER_QUERY
+ - RESOLVER_RESPONSE
+ - CLIENT_QUERY
+ - CLIENT_RESPONSE
+
+Download latest source and build-it with dnstap support:
+
+```bash
+./configure --enable-dnstap
+make && make install
+```
+
+Update the configuration file `/etc/named.conf` to activate the dnstap feature:
+
+```
+options {
+    dnstap { all; };
+    dnstap-output unix "/var/run/named/dnstap.sock";
+    dnstap-identity "dns-bind";
+    dnstap-version "bind";
+}
+```
+
+Execute the dnstap receiver:
+
+```bash
+su - named -s /bin/bash -c "dnstap_receiver -u "/var/run/named/dnstap.sock" -v"
+```
 
 ### pdns-recursor
 
@@ -243,7 +286,7 @@ su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.
 
 ## Tested Logs Collectors
 
-### Logstash
+### Logstash with json input
 
 vim /etc/logstash/conf.d/00-dnstap.conf
 
