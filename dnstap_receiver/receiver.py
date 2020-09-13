@@ -16,7 +16,10 @@ import dnslib
 # python3 -m pip install protobuf
 # bin/protoc --python_out=. dnstap.proto
 
+# more informations on dnstap http://dnstap.info/
 from dnstap_receiver import dnstap as dnstap_pb2
+
+# framestreams decoder
 from dnstap_receiver import fstrm
 
 parser = argparse.ArgumentParser()
@@ -25,8 +28,6 @@ parser.add_argument('-v', action='store_true', help="verbose mode")
 parser.add_argument("-y", help="write YAML-formatted output", action='store_true')
 parser.add_argument("-j", help="write JSON-formatted output", action='store_true')                       
 parser.add_argument("-d", help="send dnstap message to remote tcp/ip address")   
-
-# http://dnstap.info/
 
 DNSTAP_TYPE = { 1: 'AUTH_QUERY',
                 2: 'AUTH_RESPONSE',
@@ -48,6 +49,18 @@ DATETIME_FORMAT ='%Y-%m-%d %H:%M:%S.%f'
 FMT_SHORT = "SHORT"
 FMT_JSON = "JSON"
 FMT_YAML = "YAML"
+
+try:
+    args = parser.parse_args()
+except:
+    sys.exit(1)
+
+# init logging
+level = logging.INFO
+if args.v:
+    level = logging.DEBUG
+logging.basicConfig(format='%(asctime)s %(message)s', level=level)
+
 
 async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     """on dnstap"""
@@ -190,17 +203,7 @@ async def cb_onconnect(reader, writer):
     
 def start_receiver():
     """start dnstap receiver"""
-    try:
-        args = parser.parse_args()
-    except:
-        sys.exit(1)
-
-    # init logging
-    level = logging.INFO
-    if args.v:
-        level = logging.DEBUG
-    logging.basicConfig(format='%(asctime)s %(message)s', level=level)
-
+    args = parser.parse_args()
     logging.debug("Start dnstap receiver...")
 
     # asynchronous unix socket

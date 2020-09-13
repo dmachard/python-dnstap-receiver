@@ -1,4 +1,4 @@
-# Dnstap receiver
+# Dnstap streams receiver
  
 ![](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20PyPI/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -57,7 +57,7 @@ dnstap_receiver -u /var/run/dnstap.sock -j -d 10.0.0.2:8192
 ## Output formats
 
 Severals outputs format are supported:
- - short text output
+ - Short text
  - JSON
  - YAML
  
@@ -143,26 +143,83 @@ transport: UDP
 ## Tested DNS servers
 
 This dnstap receiver has been tested with success with the following dns servers:
- - **PowerDNS - dnsdist**
+ - **PowerDNS - dnsdist, pdns-recursor**
  - **NLnet Labs - unbound**
- 
+
+### pdns-recursor
+
+![pdns-recursor 4.3.4](https://img.shields.io/badge/4.3.4-tested-green)
+
+Dnstap messages supported:
+ - RESOLVER_QUERY
+ - RESOLVER_RESPONSE
+
+Update the configuration file to activate the dnstap feature:
+
+```
+vim /etc/pdns-recursor/recursor.conf
+lua-config-file=/etc/pdns-recursor/recursor.lua
+
+vim /etc/pdns-recursor/recursor.lua
+dnstapFrameStreamServer("/var/run/pdns-recursor/dnstap.sock")
+```
+
+Execute the dnstap receiver:
+
+```bash
+su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock" -v"
+```
+
 ### dnsdist
 
-![dnsdist 1.4.0](https://img.shields.io/badge/1.4.0-tested-green)
+![dnsdist 1.4.0](https://img.shields.io/badge/1.4.0-tested-green) ![dnsdist 1.5.0](https://img.shields.io/badge/1.5.0-tested-green)
 
-The following file `/etc/dnsdist/dnsdist.conf` must be updated like below:
+Dnstap messages supported:
+ - CLIENT_QUERY
+ - CLIENT_RESPONSE
+ 
+Create the dnsdist folder where the unix socket will be created:
+
+```bash
+mkdir -p /var/run/dnsdist/
+chown dnsdist.dnsdist /var/run/dnsdist/
 ```
-fsul = newFrameStreamUnixLogger("/var/run/dnstap.sock")
-addAction(AllRule(), DnstapLogAction(fsul))
-addResponseAction(AllRule(), DnstapLogResponseAction(fsul))
+
+Update the configuration file `/etc/dnsdist/dnsdist.conf` to activate the dnstap feature:
+
+```
+fsul = newFrameStreamUnixLogger("/var/run/dnsdist/dnstap.sock")
+addAction(AllRule(), DnstapLogAction("dnsdist", fsul))
+addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
+```
+
+Execute the dnstap receiver:
+
+```bash
+su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/dnsdist/dnstap.sock" -v"
 ```
 
 ### unbound
 
 ![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green)
 
-Unbound must be build with dnstap support `./configure --enable-dnstap`.
-The following file `/etc/unbound/unbound.conf` must be updated too:
+Dnstap messages supported:
+ - CLIENT_QUERY
+ - CLIENT_RESPONSE
+ - RESOLVER_QUERY
+ - RESOLVER_RESPONSE
+ - CLIENT_QUERY
+ - CLIENT_RESPONSE
+ 
+ 
+Download latest source and build-it with dnstap support:
+
+```bash
+./configure --enable-dnstap
+make && make install
+```
+
+Update the configuration file `/etc/unbound/unbound.conf` to activate the dnstap feature:
 
 ```
 dnstap:
@@ -176,6 +233,12 @@ dnstap:
     dnstap-log-client-response-messages: yes
     dnstap-log-forwarder-query-messages: yes
     dnstap-log-forwarder-response-messages: yes
+```
+
+Execute the dnstap receiver:
+
+```bash
+su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock" -v"
 ```
 
 ## Tested Logs Collectors
