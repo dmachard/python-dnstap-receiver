@@ -1,4 +1,5 @@
 import struct
+import logging
 
 # https://farsightsec.github.io/fstrm/
 
@@ -42,6 +43,11 @@ class FstrmHandler(object):
         """init class"""
         self.buf = b''
         
+        self.df_length = None
+        self.cf_length = None
+        
+    def reset(self):
+        """reset"""
         self.df_length = None
         self.cf_length = None
         
@@ -92,6 +98,8 @@ class FstrmHandler(object):
             # need more data ?
             if len(self.buf) < self.df_length:
                 return False
+            else:
+                return True
                 
     def decode(self):
         """decode frame"""

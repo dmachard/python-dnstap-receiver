@@ -4,8 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
-This Python module acts as a DNS tap receiver and streams as JSON, YAML or text 
-payload to remote tcp address or directly to stdout. 
+This Python module acts as a DNS tap streams receiver for DNS servers.
+The input stream can be a unix socket or multiple tcp sender.
+The output is printed directly to stdout or send to remote tcp address in JSON, YAML or one line text format. 
 
 ## Table of contents
 * [Installation](#installation)
@@ -38,10 +39,11 @@ pip install dnstap_receiver
 
 ```
 dnstap_receiver --help
-usage: dnstap_receiver.py [-h] -u U [-v] [-y] [-j] [-d D]
+usage: dnstap_receiver.py [-h] [-l L] [-u U] [-v] [-y] [-j] [-d D]
 
 optional arguments:
   -h, --help  show this help message and exit
+  -l L        receive dnstap payloads from remote tcp sender, listen on ip:port
   -u U        read dnstap payloads using framestreams from unix socket
   -v          verbose mode
   -y          write YAML-formatted output

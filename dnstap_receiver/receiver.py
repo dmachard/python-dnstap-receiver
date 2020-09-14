@@ -23,7 +23,8 @@ from dnstap_receiver import dnstap as dnstap_pb2
 from dnstap_receiver import fstrm
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-u", required=True, help="read dnstap payloads using framestreams from unix socket")
+parser.add_argument("-l", help="receive dnstap payloads from remote tcp sender, listen on ip:port")
+parser.add_argument("-u", help="read dnstap payloads using framestreams from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")
 parser.add_argument("-y", help="write YAML-formatted output", action='store_true')
 parser.add_argument("-j", help="write JSON-formatted output", action='store_true')                       
@@ -67,11 +68,11 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     # decode binary payload
     dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
-      
-    logging.debug("< server information identity=%s version=%s" % (dnstap_decoder.identity,
-                                                                 dnstap_decoder.version))
     
-    tap = {"query-name": "-", "query-type": "-", "source-ip": "-"}
+    tap = { "identity": dnstap_decoder.identity,
+            "query-name": "-", 
+            "query-type": "-", 
+            "source-ip": "-"}
     
     # decode type message
     tap["message"] = DNSTAP_TYPE.get(dm.type.value, "-")
@@ -113,7 +114,8 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     
     # reformat dnstap message
     if output_fmt == FMT_SHORT:
-        msg = "%s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["message"], tap["code"],
+        msg = "%s %s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["identity"].decode(), 
+                                               tap["message"], tap["code"],
                                                tap["source-ip"], tap["source-port"],
                                                tap["protocol"], tap["transport"], tap["length"],
                                                tap["query-name"], tap["query-type"])
@@ -132,7 +134,12 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
 
 async def cb_onconnect(reader, writer):
     """callback when a connection is established"""
-    logging.debug("connect accepted")
+    sock = writer.get_extra_info('socket')
+    if sock.family == socket.AF_UNIX:
+        peername = "Unix socket"
+    else:
+        peername = "Remote %s:%s" % writer.get_extra_info('peername')
+    logging.debug(f"{peername} - new connected")
 
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
@@ -147,74 +154,80 @@ async def cb_onconnect(reader, writer):
             raise Exception("bad remote ip provided")
         dest_ip, dest_port = args.d.split(":", 1)
         
-        _, tcp_writer = await asyncio.open_connection(dest_ip, int(dest_port), loop=loop)
+        _, tcp_writer = await asyncio.open_connection(dest_ip, 
+                                                      int(dest_port),
+                                                      loop=loop)
     
     fmt = FMT_SHORT
     if args.y:
         fmt = FMT_YAML
     if args.j:
         fmt = FMT_JSON
-        
-    running = True
-    while running:
-        try:
-            while not fstrm_handler.process():
-                # read received data
-                data = await reader.read(fstrm_handler.pending_nb_bytes())
-                if not data:
-                    break
+
+    try:
+        while data := await reader.read(fstrm_handler.pending_nb_bytes()) :
+            # append data to the buffer
+            fstrm_handler.append(data=data)
+            
+            # process the buffer, check if we have received a complete frame ?
+            if fstrm_handler.process():
+                # Ok, the frame is complete so let's decode it
+                fs, payload  = fstrm_handler.decode()
+
+                # handle the DATA frame
+                if fs == fstrm.FSTRM_DATA_FRAME:
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, tcp_writer, fmt))
                     
-                # append data to the buffer
-                fstrm_handler.append(data=data)
-            
-            # frame is complete so let's decode it
-            fs, payload  = fstrm_handler.decode()
-            
-            # handle the DATA frame
-            if fs == fstrm.FSTRM_DATA_FRAME:
-                loop.create_task(cb_ondnstap(dnstap_decoder, payload, tcp_writer, fmt))
-                continue
-            
-            # handle the control frame READY
-            if fs == fstrm.FSTRM_CONTROL_READY:
-                logging.debug("<< control ready")
-                ctrl_accept = fstrm_handler.encode(fs=fstrm.FSTRM_CONTROL_ACCEPT)
-                
-                # respond with accept only if the content type is dnstap
-                writer.write(ctrl_accept)
-                await writer.drain()
-                logging.debug(">> control accept")
-            
-            # handle the control frame READY
-            if fs == fstrm.FSTRM_CONTROL_START:    
-                logging.debug("<< control start")
-            
-            # handle the control frame STOP
-            if fs == fstrm.FSTRM_CONTROL_STOP:
-                logging.debug("<< control stop")
-                running = False
-            
-        except Exception as e:
-            running = False
-            logging.error("something happened: %s" % e)
-    
+                # handle the control frame READY
+                if fs == fstrm.FSTRM_CONTROL_READY:
+                    logging.debug(f"{peername} - control ready received")
+                    ctrl_accept = fstrm_handler.encode(fs=fstrm.FSTRM_CONTROL_ACCEPT)
+                    # respond with accept only if the content type is dnstap
+                    writer.write(ctrl_accept)
+                    await writer.drain()
+                    logging.debug(f"{peername} - sending control accept")
+                    
+                # handle the control frame READY
+                if fs == fstrm.FSTRM_CONTROL_START:
+                    logging.debug(f"{peername} - control start received")
+   
+                # handle the control frame STOP
+                if fs == fstrm.FSTRM_CONTROL_STOP:
+                    logging.debug(f"{peername} - control stop received")
+                    fstrm_handler.reset()           
+    except asyncio.CancelledError:
+        print(f'{peername} closing connection.')
+        writer.close()
+        await writer.wait_closed()
+    except asyncio.IncompleteReadError:
+        print(f'{peername} disconnected')
+    finally:
+        print(f'{peername} closed')
+
     # close the remote tcp conn
     if tcp_writer is not None:
         tcp_writer.close()
-        
-    logging.debug("connection done")
-    
+
 def start_receiver():
     """start dnstap receiver"""
     args = parser.parse_args()
     logging.debug("Start dnstap receiver...")
 
-    # asynchronous unix socket
-    socket_server = asyncio.start_unix_server(cb_onconnect, path=args.u)
-
-    # run until complete
     loop = asyncio.get_event_loop()
-    
+
+    # asynchronous unix socket
+    if args.u is not None:
+        socket_server = asyncio.start_unix_server(cb_onconnect, path=args.u, loop=loop)
+    elif args.l is not None:
+        if ":" not in args.l:
+            logging.error("malformed listen ip/port provided")
+            sys.exit(1)
+        listen_ip, listen_port = args.l.split(":", 1)
+        socket_server = asyncio.start_server(cb_onconnect, listen_ip, listen_port, loop=loop)
+    else:
+        logging.error("no input provided")
+        sys.exit(1)
+        
     # run until complete
     loop.run_until_complete(socket_server)
     
