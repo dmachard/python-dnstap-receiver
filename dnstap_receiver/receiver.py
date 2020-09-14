@@ -69,7 +69,7 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
     
-    tap = { "identity": dnstap_decoder.identity,
+    tap = { "identity": dnstap_decoder.identity.decode(),
             "query-name": "-", 
             "query-type": "-", 
             "source-ip": "-"}
@@ -114,7 +114,7 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     
     # reformat dnstap message
     if output_fmt == FMT_SHORT:
-        msg = "%s %s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["identity"].decode(), 
+        msg = "%s %s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["identity"], 
                                                tap["message"], tap["code"],
                                                tap["source-ip"], tap["source-port"],
                                                tap["protocol"], tap["transport"], tap["length"],

@@ -85,14 +85,17 @@ CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
 ```json
 {
+    "identity": "dev-centos8",
+    "query-name": "www.orange.com.",
+    "query-type": "A",
+    "source-ip": "192.168.1.114",
     "message": "CLIENT_QUERY",
-    "s_family": "IPv4",
-    "s_proto": "TCP",
-    "q_addr": "127.0.0.1",
-    "q_port": 43935, 
-    "dt_query": "2020-09-12 10:41:36.591",
-    "q_name": "www.google.com.",
-    "q_type": "A"
+    "protocol": "IP4",
+    "transport": "UDP",
+    "source-port": 42222,
+    "length": 43,
+    "timestamp": "2020-09-12 22:24:34.132",
+    "code": "NOERROR"
 }
 ```
 
@@ -100,20 +103,17 @@ CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
 
 ```json
 {
-    "r_code": "NOERROR",
-    "port": 52782,
-    "q_name":"rpc.gandi.net.",
-    "s_family":"IPv4",
-    "r_bytes": 47,
-    "dt_reply": "2020-05-24 03:30:01.411",
-    "q_addr": "10.0.0.235",
-    "host": "10.0.0.97",
+    "identity": "dev-centos8",
+    "query-name": "www.orange.com.",
+    "query-type": "A",
+    "source-ip": "192.168.1.114",
     "message": "CLIENT_RESPONSE",
-    "q_type": "A",
-    "s_proto": "UDP",
-    "dt_query": "2020-05-24 03:30:01.376",
-    "q_port": 40311,
-    "q_time": 0.035
+    "protocol": "IP4",
+    "transport": "UDP",
+    "source-port": 42222,
+    "length": 101,
+    "timestamp": "2020-09-12 22:24:34.132",
+    "code": "NOERROR"
 }
 ```
 
