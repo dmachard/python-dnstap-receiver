@@ -5,11 +5,7 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
 This Python module acts as a DNS tap streams receiver for DNS servers.
-
-Input streams can be:
-- a unix socket 
-- multiple remote tcp sender
-
+Input streams can be a unix socket or multiple remote tcp sender
 The output is printed directly to stdout or send to remote tcp address in JSON, YAML or one line text format. 
 
 ## Table of contents
@@ -50,7 +46,7 @@ This mode enable to receive dnstap messages from multiple dns servers.
 By default, the receiver is listening on the ip 0.0.0.0 and the tcp port 6000.
 
 ```
-dnstap_receiver
+./dnstap_receiver
 ```
 
 ### Unix socket mode
@@ -58,7 +54,7 @@ dnstap_receiver
 In this mode, the 'dnstap_receiver' binary takes in input a unix socket 
 
 ```
-dnstap_receiver -u /var/run/dnstap.sock
+./dnstap_receiver -u /var/run/dnstap.sock
 ```
 
 ## More options
@@ -68,7 +64,7 @@ dnstap_receiver -u /var/run/dnstap.sock
 You can execute the binary in verbose mode with the `-v` argument
 
 ```
-dnstap_receiver -v
+./dnstap_receiver -v
 2020-09-12 23:47:35,833 Start dnstap receiver...
 2020-09-12 23:47:35,833 Using selector: EpollSelector
 2020-09-12 23:47:35,834 Listening on 0.0.0.0:6000
@@ -80,7 +76,7 @@ If you want to send the dnstap message as json to a remote tcp collector,
 type the following command:
 
 ```
-dnstap_receiver -u /var/run/dnstap.sock -j -d 10.0.0.2:8192
+./dnstap_receiver -u /var/run/dnstap.sock -j -d 10.0.0.2:8192
 ```
  
 ### Quiet text output
@@ -219,6 +215,8 @@ Dnstap messages supported:
  - RESOLVER_QUERY
  - RESOLVER_RESPONSE
 
+#### Unix socket
+
 Update the configuration file to activate the dnstap feature:
 
 ```
@@ -233,6 +231,20 @@ Execute the dnstap receiver:
 
 ```bash
 su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock""
+```
+
+#### tcp socket
+
+
+Update the configuration file to activate the dnstap feature with tcp mode 
+and execute the dnstap receiver in listening tcp socket mode:
+
+```
+vim /etc/pdns-recursor/recursor.conf
+lua-config-file=/etc/pdns-recursor/recursor.lua
+
+vim /etc/pdns-recursor/recursor.lua
+dnstapFrameStreamServer("10.0.0.100:6000")
 ```
 
 ### dnsdist
