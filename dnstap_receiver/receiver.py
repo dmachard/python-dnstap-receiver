@@ -23,11 +23,16 @@ from dnstap_receiver import dnstap as dnstap_pb2
 from dnstap_receiver import fstrm
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-l", help="receive dnstap payloads from remote tcp sender, listen on ip:port")
-parser.add_argument("-u", help="read dnstap payloads using framestreams from unix socket")
+parser.add_argument("-l", 
+                    help="IP of the dnsptap server to receive dnstap payloads (default: %(default)r)",
+                    default="0.0.0.0")
+parser.add_argument("-p", type=int,
+                    help="Port the dnstap receiver is listening on (default: %(default)r)",
+                    default=6000)               
+parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")
-parser.add_argument("-y", help="write YAML-formatted output", action='store_true')
-parser.add_argument("-j", help="write JSON-formatted output", action='store_true')                       
+parser.add_argument("-y", help="use verbose YAML output", action='store_true')
+parser.add_argument("-j", help="use verbose JSON output", action='store_true')                       
 parser.add_argument("-d", help="send dnstap message to remote tcp/ip address")   
 
 DNSTAP_TYPE = { 1: 'AUTH_QUERY',
@@ -51,6 +56,7 @@ FMT_SHORT = "SHORT"
 FMT_JSON = "JSON"
 FMT_YAML = "YAML"
 
+# Handle command-line arguments.
 try:
     args = parser.parse_args()
 except:
@@ -217,13 +223,16 @@ def start_receiver():
 
     # asynchronous unix socket
     if args.u is not None:
-        socket_server = asyncio.start_unix_server(cb_onconnect, path=args.u, loop=loop)
+        logging.debug("Listening on %s" % args.u)
+        socket_server = asyncio.start_unix_server(cb_onconnect,
+                                                  path=args.u,
+                                                  loop=loop)
     elif args.l is not None:
-        if ":" not in args.l:
-            logging.error("malformed listen ip/port provided")
-            sys.exit(1)
-        listen_ip, listen_port = args.l.split(":", 1)
-        socket_server = asyncio.start_server(cb_onconnect, listen_ip, listen_port, loop=loop)
+        logging.debug("Listening on %s:%s" % (args.l, args.p))
+        socket_server = asyncio.start_server(cb_onconnect, 
+                                             args.l,
+                                             args.p,
+                                             loop=loop)
     else:
         logging.error("no input provided")
         sys.exit(1)

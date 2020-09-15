@@ -5,17 +5,24 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
 This Python module acts as a DNS tap streams receiver for DNS servers.
-The input stream can be a unix socket or multiple tcp sender.
+
+Input streams can be:
+- a unix socket 
+- multiple remote tcp sender
+
 The output is printed directly to stdout or send to remote tcp address in JSON, YAML or one line text format. 
 
 ## Table of contents
 * [Installation](#installation)
-* [Help usage](#show-help-usage)
 * [Start dnstap receiver](#start-dnstap-receiver)
-* [Output formats](#output-formats)
-    * [Text](#short-text)
-    * [JSON](#json-formatted)
-    * [YAML](#yaml-formatted)
+    * [Unix socket mode](#unix-socket-mode)
+    * [Listening tcp/ip socket mode](#listening-tcp_ip-socket-mode)
+* [More options](#more-options)
+    * [Verbose mode](#verbose-mode)
+    * [Send dnstap message to remote tcp/ip address](#send-dnstap-message-to-remote-tcp_ip-address)
+    * [Quiet text output](#quiet-text-output)
+    * [JSON-formatted output](#json-formatted-output)
+    * [YAML-formatted output](#yaml-formatted-output)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
@@ -35,58 +42,66 @@ Deploy the dnstap receiver in your DNS server with the pip command.
 pip install dnstap_receiver
 ```
 
-## Show help usage
-
-```
-dnstap_receiver --help
-usage: dnstap_receiver.py [-h] [-l L] [-u U] [-v] [-y] [-j] [-d D]
-
-optional arguments:
-  -h, --help  show this help message and exit
-  -l L        receive dnstap payloads from remote tcp sender, listen on ip:port
-  -u U        read dnstap payloads using framestreams from unix socket
-  -v          verbose mode
-  -y          write YAML-formatted output
-  -j          write JSON-formatted output
-  -d D        send dnstap message to remote tcp/ip address
-```
-
 ## Start dnstap receiver
 
-The 'dnstap_receiver' binary takes in input a unix socket 
-In this case the output will be print directly to stdout with short text format.
+### Listening tcp/ip socket mode
+
+This mode enable to receive dnstap messages from multiple dns servers.
+By default, the receiver is listening on the ip 0.0.0.0 and the tcp port 6000.
+
+```
+dnstap_receiver
+```
+
+### Unix socket mode
+
+In this mode, the 'dnstap_receiver' binary takes in input a unix socket 
+
 ```
 dnstap_receiver -u /var/run/dnstap.sock
 ```
 
+## More options
+
+### Verbose mode
+
+You can execute the binary in verbose mode with the `-v` argument
+
+```
+dnstap_receiver -v
+2020-09-12 23:47:35,833 Start dnstap receiver...
+2020-09-12 23:47:35,833 Using selector: EpollSelector
+2020-09-12 23:47:35,834 Listening on 0.0.0.0:6000
+```
+
+### Send dnstap message to remote tcp/ip address
+
 If you want to send the dnstap message as json to a remote tcp collector, 
 type the following command:
+
 ```
 dnstap_receiver -u /var/run/dnstap.sock -j -d 10.0.0.2:8192
 ```
-
-## Output formats
-
-Severals outputs format are supported:
- - Short text
- - JSON
- - YAML
  
-### Short text
+### Quiet text output
+
+By default the output will be print in quiet text format.
 
 ```
 2020-09-12 14:15:00.551 CLIENT_QUERY NOERROR 192.168.1.114 46528 IP4 TCP 43b www.google.com. A
 2020-09-12 14:15:00.551 CLIENT_RESPONSE NOERROR 192.168.1.114 46528 IP4 TCP 101b www.google.com. A
 ```
 
-### JSON-formatted
+### JSON-formatted output
+
+You can execute the binary with the `-j` argument to use verbose JSON output.
 
 CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
 ```json
 {
     "identity": "dev-centos8",
-    "query-name": "www.orange.com.",
+    "query-name": "www.google.com.",
     "query-type": "A",
     "source-ip": "192.168.1.114",
     "message": "CLIENT_QUERY",
@@ -104,7 +119,7 @@ CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
 ```json
 {
     "identity": "dev-centos8",
-    "query-name": "www.orange.com.",
+    "query-name": "www.google.com.",
     "query-type": "A",
     "source-ip": "192.168.1.114",
     "message": "CLIENT_RESPONSE",
@@ -117,7 +132,9 @@ CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
 }
 ```
 
-### YAML-formatted
+### YAML-formatted output
+
+You can execute the binary with the `-y` argument to use verbose YAML output.
 
 CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
@@ -225,7 +242,9 @@ su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/d
 Dnstap messages supported:
  - CLIENT_QUERY
  - CLIENT_RESPONSE
- 
+
+#### Unix socket
+
 Create the dnsdist folder where the unix socket will be created:
 
 ```bash
@@ -245,6 +264,17 @@ Execute the dnstap receiver:
 
 ```bash
 su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/dnsdist/dnstap.sock""
+```
+
+#### tcp socket
+
+Update the configuration file `/etc/dnsdist/dnsdist.conf` to activate the dnstap feature
+with tcp stream and execute the dnstap receiver in listening tcp socket mode:
+
+```
+fsul = newFrameStreamTcpLogger("127.0.0.1:8888")
+addAction(AllRule(), DnstapLogAction("dnsdist", fsul))
+addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
 ```
 
 ### nsd
@@ -303,6 +333,8 @@ Download latest source and build-it with dnstap support:
 make && make install
 ```
 
+#### Unix socket
+
 Update the configuration file `/etc/unbound/unbound.conf` to activate the dnstap feature:
 
 ```yaml
@@ -323,6 +355,23 @@ Execute the dnstap receiver:
 
 ```bash
 su - unbound -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock""
+```
+
+#### TCP socket
+
+Update the configuration file `/etc/unbound/unbound.conf` to activate the dnstap feature 
+with tcp mode and execute the dnstap receiver in listening tcp socket mode:
+
+```yaml
+dnstap:
+    dnstap-enable: yes
+    dnstap-socket-path: ""
+    dnstap-ip: "10.0.0.100@6000"
+    dnstap-tls: no
+    dnstap-send-identity: yes
+    dnstap-send-version: yes
+    dnstap-log-client-query-messages: yes
+    dnstap-log-client-response-messages: yes
 ```
 
 ## Tested Logs Collectors
