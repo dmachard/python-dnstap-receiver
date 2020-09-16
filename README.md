@@ -18,25 +18,25 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
     * [Quiet text output](#quiet-text-output)
     * [JSON-formatted output](#json-formatted-output)
     * [YAML-formatted output](#yaml-formatted-output)
-    * [Forward dnstap message to remote destination](#forward-dnstap-message-to-remote-destination)
+    * [Forward to remote destination](#forward-to-remote-destination)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
         * [Build with dnstap support](#build-with-dnstap-support)
         * [Unix socket](#unix-socket)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
-        * [Unix socket](#unix-socket)
+        * [Unix socket](#unix-socket-1)
         * [TCP stream](#tcp-stream)
     * [PowerDNS - dnsdist](#dnsdist)
-        * [Unix socket](#unix-socket)
-        * [TCP stream](#tcp-stream)
+        * [Unix socket](#unix-socket-2)
+        * [TCP stream](#tcp-stream-1)
     * [NLnet Labs - nsd](#nsd)
-        * [Build with dnstap support](#build-with-dnstap-support)
-        * [Unix socket](#unix-socket)
-        * [TCP stream](#tcp-stream)
+        * [Build with dnstap support](#build-with-dnstap-support-1)
+        * [Unix socket](#unix-socket-3)
+        * [TCP stream](#tcp-stream-2)
     * [NLnet Labs - unbound](#unbound)
-        * [Build with dnstap support](#build-with-dnstap-support)
-        * [Unix socket](#unix-socket)
-        * [TCP stream](#tcp-stream)
+        * [Build with dnstap support](#build-with-dnstap-support-2)
+        * [Unix socket](#unix-socket-4)
+        * [TCP stream](#tcp-stream-3)
 * [Tested Logs Collectors](#tested-dns-servers)
     * [Logstash](#logstash-with-json-input)
 * [Systemd service file configuration](#systemd-service-file-configuration)
@@ -55,7 +55,7 @@ pip install dnstap_receiver
 ### TCP socket mode
 
 This mode enable to receive dnstap messages from multiple dns servers.
-By default, the receiver is listening on the ip 0.0.0.0 and the tcp port 6000.
+By default, the receiver is listening on the ip `0.0.0.0` and the tcp port `6000`.
 
 ```
 ./dnstap_receiver
@@ -63,7 +63,7 @@ By default, the receiver is listening on the ip 0.0.0.0 and the tcp port 6000.
 
 ### Unix socket mode
 
-In this mode, the 'dnstap_receiver' binary takes in input a unix socket 
+In this mode, the `dnstap_receiver` binary takes in input a unix socket 
 
 ```
 ./dnstap_receiver -u /var/run/dnstap.sock
@@ -167,7 +167,7 @@ transport: UDP
 
 ```
 
-### Forward dnstap message to remote destination
+### Forward to remote destination
 
 If you want to send the dnstap message as json to a remote tcp collector, 
 type the following command:
@@ -217,7 +217,7 @@ options {
 }
 ```
 
-Execute the dnstap receiver:
+Execute the dnstap receiver with `named` user:
 
 ```bash
 su - named -s /bin/bash -c "dnstap_receiver -u "/var/run/named/dnstap.sock""
@@ -243,7 +243,7 @@ vim /etc/pdns-recursor/recursor.lua
 dnstapFrameStreamServer("/var/run/pdns-recursor/dnstap.sock")
 ```
 
-Execute the dnstap receiver:
+Execute the dnstap receiver with `pdns-recursor` user:
 
 ```bash
 su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock""
@@ -288,7 +288,7 @@ addAction(AllRule(), DnstapLogAction("dnsdist", fsul))
 addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
 ```
 
-Execute the dnstap receiver:
+Execute the dnstap receiver with `dnsdist` user:
 
 ```bash
 su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/dnsdist/dnstap.sock""
@@ -336,9 +336,7 @@ dnstap:
     dnstap-log-auth-response-messages: yes
 ```
 
-#### Build with dnstap support
-
-Execute the dnstap receiver:
+Execute the dnstap receiver with `nsd` user:
 
 ```bash
 su - nsd -s /bin/bash -c "dnstap_receiver -u "/var/run/nsd/dnstap.sock""
@@ -357,7 +355,8 @@ Dnstap messages supported:
  - CLIENT_QUERY
  - CLIENT_RESPONSE
  
- 
+#### Build with dnstap support
+
 Download latest source and build-it with dnstap support:
 
 ```bash
@@ -383,7 +382,7 @@ dnstap:
     dnstap-log-forwarder-response-messages: yes
 ```
 
-Execute the dnstap receiver:
+Execute the dnstap receiver with `unbound` user:
 
 ```bash
 su - unbound -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock""
@@ -447,7 +446,7 @@ Description=Python DNS tap Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/dnstap_receiver -u /etc/dnsdist/dnstap.sock -j 10.0.0.2:8192
+ExecStart=/usr/local/bin/dnstap_receiver -u /etc/dnsdist/dnstap.sock -f 10.0.0.2:8192
 Restart=on-abort
 Type=simple
 User=root
