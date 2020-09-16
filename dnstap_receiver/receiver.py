@@ -33,20 +33,14 @@ parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")
 parser.add_argument("-y", help="use verbose YAML output", action='store_true')
 parser.add_argument("-j", help="use verbose JSON output", action='store_true')                       
-parser.add_argument("-d", help="send dnstap message to remote tcp/ip address")   
+parser.add_argument("-f", help="forward dnstap message to remote destination")   
 
-DNSTAP_TYPE = { 1: 'AUTH_QUERY',
-                2: 'AUTH_RESPONSE',
-                3: 'RESOLVER_QUERY',
-                4: 'RESOLVER_RESPONSE',
-                5: 'CLIENT_QUERY',
-                6: 'CLIENT_RESPONSE',
-                7: 'FORWARDER_QUERY',
-                8: 'FORWARDER_RESPONSE',
-                9: 'STUB_QUERY',
-                10: 'STUB_RESPONSE',
-                11: 'TOOL_QUERY',
-                12: 'TOOL_RESPONSE' }
+DNSTAP_TYPE = { 1: 'AUTH_QUERY', 2: 'AUTH_RESPONSE',
+                3: 'RESOLVER_QUERY', 4: 'RESOLVER_RESPONSE',
+                5: 'CLIENT_QUERY', 6: 'CLIENT_RESPONSE',
+                7: 'FORWARDER_QUERY', 8: 'FORWARDER_RESPONSE',
+                9: 'STUB_QUERY', 10: 'STUB_RESPONSE',
+                11: 'TOOL_QUERY', 2: 'TOOL_RESPONSE' }
 DNSTAP_FAMILY = {1: 'IP4', 2: 'IP6'}
 DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}    
 
@@ -132,7 +126,8 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     if output_fmt == FMT_YAML:
         msg = yaml.dump(tap)
 
-    # final step, stdout or remote destination ? send json message to remote tcp
+    # final step, stdout or remote destination ? 
+    # send json message to remote tcp
     if tcp_writer is not None:
         tcp_writer.write(msg.encode() + b"\n")
     else:
@@ -153,12 +148,12 @@ async def cb_onconnect(reader, writer):
     dnstap_decoder = dnstap_pb2.Dnstap()
     
     args = parser.parse_args()
-    if args.d is None:
+    if args.f is None:
         tcp_writer = None
     else:
-        if ":" not in args.d:
+        if ":" not in args.f:
             raise Exception("bad remote ip provided")
-        dest_ip, dest_port = args.d.split(":", 1)
+        dest_ip, dest_port = args.f.split(":", 1)
         
         _, tcp_writer = await asyncio.open_connection(dest_ip, 
                                                       int(dest_port),
@@ -202,13 +197,13 @@ async def cb_onconnect(reader, writer):
                     logging.debug(f"{peername} - control stop received")
                     fstrm_handler.reset()           
     except asyncio.CancelledError:
-        print(f'{peername} closing connection.')
+        logging.debug(f'{peername} - closing connection.')
         writer.close()
         await writer.wait_closed()
     except asyncio.IncompleteReadError:
-        print(f'{peername} disconnected')
+        logging.debug(f'{peername} - disconnected')
     finally:
-        print(f'{peername} closed')
+        logging.debug(f'{peername} - closed')
 
     # close the remote tcp conn
     if tcp_writer is not None:
@@ -216,9 +211,9 @@ async def cb_onconnect(reader, writer):
 
 def start_receiver():
     """start dnstap receiver"""
+    logging.debug("Start receiver...")
     args = parser.parse_args()
-    logging.debug("Start dnstap receiver...")
-
+    
     loop = asyncio.get_event_loop()
 
     # asynchronous unix socket
@@ -227,16 +222,13 @@ def start_receiver():
         socket_server = asyncio.start_unix_server(cb_onconnect,
                                                   path=args.u,
                                                   loop=loop)
-    elif args.l is not None:
+    # asynchronous tcp socket
+    else:
         logging.debug("Listening on %s:%s" % (args.l, args.p))
         socket_server = asyncio.start_server(cb_onconnect, 
-                                             args.l,
-                                             args.p,
+                                             args.l, args.p,
                                              loop=loop)
-    else:
-        logging.error("no input provided")
-        sys.exit(1)
-        
+
     # run until complete
     loop.run_until_complete(socket_server)
     

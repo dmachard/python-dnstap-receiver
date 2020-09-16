@@ -12,19 +12,31 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
 * [Installation](#installation)
 * [Start dnstap receiver](#start-dnstap-receiver)
     * [Unix socket mode](#unix-socket-mode)
-    * [Listening tcp/ip socket mode](#listening-tcp_ip-socket-mode)
+    * [TCP socket mode](#tcp-socket-mode)
 * [More options](#more-options)
     * [Verbose mode](#verbose-mode)
-    * [Send dnstap message to remote tcp/ip address](#send-dnstap-message-to-remote-tcp_ip-address)
     * [Quiet text output](#quiet-text-output)
     * [JSON-formatted output](#json-formatted-output)
     * [YAML-formatted output](#yaml-formatted-output)
+    * [Forward dnstap message to remote destination](#forward-dnstap-message-to-remote-destination)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
+        * [Build with dnstap support](#build-with-dnstap-support)
+        * [Unix socket](#unix-socket)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
+        * [Unix socket](#unix-socket)
+        * [TCP stream](#tcp-stream)
     * [PowerDNS - dnsdist](#dnsdist)
+        * [Unix socket](#unix-socket)
+        * [TCP stream](#tcp-stream)
     * [NLnet Labs - nsd](#nsd)
+        * [Build with dnstap support](#build-with-dnstap-support)
+        * [Unix socket](#unix-socket)
+        * [TCP stream](#tcp-stream)
     * [NLnet Labs - unbound](#unbound)
+        * [Build with dnstap support](#build-with-dnstap-support)
+        * [Unix socket](#unix-socket)
+        * [TCP stream](#tcp-stream)
 * [Tested Logs Collectors](#tested-dns-servers)
     * [Logstash](#logstash-with-json-input)
 * [Systemd service file configuration](#systemd-service-file-configuration)
@@ -40,7 +52,7 @@ pip install dnstap_receiver
 
 ## Start dnstap receiver
 
-### Listening tcp/ip socket mode
+### TCP socket mode
 
 This mode enable to receive dnstap messages from multiple dns servers.
 By default, the receiver is listening on the ip 0.0.0.0 and the tcp port 6000.
@@ -70,15 +82,6 @@ You can execute the binary in verbose mode with the `-v` argument
 2020-09-12 23:47:35,834 Listening on 0.0.0.0:6000
 ```
 
-### Send dnstap message to remote tcp/ip address
-
-If you want to send the dnstap message as json to a remote tcp collector, 
-type the following command:
-
-```
-./dnstap_receiver -u /var/run/dnstap.sock -j -d 10.0.0.2:8192
-```
- 
 ### Quiet text output
 
 By default the output will be print in quiet text format.
@@ -90,7 +93,7 @@ By default the output will be print in quiet text format.
 
 ### JSON-formatted output
 
-You can execute the binary with the `-j` argument to use verbose JSON output.
+You could, for example, execute the binary with the `-j` argument to use verbose JSON output.
 
 CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
@@ -130,7 +133,7 @@ CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
 
 ### YAML-formatted output
 
-You can execute the binary with the `-y` argument to use verbose YAML output.
+You can, for example, execute the binary with the `-y` argument to use verbose YAML output.
 
 CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 
@@ -164,6 +167,15 @@ transport: UDP
 
 ```
 
+### Forward dnstap message to remote destination
+
+If you want to send the dnstap message as json to a remote tcp collector, 
+type the following command:
+
+```
+./dnstap_receiver -u /var/run/dnstap.sock -j -f 10.0.0.2:8192
+```
+ 
 ## Tested DNS servers
 
 This dnstap receiver has been tested with success with the following dns servers:
@@ -183,12 +195,16 @@ Dnstap messages supported:
  - AUTH_QUERY
  - AUTH_RESPONSE
 
+#### Build with dnstap support
+
 Download latest source and build-it with dnstap support:
 
 ```bash
 ./configure --enable-dnstap
 make && make install
 ```
+
+#### Unix socket
 
 Update the configuration file `/etc/named.conf` to activate the dnstap feature:
 
@@ -233,7 +249,7 @@ Execute the dnstap receiver:
 su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/dnstap.sock""
 ```
 
-#### tcp socket
+#### TCP stream
 
 
 Update the configuration file to activate the dnstap feature with tcp mode 
@@ -278,7 +294,7 @@ Execute the dnstap receiver:
 su - dnsdist -s /bin/bash -c "dnstap_receiver -u "/var/run/dnsdist/dnstap.sock""
 ```
 
-#### tcp socket
+#### TCP stream
 
 Update the configuration file `/etc/dnsdist/dnsdist.conf` to activate the dnstap feature
 with tcp stream and execute the dnstap receiver in listening tcp socket mode:
@@ -296,13 +312,17 @@ addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
 Dnstap messages supported:
  - AUTH_QUERY
  - AUTH_RESPONSE
- 
+
+#### Build with dnstap support
+
 Download latest source and build-it with dnstap support:
 
 ```bash
 ./configure --enable-dnstap
 make && make install
 ```
+
+#### Unix socket
 
 Update the configuration file `/etc/nsd/nsd.conf` to activate the dnstap feature:
 
@@ -312,11 +332,11 @@ dnstap:
     dnstap-socket-path: "/var/run/nsd/dnstap.sock"
     dnstap-send-identity: yes
     dnstap-send-version: yes
-    dnstap-identity: "haha"
-    dnstap-version: "1"
     dnstap-log-auth-query-messages: yes
     dnstap-log-auth-response-messages: yes
 ```
+
+#### Build with dnstap support
 
 Execute the dnstap receiver:
 
@@ -369,7 +389,7 @@ Execute the dnstap receiver:
 su - unbound -s /bin/bash -c "dnstap_receiver -u "/usr/local/etc/unbound/dnstap.sock""
 ```
 
-#### TCP socket
+#### TCP stream
 
 Update the configuration file `/etc/unbound/unbound.conf` to activate the dnstap feature 
 with tcp mode and execute the dnstap receiver in listening tcp socket mode:
