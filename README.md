@@ -90,7 +90,7 @@ Create the external configuration file and enable tls:
 ```yaml
 input-mode:
   # enable tls on socket
-  tls-support: false
+  tls-support: true
   tls-server-cert: /etc/dnstap_receiver/server.crt
   tls-server-key: /etc/dnstap_receiver/server.key
 ```
