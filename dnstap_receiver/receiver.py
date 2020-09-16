@@ -8,7 +8,7 @@ import sys
 import re
 import ssl
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 # python3 -m pip dnslib
 import dnslib
@@ -83,19 +83,16 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
     if (dm.type.value % 2 ) == 1 :
         dnstap_parsed = dnslib.DNSRecord.parse(dm.query_message)
         tap["length"] = len(dm.query_message)
-        query_time_milli = (round(dm.query_time_nsec / 1000000) / 1000)
-        d1 = dm.query_time_sec +  query_time_milli
-        tap["timestamp"] = datetime.fromtimestamp(d1).strftime(DATETIME_FORMAT)[:-3]
+        d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
+        tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
         
     # handle response message
     if (dm.type.value % 2 ) == 0 :
         dnstap_parsed = dnslib.DNSRecord.parse(dm.response_message)
         tap["length"] = len(dm.response_message)
-
-        reply_time_milli = (round(dm.response_time_nsec / 1000000) / 1000) 
-        d2 = dm.response_time_sec + reply_time_milli
-        tap["timestamp"] = datetime.fromtimestamp(d2).strftime(DATETIME_FORMAT)[:-3]
-
+        d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
+        tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
+        
     # common params
     if len(dnstap_parsed.questions):
         tap["query-name"] = str(dnstap_parsed.questions[0].get_qname())

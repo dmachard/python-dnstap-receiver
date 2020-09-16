@@ -13,6 +13,7 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
 * [Start dnstap receiver](#start-dnstap-receiver)
     * [Unix socket mode](#unix-socket-mode)
     * [TCP socket mode](#tcp-socket-mode)
+    * [TLS socket mode](#tls-socket-mode)
 * [More options](#more-options)
     * [Verbose mode](#verbose-mode)
     * [Quiet text output](#quiet-text-output)
@@ -73,6 +74,33 @@ In this mode, the `dnstap_receiver` binary takes in input a unix socket
 ./dnstap_receiver -u /var/run/dnstap.sock
 ```
 
+### TLS socket mode
+
+This mode enable to receive dnstap messages from multiple dns servers with tcp/tls transport.
+By default, the receiver is listening on the ip `0.0.0.0` and the tcp port `6000`.
+
+Generate a certificate and private key for the dnstap receiver:
+
+```
+openssl req -x509 -newkey rsa:4096 -sha256  -nodes -keyout server.key -out server.crt  -subj "/CN=dnstap_receiver.com" -days 3650
+```
+
+Create the external configuration file and enable tls:
+
+```yaml
+input-mode:
+  # enable tls on socket
+  tls-support: false
+  tls-server-cert: /etc/dnstap_receiver/server.crt
+  tls-server-key: /etc/dnstap_receiver/server.key
+```
+
+Finally execute the dnstap receiver with the configuration file:
+
+```
+./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
+```
+
 ## More options
 
 ### Verbose mode
@@ -91,8 +119,8 @@ You can execute the binary in verbose mode with the `-v` argument
 By default the output will be print in quiet text format.
 
 ```
-2020-09-12 14:15:00.551 dnsdist01 CLIENT_QUERY NOERROR 192.168.1.114 46528 IP4 TCP 43b www.google.com. A
-2020-09-12 14:15:00.551 dnsdist01 CLIENT_RESPONSE NOERROR 192.168.1.114 46528 IP4 TCP 101b www.google.com. A
+2020-09-16T18:51:53.547352+00:00 dev-centos8 RESOLVER_QUERY NOERROR - - IP4 UDP 43b ns2.google.com. A
+2020-09-16T18:51:53.591736+00:00 dev-centos8 RESOLVER_RESPONSE NOERROR - - IP4 UDP 59b ns2.google.com. A
 ```
 
 ### External config file
@@ -114,6 +142,10 @@ input-mode:
   # read dnstap message from tcp socket
   local-address: 0.0.0.0
   local-port: 6000
+  # enable tls on socket
+  tls-support: false
+  tls-server-cert: null
+  tls-server-key: null
   # read dnstap message fom unix socket
   unix-socket: null
  
