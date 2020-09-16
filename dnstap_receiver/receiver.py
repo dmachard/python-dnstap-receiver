@@ -52,6 +52,10 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
     dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
     
+    if "dnstap-identities" in cfg["input-mode"]:
+        if dnstap_decoder.identity.decode() not in cfg["input-mode"]["dnstap-identities"]:
+            return
+            
     tap = { "identity": dnstap_decoder.identity.decode(),
             "query-name": "-", 
             "query-type": "-", 
@@ -207,7 +211,7 @@ def start_receiver():
         cfg["forward-to"]["enable"] =  False
         cfg["forward-to"]["remote-port"] = None
         cfg["forward-to"]["remote-port"] = None
-            
+
     # init logging
     level = logging.INFO
     if cfg["verbose"]:

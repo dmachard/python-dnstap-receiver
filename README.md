@@ -16,9 +16,11 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
 * [More options](#more-options)
     * [Verbose mode](#verbose-mode)
     * [Quiet text output](#quiet-text-output)
+    * [External config file](#external-config-file)
     * [JSON-formatted output](#json-formatted-output)
     * [YAML-formatted output](#yaml-formatted-output)
     * [Forward to remote destination](#forward-to-remote-destination)
+    * [Filtering by dnstap identity](#filtering-by-dnstap-identity)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
         * [Build with dnstap support](#build-with-dnstap-support)
@@ -87,15 +89,63 @@ You can execute the binary in verbose mode with the `-v` argument
 By default the output will be print in quiet text format.
 
 ```
-2020-09-12 14:15:00.551 CLIENT_QUERY NOERROR 192.168.1.114 46528 IP4 TCP 43b www.google.com. A
-2020-09-12 14:15:00.551 CLIENT_RESPONSE NOERROR 192.168.1.114 46528 IP4 TCP 101b www.google.com. A
+2020-09-12 14:15:00.551 dnsdist01 CLIENT_QUERY NOERROR 192.168.1.114 46528 IP4 TCP 43b www.google.com. A
+2020-09-12 14:15:00.551 dnsdist01 CLIENT_RESPONSE NOERROR 192.168.1.114 46528 IP4 TCP 101b www.google.com. A
+```
+
+### External config file
+
+The `dnstap_receiver` binary can takes an external config file with the `-c` argument
+
+```
+./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
+```
+
+Example of configuration file
+
+```yaml
+# enable verbose mode
+verbose: true
+
+# read and decode dnstap messages from
+input-mode:
+  # read dnstap message from tcp socket
+  local-address: 0.0.0.0
+  local-port: 6000
+  # read dnstap message fom unix socket
+  unix-socket: null
+#  # checking the dnstap identify received and ignores-it 
+#  # if the message does not match the expected list of identities
+#  dnstap-identity:
+#    - dnsdist01
+#    - unbound01
+        
+# format dnstap message output
+output-format:
+  text: true
+  yaml: false
+  json: false
+
+# forward decoded messages to a remote tcp destination
+forward-to:
+  enable: false
+  remote-address: null
+  remote-port: null
 ```
 
 ### JSON-formatted output
 
-You could, for example, execute the binary with the `-j` argument to use verbose JSON output.
+JSON output can be activated through the external configuration file
 
-CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
+```yaml
+# format dnstap message output
+output-format:
+  text: false
+  yaml: false
+  json: true
+```
+
+Output example:
 
 ```json
 {
@@ -113,29 +163,19 @@ CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
 }
 ```
 
-CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
-
-```json
-{
-    "identity": "dev-centos8",
-    "query-name": "www.google.com.",
-    "query-type": "A",
-    "source-ip": "192.168.1.114",
-    "message": "CLIENT_RESPONSE",
-    "protocol": "IP4",
-    "transport": "UDP",
-    "source-port": 42222,
-    "length": 101,
-    "timestamp": "2020-09-12 22:24:34.132",
-    "code": "NOERROR"
-}
-```
-
 ### YAML-formatted output
 
-You can, for example, execute the binary with the `-y` argument to use verbose YAML output.
+YAML output can be activated through the external configuration file
 
-CLIENT_QUERY / FORWARDER_QUERY / RESOLVER_QUERY
+```yaml
+# format dnstap message output
+output-format:
+  text: false
+  yaml: true
+  json: false
+```
+
+Output example:
 
 ```yaml
 code: NOERROR
@@ -151,31 +191,33 @@ transport: UDP
 
 ```
 
-CLIENT_RESPONSE / FORWARDER_RESPONSE / RESOLVER_RESPONSE
-
-```yaml
-code: NOERROR
-length: 198
-message: RESOLVER_RESPONSE
-protocol: IP4
-query-name: dns3.comlaude-dns.co.uk.
-query-type: AAAA
-source-ip: '-'
-source-port: '-'
-timestamp: '2020-09-12 14:13:54.000'
-transport: UDP
-
-```
-
 ### Forward to remote destination
 
-If you want to send the dnstap message as json to a remote tcp collector, 
-type the following command:
-
-```
-./dnstap_receiver -u /var/run/dnstap.sock -j -f 10.0.0.2:8192
-```
+Forward dnstap message to a remote tcp collector can be done through the 
+external configuration file 
  
+```yaml
+# forward decoded messages to a remote tcp destination
+forward-to:
+  enable: true
+  remote-address: 10.0.0.2
+  remote-port: 8192
+```
+
+### Filtering by dnstap identity
+
+You can filtering dnstap messages according to the dnstap identity field.
+A list of expected identities can be configured in the external configuration file like below:
+
+```yaml
+input-mode:
+  # dnstap identify filtering feature
+  # list of expected dnstap identities
+  dnstap-identities:
+    - dnsdist01
+    - unbound01
+```
+
 ## Tested DNS servers
 
 This dnstap receiver has been tested with success with the following dns servers:
