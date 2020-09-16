@@ -212,6 +212,9 @@ def start_receiver():
         cfg["input-mode"]["local-address"] =  args.l
         cfg["input-mode"]["local-port"] =  args.p
         cfg["input-mode"]["tls-support"] = False
+        cfg["input-mode"]["tls-support"] = False
+        cfg["filter"]["qname-regex"] = None
+        cfg["filter"]["dnstap-identities"] = None
         cfg["output-format"]["yaml"] = False
         cfg["output-format"]["json"] = False
         cfg["output-format"]["text"] =True
