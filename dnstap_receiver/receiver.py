@@ -206,7 +206,7 @@ def start_receiver():
             print("error: config file not found")
             sys.exit(1)
     else:
-        cfg = {"verbose": args.v, "input-mode": {}, 
+        cfg = {"verbose": args.v, "input-mode": {}, "filter": {}, 
                "output-format": {} , "forward-to": {}}
         cfg["input-mode"]["unix-socket"] = args.u
         cfg["input-mode"]["local-address"] =  args.l
