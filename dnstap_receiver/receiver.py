@@ -211,6 +211,7 @@ def start_receiver():
         cfg["input-mode"]["unix-socket"] = args.u
         cfg["input-mode"]["local-address"] =  args.l
         cfg["input-mode"]["local-port"] =  args.p
+        cfg["input-mode"]["tls-support"] = False
         cfg["output-format"]["yaml"] = False
         cfg["output-format"]["json"] = False
         cfg["output-format"]["text"] =True
