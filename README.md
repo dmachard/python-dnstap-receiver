@@ -21,6 +21,7 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
     * [YAML-formatted output](#yaml-formatted-output)
     * [Forward to remote destination](#forward-to-remote-destination)
     * [Filtering by dnstap identity](#filtering-by-dnstap-identity)
+    * [Filtering by qname](#filtering-by-qname)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
         * [Build with dnstap support](#build-with-dnstap-support)
@@ -114,11 +115,12 @@ input-mode:
   local-port: 6000
   # read dnstap message fom unix socket
   unix-socket: null
-#  # checking the dnstap identify received and ignores-it 
-#  # if the message does not match the expected list of identities
-#  dnstap-identity:
-#    - dnsdist01
-#    - unbound01
+ 
+filter: 
+  # qname filtering feature with regex support
+  qname-regex: null
+  # dnstap identify filtering feature with regex support
+  dnstap-identities: null
         
 # format dnstap message output
 output-format:
@@ -206,16 +208,25 @@ forward-to:
 
 ### Filtering by dnstap identity
 
-You can filtering dnstap messages according to the dnstap identity field.
-A list of expected identities can be configured in the external configuration file like below:
+You can filtering incoming dnstap messages according to the dnstap identity field.
+A regex can be configured in the external configuration file to do that
 
 ```yaml
-input-mode:
-  # dnstap identify filtering feature
-  # list of expected dnstap identities
-  dnstap-identities:
-    - dnsdist01
-    - unbound01
+filter:
+  # dnstap identify filtering feature with regex support
+  dnstap-identities: dnsdist01|unbound01
+```
+
+### Filtering by qname
+
+You can filtering incoming dnstap messages according to the query name.
+This feature can be useful if you want to ignore some domains and keep just what you want.
+A regex can be configured in the external configuration file to do that
+
+```yaml
+filter: 
+  # qname filtering feature with regex support
+  qname-regex: ".*\.com"
 ```
 
 ## Tested DNS servers

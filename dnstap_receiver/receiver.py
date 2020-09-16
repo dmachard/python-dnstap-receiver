@@ -5,6 +5,7 @@ import socket
 import json
 import yaml
 import sys
+import re
 
 from datetime import datetime
 
@@ -52,8 +53,10 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
     dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
     
-    if "dnstap-identities" in cfg["input-mode"]:
-        if dnstap_decoder.identity.decode() not in cfg["input-mode"]["dnstap-identities"]:
+    # filtering by dnstap identity ?
+    if cfg["filter"]["dnstap-identities"] is not None:
+        if re.match(cfg["filter"]["dnstap-identities"], dnstap_decoder.identity.decode()) is None:
+            del dm
             return
             
     tap = { "identity": dnstap_decoder.identity.decode(),
@@ -98,6 +101,11 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
         tap["query-type"] = dnslib.QTYPE[dnstap_parsed.questions[0].qtype]
     tap["code"] = dnslib.RCODE[dnstap_parsed.header.rcode]
     
+    # filtering by qname ?
+    if cfg["filter"]["qname-regex"] is not None:
+        if re.match(cfg["filter"]["qname-regex"], tap["query-name"]) is None:
+            del dm; del tap;
+            return
     
     # reformat dnstap message
     if cfg["output-format"]["text"]:
