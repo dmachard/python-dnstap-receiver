@@ -22,19 +22,6 @@ from dnstap_receiver import dnstap as dnstap_pb2
 # framestreams decoder
 from dnstap_receiver import fstrm
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-l", 
-                    help="IP of the dnsptap server to receive dnstap payloads (default: %(default)r)",
-                    default="0.0.0.0")
-parser.add_argument("-p", type=int,
-                    help="Port the dnstap receiver is listening on (default: %(default)r)",
-                    default=6000)               
-parser.add_argument("-u", help="read dnstap payloads from unix socket")
-parser.add_argument('-v', action='store_true', help="verbose mode")
-parser.add_argument("-y", help="use verbose YAML output", action='store_true')
-parser.add_argument("-j", help="use verbose JSON output", action='store_true')                       
-parser.add_argument("-f", help="forward dnstap message to remote destination")   
-
 DNSTAP_TYPE = { 1: 'AUTH_QUERY', 2: 'AUTH_RESPONSE',
                 3: 'RESOLVER_QUERY', 4: 'RESOLVER_RESPONSE',
                 5: 'CLIENT_QUERY', 6: 'CLIENT_RESPONSE',
@@ -46,24 +33,20 @@ DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}
 
 DATETIME_FORMAT ='%Y-%m-%d %H:%M:%S.%f'
 
-FMT_SHORT = "SHORT"
-FMT_JSON = "JSON"
-FMT_YAML = "YAML"
-
-# Handle command-line arguments.
-try:
-    args = parser.parse_args()
-except:
-    sys.exit(1)
-
-# init logging
-level = logging.INFO
-if args.v:
-    level = logging.DEBUG
-logging.basicConfig(format='%(asctime)s %(message)s', level=level)
+# command line arguments definition
+parser = argparse.ArgumentParser()
+parser.add_argument("-l", 
+                    help="IP of the dnsptap server to receive dnstap payloads (default: %(default)r)",
+                    default="0.0.0.0")
+parser.add_argument("-p", type=int,
+                    help="Port the dnstap receiver is listening on (default: %(default)r)",
+                    default=6000)               
+parser.add_argument("-u", help="read dnstap payloads from unix socket")
+parser.add_argument('-v', action='store_true', help="verbose mode")   
+parser.add_argument("-c", help="external config file")   
 
 
-async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
+async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.parse_from_bytes(payload)
@@ -113,17 +96,18 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     
     
     # reformat dnstap message
-    if output_fmt == FMT_SHORT:
+    if cfg["output-format"]["text"]:
         msg = "%s %s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["identity"], 
-                                               tap["message"], tap["code"],
-                                               tap["source-ip"], tap["source-port"],
-                                               tap["protocol"], tap["transport"], tap["length"],
-                                               tap["query-name"], tap["query-type"])
+                                                   tap["message"], tap["code"],
+                                                   tap["source-ip"], tap["source-port"],
+                                                   tap["protocol"], tap["transport"],
+                                                   tap["length"],
+                                                   tap["query-name"], tap["query-type"])
         
-    if output_fmt == FMT_JSON:
+    if cfg["output-format"]["json"]:
         msg = json.dumps(tap)
         
-    if output_fmt == FMT_YAML:
+    if cfg["output-format"]["yaml"]:
         msg = yaml.dump(tap)
 
     # final step, stdout or remote destination ? 
@@ -133,7 +117,7 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, output_fmt):
     else:
         print(msg)
 
-async def cb_onconnect(reader, writer):
+async def cb_onconnect(reader, writer, cfg):
     """callback when a connection is established"""
     sock = writer.get_extra_info('socket')
     if sock.family == socket.AF_UNIX:
@@ -147,23 +131,12 @@ async def cb_onconnect(reader, writer):
     loop = asyncio.get_event_loop()
     dnstap_decoder = dnstap_pb2.Dnstap()
     
-    args = parser.parse_args()
-    if args.f is None:
-        tcp_writer = None
-    else:
-        if ":" not in args.f:
-            raise Exception("bad remote ip provided")
-        dest_ip, dest_port = args.f.split(":", 1)
-        
-        _, tcp_writer = await asyncio.open_connection(dest_ip, 
-                                                      int(dest_port),
+    # remote connection to enable ?
+    tcp_writer = None
+    if cfg["forward-to"]["enable"]:
+        _, tcp_writer = await asyncio.open_connection(cfg["forward-to"]["remote-address"], 
+                                                      cfg["forward-to"]["remote-port"],
                                                       loop=loop)
-    
-    fmt = FMT_SHORT
-    if args.y:
-        fmt = FMT_YAML
-    if args.j:
-        fmt = FMT_JSON
 
     try:
         while data := await reader.read(fstrm_handler.pending_nb_bytes()) :
@@ -177,7 +150,7 @@ async def cb_onconnect(reader, writer):
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, tcp_writer, fmt))
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
@@ -205,28 +178,58 @@ async def cb_onconnect(reader, writer):
     finally:
         logging.debug(f'{peername} - closed')
 
-    # close the remote tcp conn
+    # close the remote connection
     if tcp_writer is not None:
         tcp_writer.close()
 
 def start_receiver():
     """start dnstap receiver"""
-    logging.debug("Start receiver...")
+    # Handle command-line arguments.
     args = parser.parse_args()
-    
+
+    # external config file provided ?
+    if args.c:
+        try:
+            with open(args.c) as file:
+                cfg = yaml.safe_load(file)
+        except FileNotFoundError:
+            print("error: config file not found")
+            sys.exit(1)
+    else:
+        cfg = {"verbose": args.v, "input-mode": {}, 
+               "output-format": {} , "forward-to": {}}
+        cfg["input-mode"]["unix-socket"] = args.u
+        cfg["input-mode"]["local-address"] =  args.l
+        cfg["input-mode"]["local-port"] =  args.p
+        cfg["output-format"]["yaml"] = args.y
+        cfg["output-format"]["json"] =args.j
+        cfg["output-format"]["text"] =True
+        cfg["forward-to"]["enable"] =  False
+        cfg["forward-to"]["remote-port"] = None
+        cfg["forward-to"]["remote-port"] = None
+            
+    # init logging
+    level = logging.INFO
+    if cfg["verbose"]:
+        level = logging.DEBUG
+    logging.basicConfig(format='%(asctime)s %(message)s', level=level)
+
+    logging.debug("Start receiver...")
     loop = asyncio.get_event_loop()
 
     # asynchronous unix socket
-    if args.u is not None:
+    if cfg["input-mode"]["unix-socket"] is not None:
         logging.debug("Listening on %s" % args.u)
         socket_server = asyncio.start_unix_server(cb_onconnect,
-                                                  path=args.u,
+                                                  path=cfg["input-mode"]["unix-socket"],
                                                   loop=loop)
     # asynchronous tcp socket
     else:
-        logging.debug("Listening on %s:%s" % (args.l, args.p))
-        socket_server = asyncio.start_server(cb_onconnect, 
-                                             args.l, args.p,
+        logging.debug("Listening on %s:%s" % (cfg["input-mode"]["local-address"],
+                                              cfg["input-mode"]["local-port"])), 
+        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg),
+                                             cfg["input-mode"]["local-address"],
+                                             cfg["input-mode"]["local-port"],
                                              loop=loop)
 
     # run until complete
