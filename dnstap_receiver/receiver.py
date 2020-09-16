@@ -211,8 +211,8 @@ def start_receiver():
         cfg["input-mode"]["unix-socket"] = args.u
         cfg["input-mode"]["local-address"] =  args.l
         cfg["input-mode"]["local-port"] =  args.p
-        cfg["output-format"]["yaml"] = args.y
-        cfg["output-format"]["json"] =args.j
+        cfg["output-format"]["yaml"] = False
+        cfg["output-format"]["json"] = False
         cfg["output-format"]["text"] =True
         cfg["forward-to"]["enable"] =  False
         cfg["forward-to"]["remote-port"] = None
