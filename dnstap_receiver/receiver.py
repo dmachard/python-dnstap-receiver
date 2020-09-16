@@ -6,6 +6,7 @@ import json
 import yaml
 import sys
 import re
+import ssl
 
 from datetime import datetime
 
@@ -237,11 +238,18 @@ def start_receiver():
                                                   loop=loop)
     # asynchronous tcp socket
     else:
+        ssl_context = None
+        if cfg["input-mode"]["tls-support"]:
+            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            ssl_context.load_cert_chain(certfile=cfg["input-mode"]["tls-server-cert"], 
+                                        keyfile=cfg["input-mode"]["tls-server-key"])
+        
         logging.debug("Listening on %s:%s" % (cfg["input-mode"]["local-address"],
                                               cfg["input-mode"]["local-port"])), 
         socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg),
                                              cfg["input-mode"]["local-address"],
                                              cfg["input-mode"]["local-port"],
+                                             ssl=ssl_context,
                                              loop=loop)
 
     # run until complete

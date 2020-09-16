@@ -5,7 +5,7 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
 This Python module acts as a DNS tap streams receiver for DNS servers.
-Input streams can be a unix socket or multiple remote tcp sender
+Input streams can be a unix socket or multiple remote dns servers.
 The output is printed directly to stdout or send to remote tcp address in JSON, YAML or one line text format. 
 
 ## Table of contents
@@ -40,6 +40,7 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
         * [Build with dnstap support](#build-with-dnstap-support-2)
         * [Unix socket](#unix-socket-4)
         * [TCP stream](#tcp-stream-3)
+        * [TLS stream](#tls-stream)
 * [Tested Logs Collectors](#tested-dns-servers)
     * [Logstash](#logstash-with-json-input)
 * [Systemd service file configuration](#systemd-service-file-configuration)
@@ -226,7 +227,7 @@ A regex can be configured in the external configuration file to do that
 ```yaml
 filter: 
   # qname filtering feature with regex support
-  qname-regex: ".*\.com"
+  qname-regex: ".*.com"
 ```
 
 ## Tested DNS servers
@@ -457,6 +458,24 @@ dnstap:
     dnstap-log-client-query-messages: yes
     dnstap-log-client-response-messages: yes
 ```
+
+#### TLS stream
+
+Update the configuration file `/etc/unbound/unbound.conf` to activate the dnstap feature 
+with tls mode and execute the dnstap receiver in listening tcp/tls socket mode:
+
+```yaml
+dnstap:
+    dnstap-enable: yes
+    dnstap-socket-path: ""
+    dnstap-ip: "10.0.0.100@6000"
+    dnstap-tls: yes
+    dnstap-send-identity: yes
+    dnstap-send-version: yes
+    dnstap-log-client-query-messages: yes
+    dnstap-log-client-response-messages: yes
+```
+
 
 ## Tested Logs Collectors
 
