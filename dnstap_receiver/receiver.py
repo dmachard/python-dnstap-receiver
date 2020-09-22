@@ -234,7 +234,7 @@ def start_receiver():
     # asynchronous unix socket
     if cfg["input-mode"]["unix-socket"] is not None:
         logging.debug("Listening on %s" % args.u)
-        socket_server = asyncio.start_unix_server(cb_onconnect,
+        socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg),
                                                   path=cfg["input-mode"]["unix-socket"],
                                                   loop=loop)
     # asynchronous tcp socket
