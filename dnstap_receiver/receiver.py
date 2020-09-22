@@ -33,8 +33,6 @@ DNSTAP_TYPE = { 1: 'AUTH_QUERY', 2: 'AUTH_RESPONSE',
 DNSTAP_FAMILY = {1: 'IP4', 2: 'IP6'}
 DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}    
 
-DATETIME_FORMAT ='%Y-%m-%d %H:%M:%S.%f'
-
 # command line arguments definition
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", 
