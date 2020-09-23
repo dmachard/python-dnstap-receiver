@@ -79,7 +79,8 @@ By default, the receiver is listening on the ip `0.0.0.0` and the tcp port `6000
 Generate a certificate and private key for the dnstap receiver:
 
 ```
-openssl req -x509 -newkey rsa:4096 -sha256  -nodes -keyout server.key -out server.crt  -subj "/CN=dnstap_receiver.com" -days 3650
+openssl req -x509 -newkey rsa:4096 -sha256  -nodes -keyout \
+server.key -out server.crt  -subj "/CN=dnstap_receiver.com" -days 3650
 ```
 
 Create the external configuration file and enable tls:
@@ -126,30 +127,22 @@ See [config file](https://github.com/dmachard/dnstap-receiver/blob/master/dnstap
 ### Formatted output
 
 Output can be formatted in different way:
-- quiet text(default one)
+- text (default one)
 - json 
-- yaml.
+- yaml
 
 #### Quiet text
 
 By default the output will be print in quiet text format.
 
 ```
-2020-09-16T18:51:53.547352+00:00 dev-centos8 RESOLVER_QUERY NOERROR - - IP4 UDP 43b ns2.google.com. A
-2020-09-16T18:51:53.591736+00:00 dev-centos8 RESOLVER_RESPONSE NOERROR - - IP4 UDP 59b ns2.google.com. A
+2020-09-16T18:51:53.547352+00:00 centos RESOLVER_QUERY NOERROR - - IP4 UDP 43b ns2.google.com. A
+2020-09-16T18:51:53.591736+00:00 centos RESOLVER_RESPONSE NOERROR - - IP4 UDP 59b ns2.google.com. A
 ```
-
-
-```yaml
-output:
-  sdtout:
-    format: text
-```
-
 
 #### JSON-formatted
 
-JSON output can be activated through the external configuration file
+JSON output can be activated with the external configuration file
 
 ```yaml
 output:
@@ -177,7 +170,7 @@ Output example:
 
 #### YAML-formatted
 
-YAML output can be activated through the external configuration file
+YAML output can be activated with the external configuration file
 
 ```yaml
 output:
