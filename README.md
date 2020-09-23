@@ -16,13 +16,10 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
     * [TLS socket mode](#tls-socket-mode)
 * [More options](#more-options)
     * [Verbose mode](#verbose-mode)
-    * [Quiet text output](#quiet-text-output)
     * [External config file](#external-config-file)
-    * [JSON-formatted output](#json-formatted-output)
-    * [YAML-formatted output](#yaml-formatted-output)
-    * [Forward to remote destination](#forward-to-remote-destination)
-    * [Filtering by dnstap identity](#filtering-by-dnstap-identity)
-    * [Filtering by qname](#filtering-by-qname)
+    * [Formatted output](#formatted-output)
+    * [Filtering feature](#filtering-feature)
+    * [Forward feature](#forward-feature)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
         * [Build with dnstap support](#build-with-dnstap-support)
@@ -88,11 +85,14 @@ openssl req -x509 -newkey rsa:4096 -sha256  -nodes -keyout server.key -out serve
 Create the external configuration file and enable tls:
 
 ```yaml
-input-mode:
-  # enable tls on socket
-  tls-support: true
-  tls-server-cert: /etc/dnstap_receiver/server.crt
-  tls-server-key: /etc/dnstap_receiver/server.key
+input:
+  tcp-socket:
+    local-address: 0.0.0.0
+    local-port: 6000
+    # enable tls on socket
+    tls-support: true
+    tls-server-cert: /etc/dnstap_receiver/server.crt
+    tls-server-key: /etc/dnstap_receiver/server.key
 ```
 
 Finally execute the dnstap receiver with the configuration file:
@@ -114,7 +114,23 @@ You can execute the binary in verbose mode with the `-v` argument
 2020-09-12 23:47:35,834 Listening on 0.0.0.0:6000
 ```
 
-### Quiet text output
+### External config file
+
+The `dnstap_receiver` binary can takes an external config file with the `-c` argument
+See [config file](https://github.com/dmachard/dnstap-receiver/blob/master/dnstap_receiver/dnstap.conf) example.
+
+```
+./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
+```
+
+### Formatted output
+
+Output can be formatted in different way:
+- quiet text(default one)
+- json 
+- yaml.
+
+#### Quiet text
 
 By default the output will be print in quiet text format.
 
@@ -123,61 +139,22 @@ By default the output will be print in quiet text format.
 2020-09-16T18:51:53.591736+00:00 dev-centos8 RESOLVER_RESPONSE NOERROR - - IP4 UDP 59b ns2.google.com. A
 ```
 
-### External config file
-
-The `dnstap_receiver` binary can takes an external config file with the `-c` argument
-
-```
-./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
-```
-
-Example of configuration file
 
 ```yaml
-# enable verbose mode
-verbose: true
-
-# read and decode dnstap messages from
-input-mode:
-  # read dnstap message from tcp socket
-  local-address: 0.0.0.0
-  local-port: 6000
-  # enable tls on socket
-  tls-support: false
-  tls-server-cert: null
-  tls-server-key: null
-  # read dnstap message fom unix socket
-  unix-socket: null
- 
-filter: 
-  # qname filtering feature with regex support
-  qname-regex: null
-  # dnstap identify filtering feature with regex support
-  dnstap-identities: null
-        
-# format dnstap message output
-output-format:
-  text: true
-  yaml: false
-  json: false
-
-# forward decoded messages to a remote tcp destination
-forward-to:
-  enable: false
-  remote-address: null
-  remote-port: null
+output:
+  sdtout:
+    format: text
 ```
 
-### JSON-formatted output
+
+#### JSON-formatted
 
 JSON output can be activated through the external configuration file
 
 ```yaml
-# format dnstap message output
-output-format:
-  text: false
-  yaml: false
-  json: true
+output:
+  sdtout:
+    format: json
 ```
 
 Output example:
@@ -198,16 +175,14 @@ Output example:
 }
 ```
 
-### YAML-formatted output
+#### YAML-formatted
 
 YAML output can be activated through the external configuration file
 
 ```yaml
-# format dnstap message output
-output-format:
-  text: false
-  yaml: true
-  json: false
+output:
+  sdtout:
+    format: yaml
 ```
 
 Output example:
@@ -226,20 +201,14 @@ transport: UDP
 
 ```
 
-### Forward to remote destination
+### Filtering feature
 
-Forward dnstap message to a remote tcp collector can be done through the 
-external configuration file 
- 
-```yaml
-# forward decoded messages to a remote tcp destination
-forward-to:
-  enable: true
-  remote-address: 10.0.0.2
-  remote-port: 8192
-```
+This feature can be useful if you want to ignore some messages and keep just what you want.
+Several filter are available:
+- by qname field
+- by dnstap identity field.
 
-### Filtering by dnstap identity
+#### By dnstap identity
 
 You can filtering incoming dnstap messages according to the dnstap identity field.
 A regex can be configured in the external configuration file to do that
@@ -250,16 +219,38 @@ filter:
   dnstap-identities: dnsdist01|unbound01
 ```
 
-### Filtering by qname
+#### By qname
 
 You can filtering incoming dnstap messages according to the query name.
-This feature can be useful if you want to ignore some domains and keep just what you want.
 A regex can be configured in the external configuration file to do that
 
 ```yaml
 filter: 
   # qname filtering feature with regex support
   qname-regex: ".*.com"
+```
+
+
+### Forward feature
+
+Output can be configured to forward messages in several modes.
+- stdout
+- remote tcp socket
+
+#### Forward to STDOUT
+
+This mode is the default one.
+
+#### Forward to remote TCP socket
+
+Forward dnstap message to a remote tcp collector can be done through the 
+external configuration file 
+ 
+```yaml
+output:
+  tcp-socket:
+    remote-address: 10.0.0.2
+    remote-port: 8192
 ```
 
 ## Tested DNS servers

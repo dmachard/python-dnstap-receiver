@@ -46,7 +46,7 @@ parser.add_argument('-v', action='store_true', help="verbose mode")
 parser.add_argument("-c", help="external config file")   
 
 
-async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
+async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg, output_fmt):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.parse_from_bytes(payload)
@@ -104,7 +104,7 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
             return
     
     # reformat dnstap message
-    if cfg["output-format"]["text"]:
+    if output_fmt == "text":
         msg = "%s %s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["identity"], 
                                                    tap["message"], tap["code"],
                                                    tap["source-ip"], tap["source-port"],
@@ -112,10 +112,10 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
                                                    tap["length"],
                                                    tap["query-name"], tap["query-type"])
         
-    if cfg["output-format"]["json"]:
+    if output_fmt == "json":
         msg = json.dumps(tap)
         
-    if cfg["output-format"]["yaml"]:
+    if output_fmt == "yaml":
         msg = yaml.dump(tap)
 
     # final step, stdout or remote destination ? 
@@ -127,12 +127,11 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg):
 
 async def cb_onconnect(reader, writer, cfg):
     """callback when a connection is established"""
-    sock = writer.get_extra_info('socket')
-    if sock.family == socket.AF_UNIX:
-        peername = "Unix socket"
-    else:
-        peername = "Remote %s:%s" % writer.get_extra_info('peername')
-    logging.debug(f"{peername} - new connected")
+    # get peer name
+    peername = writer.get_extra_info('peername')
+    if not len(peername):
+        peername = "(unix-socket)"
+    logging.debug(f"{peername} - new connection")
 
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
@@ -141,11 +140,16 @@ async def cb_onconnect(reader, writer, cfg):
     
     # remote connection to enable ?
     tcp_writer = None
-    if cfg["forward-to"]["enable"]:
-        _, tcp_writer = await asyncio.open_connection(cfg["forward-to"]["remote-address"], 
-                                                      cfg["forward-to"]["remote-port"],
+    output_fmt = cfg["output"]["stdout"]["format"]
+    remote_tcp_addr = cfg["output"]["tcp-socket"]["remote-address"]
+    remote_tcp_port = cfg["output"]["tcp-socket"]["remote-port"]
+    
+    # output to remote address enabled ?
+    if remote_tcp_addr is not None and remote_tcp_port is not None :
+        _, tcp_writer = await asyncio.open_connection(remote_tcp_addr, remote_tcp_port,
                                                       loop=loop)
-
+        output_fmt = cfg["output"]["tcp-socket"]["format"]
+        
     try:
         while data := await reader.read(fstrm_handler.pending_nb_bytes()) :
             # append data to the buffer
@@ -158,7 +162,8 @@ async def cb_onconnect(reader, writer, cfg):
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg))
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, 
+                                                 tcp_writer, cfg, output_fmt))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
@@ -195,30 +200,45 @@ def start_receiver():
     # Handle command-line arguments.
     args = parser.parse_args()
 
-    # external config file provided ?
+    # set default config
+    cfg = {  
+             "verbose": args.v, 
+             "input": {
+                         "tcp-socket": {
+                                         "local-address": args.l,
+                                         "local-port": args.p,
+                                         "tls-support": False,
+                                         "tls-server-cert": None,
+                                         "tls-server-key": None,
+                                       },
+                         "unix-socket": {
+                                          "path": args.u
+                                        }
+                      },
+             "filter": {
+                         "qname-regex": None,
+                         "dnstap-identities": None
+                       }, 
+             "output": {
+                         "stdout": {
+                                     "format": "text"
+                                   },
+                         "tcp-socket": {
+                                         "format": "text",
+                                         "remote-address": None,
+                                         "remote-port": None
+                                       }
+                       }
+          }
+    
+    # overwrite config with external file ?    
     if args.c:
         try:
             with open(args.c) as file:
-                cfg = yaml.safe_load(file)
+                cfg.update( yaml.safe_load(file) )
         except FileNotFoundError:
             print("error: config file not found")
             sys.exit(1)
-    else:
-        cfg = {"verbose": args.v, "input-mode": {}, "filter": {}, 
-               "output-format": {} , "forward-to": {}}
-        cfg["input-mode"]["unix-socket"] = args.u
-        cfg["input-mode"]["local-address"] =  args.l
-        cfg["input-mode"]["local-port"] =  args.p
-        cfg["input-mode"]["tls-support"] = False
-        cfg["input-mode"]["tls-support"] = False
-        cfg["filter"]["qname-regex"] = None
-        cfg["filter"]["dnstap-identities"] = None
-        cfg["output-format"]["yaml"] = False
-        cfg["output-format"]["json"] = False
-        cfg["output-format"]["text"] =True
-        cfg["forward-to"]["enable"] =  False
-        cfg["forward-to"]["remote-port"] = None
-        cfg["forward-to"]["remote-port"] = None
 
     # init logging
     level = logging.INFO
@@ -230,24 +250,24 @@ def start_receiver():
     loop = asyncio.get_event_loop()
 
     # asynchronous unix socket
-    if cfg["input-mode"]["unix-socket"] is not None:
+    if cfg["input"]["unix-socket"]["path"] is not None:
         logging.debug("Listening on %s" % args.u)
         socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg),
-                                                  path=cfg["input-mode"]["unix-socket"],
+                                                  path=cfg["input"]["unix-socket"]["path"],
                                                   loop=loop)
-    # asynchronous tcp socket
+    # default mode: asynchronous tcp socket
     else:
         ssl_context = None
-        if cfg["input-mode"]["tls-support"]:
+        if cfg["input"]["tcp-socket"]["tls-support"]:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            ssl_context.load_cert_chain(certfile=cfg["input-mode"]["tls-server-cert"], 
-                                        keyfile=cfg["input-mode"]["tls-server-key"])
+            ssl_context.load_cert_chain(certfile=cfg["input"]["tcp-socket"]["tls-server-cert"], 
+                                        keyfile=cfg["input"]["tcp-socket"]["tls-server-key"])
         
-        logging.debug("Listening on %s:%s" % (cfg["input-mode"]["local-address"],
-                                              cfg["input-mode"]["local-port"])), 
+        logging.debug("Listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
+                                              cfg["input"]["tcp-socket"]["local-port"])), 
         socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg),
-                                             cfg["input-mode"]["local-address"],
-                                             cfg["input-mode"]["local-port"],
+                                             cfg["input"]["tcp-socket"]["local-address"],
+                                             cfg["input"]["tcp-socket"]["local-port"],
                                              ssl=ssl_context,
                                              loop=loop)
 
