@@ -6,20 +6,23 @@
 
 This Python module acts as a DNS tap streams receiver for DNS servers.
 Input streams can be a unix socket or multiple remote dns servers.
-The output is printed directly to stdout or send to remote tcp address in JSON, YAML or one line text format. 
+The output is printed directly to stdout or send to remote tcp address 
+in JSON, YAML or one line text format. 
 
 ## Table of contents
 * [Installation](#installation)
 * [Start dnstap receiver](#start-dnstap-receiver)
-    * [Unix socket mode](#unix-socket-mode)
-    * [TCP socket mode](#tcp-socket-mode)
-    * [TLS socket mode](#tls-socket-mode)
+* [Inputs handler](#inputs-handler)
+    * [TCP socket](#tcp-socket)
+    * [Unix socket](#unix-socket)
+* [Outputs handler](#outputs-handler)
+    * [Stdout](#stdout)
+    * [TCP socket](#tcp-socket)
+    * [Syslog](#syslog)
 * [More options](#more-options)
-    * [Verbose mode](#verbose-mode)
     * [External config file](#external-config-file)
-    * [Formatted output](#formatted-output)
+    * [Verbose mode](#verbose-mode)
     * [Filtering feature](#filtering-feature)
-    * [Forward feature](#forward-feature)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
@@ -42,46 +45,47 @@ pip install dnstap_receiver
 
 ## Start dnstap receiver
 
-### TCP socket mode
+After installation, you can execute the `dnstap_receiver` to start-it.
 
-This mode enable to receive dnstap messages from multiple dns servers.
-By default, the receiver is listening on the ip `0.0.0.0` and the tcp port `6000`.
-
-```
-./dnstap_receiver
-```
-
-### Unix socket mode
-
-In this mode, the `dnstap_receiver` binary takes in input a unix socket 
+Usage:
 
 ```
-./dnstap_receiver -u /var/run/dnstap.sock
+usage: dnstap_receiver.py [-h] [-l L] [-p P] [-u U] [-v] [-c C]
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -l L        IP of the dnsptap server to receive dnstap payloads (default: '0.0.0.0')
+  -p P        Port the dnstap receiver is listening on (default: 6000)
+  -u U        read dnstap payloads from unix socket
+  -v          verbose mode
+  -c C        external config file
 ```
 
-### TLS socket mode
 
-This mode enable to receive dnstap messages from multiple dns servers with tcp/tls transport.
-By default, the receiver is listening on the ip `0.0.0.0` and the tcp port `6000`.
+## Inputs handler
 
-Generate a certificate and private key for the dnstap receiver:
+Severals inputs handler are supported to read incoming dnstap messages:
+- TCP socket
+- Unix socket
+
+### TCP socket
+
+The TCP socket input enable to receive dnstap messages from multiple dns servers.
+This is the default input if you exectute the binary without arguments.
+The receiver is listening on `localhost` interface and the tcp port `6000`.
+You can change binding options with `-l` and `-p` arguments.
 
 ```
-openssl req -x509 -newkey rsa:4096 -sha256  -nodes -keyout \
-server.key -out server.crt  -subj "/CN=dnstap_receiver.com" -days 3650
+./dnstap_receiver -l 0.0.0.0 -p 6000
 ```
 
-Create the external configuration file and enable tls:
+You can also activate `TLS` on the socket, add the following config as external config file
+to activate the tls support, configure the path of the certificate and key to use.
 
 ```yaml
 input:
-  # read dnstap messages from tcp socket
   tcp-socket:
-    # listening address ipv4 0.0.0.0 or ipv6 [::]
-    local-address: 0.0.0.0
-    # listing on port
-    local-port: 6000
-    # enable tls on socket
+    # enable tls support
     tls-support: true
     # provide certificate server path
     tls-server-cert: /etc/dnstap_receiver/server.crt
@@ -89,61 +93,53 @@ input:
     tls-server-key: /etc/dnstap_receiver/server.key
 ```
 
-Finally execute the dnstap receiver with the configuration file:
+Then execute the dnstap receiver with the configuration file:
 
 ```
 ./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
 ```
 
-## More options
+### Unix socket
 
-### Verbose mode
-
-You can execute the binary in verbose mode with the `-v` argument
-
-```
-./dnstap_receiver -v
-2020-09-12 23:47:35,833 Start dnstap receiver...
-2020-09-12 23:47:35,833 Using selector: EpollSelector
-2020-09-12 23:47:35,834 Listening on 0.0.0.0:6000
-```
-
-### External config file
-
-The `dnstap_receiver` binary can takes an external config file with the `-c` argument
-See [config file](https://github.com/dmachard/dnstap-receiver/blob/master/dnstap_receiver/dnstap.conf) example.
+The unix socket input enables read dnstap message from a unix socket. 
+Configure the path of the socket with the `-u` argument.
 
 ```
-./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
+./dnstap_receiver -u /var/run/dnstap.sock
 ```
 
-### Formatted output
+## Outputs handler
+
+Outputs handler can be configured to forward messages in several modes.
+- stdout
+- remote tcp socket
+- syslog
+
+### Stdout
+
+This output enables to forward dnstap messages directly to Stdout.
+Add the following configuration as external config to activate this output:
+
+```yaml
+output:
+  stdout:
+    # format available text|json|yaml
+    format: text
+```
 
 Output can be formatted in different way:
 - text (default one)
 - json 
 - yaml
 
-#### Quiet text
-
-By default the output will be print in quiet text format.
+Text format:
 
 ```
 2020-09-16T18:51:53.547352+00:00 centos RESOLVER_QUERY NOERROR - - IP4 UDP 43b ns2.google.com. A
 2020-09-16T18:51:53.591736+00:00 centos RESOLVER_RESPONSE NOERROR - - IP4 UDP 59b ns2.google.com. A
 ```
 
-#### JSON-formatted
-
-JSON output can be activated with the external configuration file
-
-```yaml
-output:
-  sdtout:
-    format: json
-```
-
-Output example:
+JSON format:
 
 ```json
 {
@@ -161,17 +157,7 @@ Output example:
 }
 ```
 
-#### YAML-formatted
-
-YAML output can be activated with the external configuration file
-
-```yaml
-output:
-  sdtout:
-    format: yaml
-```
-
-Output example:
+YAML format:
 
 ```yaml
 code: NOERROR
@@ -185,6 +171,81 @@ source-port: '-'
 timestamp: '2020-09-12 14:13:53.948'
 transport: UDP
 
+```
+
+### TCP socket
+
+This output enables to forward dnstap message to a remote tcp collector
+Add the following configuration as external config to activate this output:
+
+```yaml
+output:
+  # forward to remote tcp destination
+  tcp-socket:
+    # enable or disable
+    enable: true
+    # format available text|json|yaml
+    format: text
+    # delimiter
+    delimiter: "\n"
+    # retry interval in seconds to connect
+    retry: 5
+    # remote ipv4 or ipv6 address
+    remote-address: 10.0.0.2
+    # remote tcp port
+    remote-port: 8192
+```
+
+### Syslog
+
+This output enables to forward dnstap message to a syslog server.
+Add the following configuration as external config to activate this output:
+
+
+```yaml
+output:
+  syslog:
+    # enable or disable
+    enable: false
+    # syslog over tcp or udp
+    transport: udp
+    # format available text|json
+    format: text
+    # retry interval in seconds to connect
+    retry: 5
+    # remote ipv4 or ipv6 address of the syslog server
+    remote-address: 10.0.0.2
+    # remote port of the syslog server
+    remote-port: 514
+```
+
+Example of output on syslog server
+
+```
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 IP4 UDP 173b www.netflix.fr. A
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 IP4 UDP 203b www.netflix.fr. AAAA
+```
+
+## More options
+
+### External config file
+
+The `dnstap_receiver` binary can takes an external config file with the `-c` argument
+See [config file](https://github.com/dmachard/dnstap-receiver/blob/master/dnstap_receiver/dnstap.conf) example.
+
+```
+./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
+```
+
+### Verbose mode
+
+You can execute the binary in verbose mode with the `-v` argument
+
+```
+./dnstap_receiver -v
+2020-09-12 23:47:35,833 Start dnstap receiver...
+2020-09-12 23:47:35,833 Using selector: EpollSelector
+2020-09-12 23:47:35,834 Listening on 0.0.0.0:6000
 ```
 
 ### Filtering feature
@@ -214,71 +275,6 @@ A regex can be configured in the external configuration file to do that
 filter: 
   # qname filtering feature with regex support
   qname-regex: ".*.com"
-```
-
-
-### Forward feature
-
-Output can be configured to forward messages in several modes.
-- stdout
-- remote tcp socket
-- syslog
-
-#### Forward to STDOUT
-
-This mode is the default one.
-
-#### Forward to remote TCP socket
-
-Forward dnstap message to a remote tcp collector can be done through the 
-external configuration file 
-
-Enable the tcp-socket output handler in the external config file like below
-
-```yaml
-output:
-  # forward to remote tcp destination
-  tcp-socket:
-    # enable or disable
-    enable: true
-    # format available text|json|yaml
-    format: text
-    # delimiter
-    delimiter: "\n"
-    # retry interval in seconds to connect
-    retry: 5
-    # remote ipv4 or ipv6 address
-    remote-address: 10.0.0.2
-    # remote tcp port
-    remote-port: 8192
-```
-
-#### Forward to syslog server
-
-Enable the syslog output handler in the external config file
-
-```yaml
-output:
-  syslog:
-    # enable or disable
-    enable: false
-    # syslog over tcp or udp
-    transport: udp
-    # format available text|json
-    format: text
-    # retry interval in seconds to connect
-    retry: 5
-    # remote ipv4 or ipv6 address of the syslog server
-    remote-address: 10.0.0.2
-    # remote port of the syslog server
-    remote-port: 514
-```
-
-Example of output on syslog server
-
-```
-Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 IP4 UDP 173b www.netflix.fr. A
-Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 IP4 UDP 203b www.netflix.fr. AAAA
 ```
 
 ## Tested DNS servers
