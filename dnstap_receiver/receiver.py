@@ -7,6 +7,7 @@ import yaml
 import sys
 import re
 import ssl
+import pkgutil
 
 from datetime import datetime, timezone
 
@@ -45,8 +46,7 @@ parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
 
-
-async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg, output_fmt):
+async def cb_ondnstap(dnstap_decoder, payload, cfg, queue):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.parse_from_bytes(payload)
@@ -102,54 +102,22 @@ async def cb_ondnstap(dnstap_decoder, payload, tcp_writer, cfg, output_fmt):
         if re.match(cfg["filter"]["qname-regex"], tap["query-name"]) is None:
             del dm; del tap;
             return
-    
-    # reformat dnstap message
-    if output_fmt == "text":
-        msg = "%s %s %s %s %s %s %s %s %sb %s %s" % (tap["timestamp"], tap["identity"], 
-                                                   tap["message"], tap["code"],
-                                                   tap["source-ip"], tap["source-port"],
-                                                   tap["protocol"], tap["transport"],
-                                                   tap["length"],
-                                                   tap["query-name"], tap["query-type"])
-        
-    if output_fmt == "json":
-        msg = json.dumps(tap)
-        
-    if output_fmt == "yaml":
-        msg = yaml.dump(tap)
 
-    # final step, stdout or remote destination ? 
-    # send json message to remote tcp
-    if tcp_writer is not None:
-        tcp_writer.write(msg.encode() + b"\n")
-    else:
-        print(msg)
+    queue.put_nowait(tap)
 
-async def cb_onconnect(reader, writer, cfg):
+async def cb_onconnect(reader, writer, cfg, queue):
     """callback when a connection is established"""
     # get peer name
     peername = writer.get_extra_info('peername')
     if not len(peername):
         peername = "(unix-socket)"
-    logging.debug(f"{peername} - new connection")
+    logging.debug(f"Input handler: new connection from {peername}")
 
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
     loop = asyncio.get_event_loop()
     dnstap_decoder = dnstap_pb2.Dnstap()
-    
-    # remote connection to enable ?
-    tcp_writer = None
-    output_fmt = cfg["output"]["stdout"]["format"]
-    remote_tcp_addr = cfg["output"]["tcp-socket"]["remote-address"]
-    remote_tcp_port = cfg["output"]["tcp-socket"]["remote-port"]
-    
-    # output to remote address enabled ?
-    if remote_tcp_addr is not None and remote_tcp_port is not None :
-        _, tcp_writer = await asyncio.open_connection(remote_tcp_addr, remote_tcp_port,
-                                                      loop=loop)
-        output_fmt = cfg["output"]["tcp-socket"]["format"]
-        
+
     try:
         while data := await reader.read(fstrm_handler.pending_nb_bytes()) :
             # append data to the buffer
@@ -162,74 +130,203 @@ async def cb_onconnect(reader, writer, cfg):
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, 
-                                                 tcp_writer, cfg, output_fmt))
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
-                    logging.debug(f"{peername} - control ready received")
+                    logging.debug(f"Input handler: control ready received from {peername}")
                     ctrl_accept = fstrm_handler.encode(fs=fstrm.FSTRM_CONTROL_ACCEPT)
                     # respond with accept only if the content type is dnstap
                     writer.write(ctrl_accept)
                     await writer.drain()
-                    logging.debug(f"{peername} - sending control accept")
+                    logging.debug(f"Input handler: sending control accept to {peername}")
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_START:
-                    logging.debug(f"{peername} - control start received")
+                    logging.debug(f"Input handler: control start received from {peername}")
    
                 # handle the control frame STOP
                 if fs == fstrm.FSTRM_CONTROL_STOP:
-                    logging.debug(f"{peername} - control stop received")
+                    logging.debug(f"Input handler: control stop received from {peername}")
                     fstrm_handler.reset()           
     except asyncio.CancelledError:
-        logging.debug(f'{peername} - closing connection.')
+        logging.debug(f'Input handler: {peername} - closing connection.')
         writer.close()
         await writer.wait_closed()
     except asyncio.IncompleteReadError:
-        logging.debug(f'{peername} - disconnected')
+        logging.debug(f'Input handler: {peername} - disconnected')
     finally:
-        logging.debug(f'{peername} - closed')
+        logging.debug(f'Input handler: {peername} - closed')
 
-    # close the remote connection
-    if tcp_writer is not None:
-        tcp_writer.close()
+async def plaintext_tcpclient(output_cfg, queue):
+    host, port = output_cfg["remote-address"], output_cfg["remote-port"]
+    logging.debug("Output handler: connection to %s:%s" % (host,port) )
+    reader, tcp_writer = await asyncio.open_connection(host, port)
+    logging.debug("Output handler: connected")
+    
+    # consume queue
+    while True:
+        # read item from queue
+        tapmsg = await queue.get()
+        
+        # convert dnstap message
+        msg = convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
+            
+        # add delimiter
+        tcp_writer.write( b"%s%s" % (msg, output_cfg["delimiter"]) )
+        
+        # connection lost ? exit and try to reconnect 
+        if tcp_writer.transport._conn_lost:
+            break
+        
+        # done continue to next item
+        queue.task_done()
+        
+    # something 
+    logging.error("Output handler: connection lost")
+    
+async def syslog_tcpclient(output_cfg, queue):
+    host, port = output_cfg["remote-address"], output_cfg["remote-port"]
+    logging.debug("Output handler: connection to %s:%s" % (host,port) )
+    reader, tcp_writer = await asyncio.open_connection(host, port)
+    logging.debug("Output handler: connected")
+    
+    # consume queue
+    while True:
+        # read item from queue
+        tapmsg = await queue.get()
+        
+        # convert dnstap message
+        msg = convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
+            
+        # add count octets
+        s_msg = "%s" % len(msg)
+        tcp_writer.write( b"%s %s" % (s_msg.encode(), msg) )
+        
+        # connection lost ? exit and try to reconnect 
+        if tcp_writer.transport._conn_lost:
+            break
+        
+        # done continue to next item
+        queue.task_done()
+        
+    # something 
+    logging.error("Output handler: connection lost")
 
+async def handle_output_tcp(output_cfg, queue):
+    """tcp reconnect"""
+    server_address = (output_cfg["remote-address"], output_cfg["remote-port"])
+    loop = asyncio.get_event_loop()
+
+    logging.debug("Output handler: TCP enabled")
+    while True:
+        try:
+            await plaintext_tcpclient(output_cfg, queue)
+        except ConnectionRefusedError:
+            logging.error('Output handler: connection to tcp server failed!')
+        except asyncio.TimeoutError:
+            logging.error('Output handler: connection to tcp server timed out!')
+        else:
+            logging.error('Output handler: connection to tcp is closed.')
+            
+        logging.debug("'Output handler: retry to connect every 5s")
+        await asyncio.sleep(output_cfg["retry"])
+     
+async def handle_output_syslog(output_cfg, queue):
+    """tcp reconnect"""
+    server_address = (output_cfg["remote-address"], output_cfg["remote-port"])
+    loop = asyncio.get_event_loop()
+    
+    # syslog tcp
+    if output_cfg["transport"] == "tcp":
+        logging.debug("Output handler: syslog TCP enabled")
+        while True:
+            try:
+                await syslog_tcpclient(output_cfg, queue)
+            except ConnectionRefusedError:
+                logging.error('Output handler: connection to syslog server failed!')
+            except asyncio.TimeoutError:
+                logging.error('Output handler: connection to syslog server timed out!')
+            else:
+                logging.error('Output handler: connection to server is closed.')
+                
+            logging.debug("'Output handler: retry to connect every 5s")
+            await asyncio.sleep(output_cfg["retry"])
+    
+    # syslog udp
+    else:
+        logging.debug("Output handler: syslog UDP enabled with %s" % str(server_address) )
+        transport, _  = await loop.create_datagram_endpoint(asyncio.DatagramProtocol,
+                                                            remote_addr=server_address)
+
+        # consume the queue
+        while True:
+            # read item from queue
+            tapmsg = await queue.get()
+            
+            # convert dnstap message
+            msg = convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
+        
+            # send msg
+            transport.sendto( msg )
+            
+            # all done
+            queue.task_done()
+
+async def handle_output_stdout(output_cfg, queue):
+    """stdout output handler"""
+    
+    while True:
+        # read item from queue
+        tapmsg = await queue.get()
+        
+        # convert dnstap message
+        msg = convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
+        
+        # print to stdout
+        print(msg.decode())
+        
+        # all done
+        queue.task_done()
+
+def convert_dnstap(fmt, tapmsg):
+    """convert dnstap message"""
+    if fmt == "text":
+        msg = "%s %s %s %s %s %s %s %s %sb %s %s" % (tapmsg["timestamp"], tapmsg["identity"],  
+                                                     tapmsg["message"], tapmsg["code"],
+                                                     tapmsg["source-ip"], tapmsg["source-port"],
+                                                     tapmsg["protocol"], tapmsg["transport"],
+                                                     tapmsg["length"],
+                                                     tapmsg["query-name"], tapmsg["query-type"])  
+    elif fmt == "json":
+        msg = json.dumps(tapmsg)
+        
+    elif fmt == "yaml":
+        msg = yaml.dump(tapmsg)
+    else:
+        raise Exception("invalid output format")
+    return msg.encode()
+    
 def start_receiver():
     """start dnstap receiver"""
     # Handle command-line arguments.
     args = parser.parse_args()
 
     # set default config
-    cfg = {  
-             "verbose": args.v, 
-             "input": {
-                         "tcp-socket": {
-                                         "local-address": args.l,
-                                         "local-port": args.p,
-                                         "tls-support": False,
-                                         "tls-server-cert": None,
-                                         "tls-server-key": None,
-                                       },
-                         "unix-socket": {
-                                          "path": args.u
-                                        }
-                      },
-             "filter": {
-                         "qname-regex": None,
-                         "dnstap-identities": None
-                       }, 
-             "output": {
-                         "stdout": {
-                                     "format": "text"
-                                   },
-                         "tcp-socket": {
-                                         "format": "text",
-                                         "remote-address": None,
-                                         "remote-port": None
-                                       }
-                       }
-          }
+    try:
+        cfg =  yaml.safe_load(pkgutil.get_data(__package__, 'dnstap.conf')) 
+    except FileNotFoundError:
+        print("error: default config file not found")
+        sys.exit(1)
+    except yaml.parser.ParserError:
+        print("error: invalid default yaml config file")
+        sys.exit(1)
+    
+    # update default config with command line arguments
+    cfg["verbose"] = args.v
+    cfg["input"]["unix-socket"]["path"] = args.u
+    cfg["input"]["tcp-socket"]["local-address"] = args.l
+    cfg["input"]["tcp-socket"]["local-port"] = args.p
     
     # overwrite config with external file ?    
     if args.c:
@@ -239,33 +336,58 @@ def start_receiver():
         except FileNotFoundError:
             print("error: config file not found")
             sys.exit(1)
-
+        except yaml.parser.ParserError:
+            print("error: invalid yaml config file")
+            sys.exit(1)
+            
     # init logging
     level = logging.INFO
     if cfg["verbose"]:
         level = logging.DEBUG
     logging.basicConfig(format='%(asctime)s %(message)s', level=level)
 
+    # start receiver and get event loop
     logging.debug("Start receiver...")
     loop = asyncio.get_event_loop()
 
+    # prepare output
+    queue = asyncio.Queue()
+    
+    if cfg["output"]["syslog"]["enable"]:
+        logging.debug("Output handler: syslog")
+        loop.create_task(handle_output_syslog(cfg["output"]["syslog"], queue))
+        
+    elif cfg["output"]["tcp-socket"]["enable"]:
+        logging.debug("Output handler: tcp")
+        loop.create_task(handle_output_tcp(cfg["output"]["tcp-socket"], queue))
+
+    else:
+        logging.debug("Output handler: stdout")
+        loop.create_task(handle_output_stdout(cfg["output"]["stdout"], queue))
+
+    
+    # prepare inputs
+    
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
-        logging.debug("Listening on %s" % args.u)
+        logging.debug("Input handler: unix socket")
+        logging.debug("Input handler: listening on %s" % args.u)
         socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg),
                                                   path=cfg["input"]["unix-socket"]["path"],
                                                   loop=loop)
     # default mode: asynchronous tcp socket
     else:
+        logging.debug("Input handler: tcp socket")
+        
         ssl_context = None
         if cfg["input"]["tcp-socket"]["tls-support"]:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ssl_context.load_cert_chain(certfile=cfg["input"]["tcp-socket"]["tls-server-cert"], 
                                         keyfile=cfg["input"]["tcp-socket"]["tls-server-key"])
-        
-        logging.debug("Listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
+            logging.debug("Input handler - tls support enabled")
+        logging.debug("Input handler: listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
                                               cfg["input"]["tcp-socket"]["local-port"])), 
-        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg),
+        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg, queue),
                                              cfg["input"]["tcp-socket"]["local-address"],
                                              cfg["input"]["tcp-socket"]["local-port"],
                                              ssl=ssl_context,
@@ -273,7 +395,7 @@ def start_receiver():
 
     # run until complete
     loop.run_until_complete(socket_server)
-    
+
     # run event loop
     try:
         loop.run_forever()

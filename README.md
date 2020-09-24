@@ -26,8 +26,9 @@ The output is printed directly to stdout or send to remote tcp address in JSON, 
     * [PowerDNS - dnsdist](#dnsdist)
     * [NLnet Labs - nsd](#nsd)
     * [NLnet Labs - unbound](#unbound)
-* [Tested Logs Collectors](#tested-dns-servers)
-    * [Logstash](#logstash-with-json-input)
+* [Tested Logs Collectors](#tested-logs-collectors)
+    * [Rsyslog](#rsyslog)
+    * [Logstash](#logstash)
 * [Systemd service file configuration](#systemd-service-file-configuration)
 * [About](#about)
 
@@ -216,6 +217,7 @@ filter:
 Output can be configured to forward messages in several modes.
 - stdout
 - remote tcp socket
+- syslog
 
 #### Forward to STDOUT
 
@@ -225,12 +227,53 @@ This mode is the default one.
 
 Forward dnstap message to a remote tcp collector can be done through the 
 external configuration file 
- 
+
+Enable the tcp-socket output handler in the external config file like below
+
 ```yaml
 output:
+  # forward to remote tcp destination
   tcp-socket:
+    # enable or disable
+    enable: true
+    # format available text|json|yaml
+    format: text
+    # delimiter
+    delimiter: "\n"
+    # retry interval in seconds to connect
+    retry: 5
+    # remote ipv4 or ipv6 address
     remote-address: 10.0.0.2
+    # remote tcp port
     remote-port: 8192
+```
+
+#### Forward to syslog server
+
+Enable the syslog output handler in the external config file
+
+```yaml
+output:
+  syslog:
+    # enable or disable
+    enable: false
+    # syslog over tcp or udp
+    transport: udp
+    # format available text|json
+    format: text
+    # retry interval in seconds to connect
+    retry: 5
+    # remote ipv4 or ipv6 address of the syslog server
+    remote-address: 10.0.0.2
+    # remote port of the syslog server
+    remote-port: 514
+```
+
+Example of output on syslog server
+
+```
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 IP4 UDP 173b www.netflix.fr. A
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 IP4 UDP 203b www.netflix.fr. AAAA
 ```
 
 ## Tested DNS servers
@@ -482,7 +525,16 @@ dnstap:
 
 ## Tested Logs Collectors
 
-### Logstash with json input
+### Rsyslog
+
+Edit the config file `/etc/rsyslog.conf` to activate tcp mode 
+
+```
+module(load="imtcp")
+input(type="imtcp" port="514")
+```
+
+### Logstash
 
 vim /etc/logstash/conf.d/00-dnstap.conf
 
