@@ -75,12 +75,17 @@ Create the external configuration file and enable tls:
 
 ```yaml
 input:
+  # read dnstap messages from tcp socket
   tcp-socket:
+    # listening address ipv4 0.0.0.0 or ipv6 [::]
     local-address: 0.0.0.0
+    # listing on port
     local-port: 6000
     # enable tls on socket
     tls-support: true
+    # provide certificate server path
     tls-server-cert: /etc/dnstap_receiver/server.crt
+    # provide certificate key path
     tls-server-key: /etc/dnstap_receiver/server.key
 ```
 
