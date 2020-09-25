@@ -50,7 +50,7 @@ After installation, you can execute the `dnstap_receiver` to start-it.
 Usage:
 
 ```
-usage: dnstap_receiver.py [-h] [-l L] [-p P] [-u U] [-v] [-c C]
+usage: dnstap_receiver [-h] [-l L] [-p P] [-u U] [-v] [-c C]
 
 optional arguments:
   -h, --help  show this help message and exit
@@ -239,7 +239,7 @@ See [config file](https://github.com/dmachard/dnstap-receiver/blob/master/dnstap
 
 ### Verbose mode
 
-You can execute the binary in verbose mode with the `-v` argument
+You can execute the binary in verbose mode with the `-v` argument:
 
 ```
 ./dnstap_receiver -v
