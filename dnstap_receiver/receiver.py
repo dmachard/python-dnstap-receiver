@@ -118,8 +118,17 @@ async def cb_onconnect(reader, writer, cfg, queue):
     loop = asyncio.get_event_loop()
     dnstap_decoder = dnstap_pb2.Dnstap()
 
-    try:
-        while data := await reader.read(fstrm_handler.pending_nb_bytes()) :
+    try: 
+        # syntax only works with python 3.8
+        # while data := await reader.read(fstrm_handler.pending_nb_bytes()) 
+        running = True
+        while running:
+            # read bytes
+            data = await reader.read(fstrm_handler.pending_nb_bytes()) 
+            if not len(data):
+                running = False
+                break
+                
             # append data to the buffer
             fstrm_handler.append(data=data)
             
