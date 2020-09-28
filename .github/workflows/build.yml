@@ -1,8 +1,9 @@
-name: Publish to PyPI
+name: Build
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - master
 
 jobs:
   release:
@@ -20,9 +21,3 @@ jobs:
     - name: Build Python package
       run: |
         python setup.py sdist bdist_wheel
-    - name: Twine check
-      run: |
-        twine check dist/*
-    - name: Upload to PyPI
-      run: |
-        twine upload dist/* -u ${{ secrets.PYPI_LOGIN }} -p ${{ secrets.PYPI_PASSWORD }}
