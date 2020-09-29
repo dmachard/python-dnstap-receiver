@@ -27,5 +27,6 @@ jobs:
         sudo netstat -anp | grep dnsdist
     - name: Run Python tests
       run: |
+        sudo python3 -m pip install dnslib protobuf pyyaml
         sudo python3 -m pip install --upgrade dnspython
         sudo python3 -m unittest tests.test_receiver_tcpsocket
