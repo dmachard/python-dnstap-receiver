@@ -293,7 +293,7 @@ async def handle_output_stdout(output_cfg, queue):
         msg = convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
         
         # print to stdout
-        print(msg.decode())
+        logging.info(msg.decode())
         
         # all done
         queue.task_done()
@@ -325,10 +325,10 @@ def start_receiver():
     try:
         cfg =  yaml.safe_load(pkgutil.get_data(__package__, 'dnstap.conf')) 
     except FileNotFoundError:
-        print("error: default config file not found")
+        logging.error("default config file not found")
         sys.exit(1)
     except yaml.parser.ParserError:
-        print("error: invalid default yaml config file")
+        logging.error("invalid default yaml config file")
         sys.exit(1)
     
     # update default config with command line arguments
@@ -343,17 +343,17 @@ def start_receiver():
             with open(args.c) as file:
                 cfg.update( yaml.safe_load(file) )
         except FileNotFoundError:
-            print("error: config file not found")
+            logging.error("external config file not found")
             sys.exit(1)
         except yaml.parser.ParserError:
-            print("error: invalid yaml config file")
+            logging.error("external invalid yaml config file")
             sys.exit(1)
             
     # init logging
     level = logging.INFO
     if cfg["verbose"]:
         level = logging.DEBUG
-    logging.basicConfig(format='%(asctime)s %(message)s', level=level)
+    logging.basicConfig(format='%(asctime)s %(message)s', stream=sys.stdout, level=level)
 
     # start receiver and get event loop
     logging.debug("Start receiver...")
