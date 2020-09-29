@@ -50,8 +50,6 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
-    
-    #dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
     
     # filtering by dnstap identity ?

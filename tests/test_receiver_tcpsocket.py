@@ -8,20 +8,20 @@ my_resolver = dns.resolver.Resolver(configure=False)
 my_resolver.nameservers = ['127.0.0.1']
 
 class TestRcvTCPsocket(unittest.TestCase):
-    def test_listening(self):
+    def test1_listening(self):
         """test listening tcp socket"""
         cmd = ["python3", "-c", 
                "from dnstap_receiver.receiver import start_receiver; start_receiver()",
                "-v"]
 
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
-            time.sleep(1)
+            time.sleep(2)
             proc.kill()
             
             o = proc.stdout.read()
         self.assertRegex(o, b"listening on")
         
-    def test_incoming_dnstap(self):
+    def test2_incoming_dnstap(self):
         """test to receive dnstap message"""
         cmd = ["python3", "-c", 
                "from dnstap_receiver.receiver import start_receiver; start_receiver()"]
