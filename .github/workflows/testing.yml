@@ -1,0 +1,31 @@
+name: Testing
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: "3.7"
+    - name: Install dnsdist
+      run: |
+        sudo apt-get install -y dnsdist net-tools
+    - name: Configure dnsdist to activate dnstap
+      run: |
+        sudo systemctl stop dnsdist
+        sudo cp -rf tests/dnsdist.conf /etc/dnsdist/
+        sudo cat /etc/dnsdist/dnsdist.conf
+        sudo systemctl start dnsdist
+        sudo systemctl status dnsdist
+        sudo netstat -anp | grep dnsdist
+    - name: Run Python tests
+      run: |
+        sudo python3 -m pip install --upgrade dnspython
+        sudo python3 -m unittest tests.test_receiver_tcpsocket
