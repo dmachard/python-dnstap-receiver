@@ -20,7 +20,7 @@ import dnslib
 # bin/protoc --python_out=. dnstap.proto
 
 # more informations on dnstap http://dnstap.info/
-from dnstap_receiver import dnstap as dnstap_pb2
+from dnstap_receiver import dnstap_pb2
 
 # framestreams decoder
 from dnstap_receiver import fstrm
@@ -49,7 +49,9 @@ parser.add_argument("-c", help="external config file")
 async def cb_ondnstap(dnstap_decoder, payload, cfg, queue):
     """on dnstap"""
     # decode binary payload
-    dnstap_decoder.parse_from_bytes(payload)
+    dnstap_decoder.ParseFromString(payload)
+    
+    #dnstap_decoder.parse_from_bytes(payload)
     dm = dnstap_decoder.message
     
     # filtering by dnstap identity ?
@@ -64,28 +66,28 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue):
             "source-ip": "-"}
     
     # decode type message
-    tap["message"] = DNSTAP_TYPE.get(dm.type.value, "-")
-    tap["protocol"] = DNSTAP_FAMILY.get(dm.socket_family.value, "-")
-    tap["transport"] = DNSTAP_PROTO.get(dm.socket_protocol.value, "-")
+    tap["message"] = DNSTAP_TYPE.get(dm.type, "-")
+    tap["protocol"] = DNSTAP_FAMILY.get(dm.socket_family, "-")
+    tap["transport"] = DNSTAP_PROTO.get(dm.socket_protocol, "-")
 
     # decode query address
-    if len(dm.query_address) and dm.socket_family.value == 1:
+    if len(dm.query_address) and dm.socket_family == 1:
         tap["source-ip"] = socket.inet_ntoa(dm.query_address)
-    if len(dm.query_address) and dm.socket_family.value == 2:
+    if len(dm.query_address) and dm.socket_family == 2:
         tap["source-ip"] = socket.inet_ntop(socket.AF_INET6, dm.query_address)
     tap["source-port"] = dm.query_port
     if tap["source-port"] == 0:
         tap["source-port"] = "-"
         
     # handle query message
-    if (dm.type.value % 2 ) == 1 :
+    if (dm.type % 2 ) == 1 :
         dnstap_parsed = dnslib.DNSRecord.parse(dm.query_message)
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
         
     # handle response message
-    if (dm.type.value % 2 ) == 0 :
+    if (dm.type % 2 ) == 0 :
         dnstap_parsed = dnslib.DNSRecord.parse(dm.response_message)
         tap["length"] = len(dm.response_message)
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
