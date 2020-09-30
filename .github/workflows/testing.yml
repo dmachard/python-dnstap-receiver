@@ -22,11 +22,14 @@ jobs:
         sudo systemctl stop dnsdist
         sudo cp -rf tests/dnsdist.conf /etc/dnsdist/
         sudo cat /etc/dnsdist/dnsdist.conf
+        sudo mkdir -p /var/run/dnsdist
+        sudo chown dnsdist.dnsdist /var/run/dnsdist/
         sudo systemctl start dnsdist
         sudo systemctl status dnsdist
         sudo netstat -anp | grep dnsdist
-    - name: Run Python tests
+    - name: Run Python tests 
       run: |
         sudo python3 -m pip install dnslib protobuf pyyaml
         sudo python3 -m pip install --upgrade dnspython
         sudo python3 -m unittest tests.test_receiver_tcpsocket -v
+        sudo python3 -m unittest tests.test_receiver_unixsocket -v
