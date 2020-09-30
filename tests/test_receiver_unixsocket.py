@@ -10,7 +10,7 @@ my_resolver.nameservers = ['127.0.0.1']
 class TestUnixSocket(unittest.TestCase):
     def test1_listening(self):
         """test listening unix socket"""
-        cmd = 'su - _dnsdist -s /bin/bash -c \'/usr/bin/python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /var/run/dnsdist/dnstap.sock -v\''
+        cmd = 'su - _dnsdist -s /bin/bash -c \'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /var/run/dnsdist/dnstap.sock -v\''
 
         with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
             time.sleep(2)
@@ -22,7 +22,7 @@ class TestUnixSocket(unittest.TestCase):
         
     def test2_incoming_dnstap(self):
         """test to receive dnstap message"""
-        cmd = 'su - _dnsdist -s /bin/bash -c \'/usr/bin/python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /var/run/dnsdist/dnstap.sock -v\''
+        cmd = 'su - _dnsdist -s /bin/bash -c \'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /var/run/dnsdist/dnstap.sock -v\''
 
         with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
             for i in range(10):
