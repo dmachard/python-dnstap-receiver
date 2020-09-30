@@ -21,7 +21,6 @@ jobs:
       run: |
         sudo systemctl stop dnsdist
         sudo cp -rf tests/dnsdist.conf /etc/dnsdist/
-        sudo ls -alrt /etc/dnsdist/
         sudo cat /etc/dnsdist/dnsdist.conf
         sudo mkdir -p /var/run/dnsdist
         sudo chown _dnsdist._dnsdist /var/run/dnsdist/
