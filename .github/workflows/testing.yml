@@ -23,6 +23,7 @@ jobs:
         sudo cp -rf tests/dnsdist.conf /etc/dnsdist/
         sudo cat /etc/dnsdist/dnsdist.conf
         sudo mkdir -p /var/run/dnsdist
+        sudo chown dnsdist:dnsdist /var/run/dnsdist/
         sudo systemctl start dnsdist
         sudo systemctl status dnsdist
         sudo netstat -anp | grep dnsdist
