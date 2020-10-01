@@ -7,6 +7,7 @@ import sys
 import re
 import ssl
 import pkgutil
+import ipaddress
 
 from datetime import datetime, timezone
 
@@ -103,7 +104,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
             return
 
     # update metrics 
-    #metrics.record_dnstap(dnstap=tap)
+    # metrics.record_dnstap(dnstap=tap)
         
     # finally add decoded tap message in queue for outputs
     queue.put_nowait(tap)
@@ -116,6 +117,24 @@ async def cb_onconnect(reader, writer, cfg, queue, metrics):
         peername = "(unix-socket)"
     logging.debug(f"Input handler: new connection from {peername}")
 
+    # access control list check
+    if len(peername):
+        acls_network = []
+        for a in cfg["input"]["tcp-socket"]["access-control-list"]:
+            acls_network.append(ipaddress.ip_network(a))
+            
+        acl_allow = False
+        for acl in acls_network:
+            if ipaddress.ip_address(peername[0]) in acl:
+                acl_allow = True
+        
+        if not acl_allow:
+            writer.close()
+            logging.debug("Input handler: checking acl refused")
+            return
+        
+        logging.debug("Input handler: checking acl allowed")
+        
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
     loop = asyncio.get_event_loop()
@@ -175,8 +194,10 @@ class Metrics:
         """metrics class"""
         self.stats = {"total-queries": 0}
         self.queries = {}
-        self.responses = {}
+        self.rtype = {}
+        self.rcode = {}
         self.clients = {}
+        self.nxdomains = {}
         
     def record_dnstap(self, dnstap):
         """add dnstap message"""
@@ -186,6 +207,21 @@ class Metrics:
             self.queries[dnstap["query-name"]] = 1
         else:
             self.queries[dnstap["query-name"]] += 1
+        
+        if dnstap["source-ip"] not in self.clients:
+            self.clients[dnstap["source-ip"]] = 1
+        else:
+            self.clients[dnstap["source-ip"]] += 1
+         
+        if dnstap["query-type"] not in self.rtype:
+            self.rtype[dnstap["query-type"]] = 1
+        else:
+            self.rtype[dnstap["query-type"]] += 1
+        
+        if dnstap["query-type"] not in self.rcode:
+            self.rcode[dnstap["code"]] = 1
+        else:
+            self.rcode[dnstap["code"]] += 1
         
 def start_receiver():
     """start dnstap receiver"""
