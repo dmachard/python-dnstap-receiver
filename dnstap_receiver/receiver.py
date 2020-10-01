@@ -118,7 +118,7 @@ async def cb_onconnect(reader, writer, cfg, queue, metrics):
     logging.debug(f"Input handler: new connection from {peername}")
 
     # access control list check
-    if len(peername):
+    if len(writer.get_extra_info('peername')):
         acls_network = []
         for a in cfg["input"]["tcp-socket"]["access-control-list"]:
             acls_network.append(ipaddress.ip_network(a))
