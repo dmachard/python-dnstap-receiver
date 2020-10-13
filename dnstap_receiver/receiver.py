@@ -24,6 +24,7 @@ from dnstap_receiver import fstrm  # framestreams decoder
 from dnstap_receiver import output_stdout
 from dnstap_receiver import output_syslog
 from dnstap_receiver import output_tcp
+from dnstap_receiver import output_metrics
 
 DNSTAP_TYPE = { 1: 'AUTH_QUERY', 2: 'AUTH_RESPONSE',
                 3: 'RESOLVER_QUERY', 4: 'RESOLVER_RESPONSE',
@@ -57,7 +58,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     if not len(tap_ident):
         tap_ident = "-"
     if cfg["filter"]["dnstap-identities"] is not None:
-        if re.match(cfg["filter"]["dnstap-identities"], tap_ident) is None:
+        if re.match(cfg["filter"]["dnstap-identities"], dnstap_decoder.identity.decode()) is None:
             del dm
             return
             
@@ -107,9 +108,13 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
             return
 
     # update metrics 
-    # metrics.record_dnstap(dnstap=tap)
+    metrics.record_dnstap(dnstap=tap)
         
     # finally add decoded tap message in queue for outputs
+    # except for metrics
+    if cfg["output"]["metrics"]["enable"]:
+        return
+        
     queue.put_nowait(tap)
 
 async def cb_onconnect(reader, writer, cfg, queue, metrics):
@@ -201,11 +206,23 @@ class Metrics:
         self.rcode = {}
         self.clients = {}
         self.nxdomains = {}
+        self.proto = {}
+        self.family = {}
         
     def record_dnstap(self, dnstap):
         """add dnstap message"""
         self.stats["total-queries"] += 1
-        
+
+        if dnstap["transport"] not in self.proto:
+            self.proto[dnstap["transport"]] = 1
+        else:
+            self.proto[dnstap["transport"]] += 1
+            
+        if dnstap["protocol"] not in self.family:
+            self.family[dnstap["protocol"]] = 1
+        else:
+            self.family[dnstap["protocol"]] += 1
+            
         if dnstap["query-name"] not in self.queries:
             self.queries[dnstap["query-name"]] = 1
         else:
@@ -221,11 +238,11 @@ class Metrics:
         else:
             self.rtype[dnstap["query-type"]] += 1
         
-        if dnstap["query-type"] not in self.rcode:
+        if dnstap["code"] not in self.rcode:
             self.rcode[dnstap["code"]] = 1
         else:
             self.rcode[dnstap["code"]] += 1
-        
+            
 def start_receiver():
     """start dnstap receiver"""
     # Handle command-line arguments.
@@ -275,19 +292,26 @@ def start_receiver():
     
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")
-        loop.create_task(output_syslog.handle(cfg["output"]["syslog"], queue))
+        loop.create_task(output_syslog.handle(cfg["output"]["syslog"], 
+                                              queue))
         
     if cfg["output"]["tcp-socket"]["enable"]:
         logging.debug("Output handler: tcp")
-        loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"], queue))
+        loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"],
+                                           queue))
 
     if cfg["output"]["stdout"]["enable"]:
         logging.debug("Output handler: stdout")
-        loop.create_task(output_stdout.handle(cfg["output"]["stdout"], queue))
+        loop.create_task(output_stdout.handle(cfg["output"]["stdout"],
+                                              queue))
 
     
-    # prepare inputs
-    
+    if cfg["output"]["metrics"]["enable"]:
+        logging.debug("Output handler: metrics")
+        loop.create_task(output_metrics.handle(cfg["output"]["metrics"],
+                                              metrics))
+                                              
+
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
         logging.debug("Input handler: unix socket")
