@@ -53,12 +53,15 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     dm = dnstap_decoder.message
     
     # filtering by dnstap identity ?
+    tap_ident = dnstap_decoder.identity.decode()
+    if not len(tap_ident):
+        tap_ident = "-"
     if cfg["filter"]["dnstap-identities"] is not None:
-        if re.match(cfg["filter"]["dnstap-identities"], dnstap_decoder.identity.decode()) is None:
+        if re.match(cfg["filter"]["dnstap-identities"], tap_ident) is None:
             del dm
             return
             
-    tap = { "identity": dnstap_decoder.identity.decode(),
+    tap = { "identity": tap_ident,
             "query-name": "-", 
             "query-type": "-", 
             "source-ip": "-"}
