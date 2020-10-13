@@ -20,7 +20,7 @@ in JSON, YAML or one line text format.
     * [Stdout](#stdout)
     * [TCP socket](#tcp-socket)
     * [Syslog](#syslog)
-    * [Stdout metrics](#metrics)
+    * [Metrics](#metrics)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -228,7 +228,7 @@ Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 IP4 UDP 173b ww
 Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 IP4 UDP 203b www.netflix.fr. AAAA
 ```
 
-### Stdout metrics
+### Metrics
 
 This output enables to generate metrics and print to stdout.
 Add the following configuration as external config to activate this output:
