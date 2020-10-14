@@ -33,7 +33,7 @@ setuptools.setup(
     ],
     entry_points={'console_scripts': ['dnstap_receiver = dnstap_receiver.receiver:start_receiver']},
     install_requires=[
-        "dnslib",
+        "dnspython",
         "protobuf",
         "pyyaml"
     ]

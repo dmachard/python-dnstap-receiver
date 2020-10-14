@@ -11,8 +11,10 @@ import ipaddress
 
 from datetime import datetime, timezone
 
-# python3 -m pip dnslib
-import dnslib
+# python3 -m pip dnspython
+import dns.rcode
+import dns.rdatatype
+import dns.message
 
 # wget https://raw.githubusercontent.com/dnstap/dnstap.pb/master/dnstap.proto
 # wget https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip
@@ -47,6 +49,62 @@ parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
 
+import dns.exception
+import dns.opcode
+import dns.flags
+
+class _WireReader(dns.message._WireReader):
+    def read(self):
+        """issue fixed - waiting fix with dnspython 2.1"""
+        if self.parser.remaining() < 12:
+            raise dns.message.ShortHeader
+        (id, flags, qcount, ancount, aucount, adcount) = \
+            self.parser.get_struct('!HHHHHH')
+        factory = dns.message._message_factory_from_opcode(dns.opcode.from_flags(flags))
+        self.message = factory(id=id)
+        self.message.flags = flags
+        self.initialize_message(self.message)
+        self.one_rr_per_rrset = \
+            self.message._get_one_rr_per_rrset(self.one_rr_per_rrset)
+        self._get_question(dns.message.MessageSection.QUESTION, qcount)
+        if self.question_only:
+            return self.message
+        self._get_section(dns.message.MessageSection.ANSWER, ancount)
+        self._get_section(dns.message.MessageSection.AUTHORITY, aucount)
+        self._get_section(dns.message.MessageSection.ADDITIONAL, adcount)
+        if not self.ignore_trailing and self.parser.remaining() != 0:
+            raise dns.message.TrailingJunk
+        if self.multi and self.message.tsig_ctx and not self.message.had_tsig:
+            self.message.tsig_ctx.update(self.parser.wire)
+        return self.message
+
+def from_wire(wire):
+    """decode wire message - waiting fix with dnspython 2.1"""
+    raise_on_truncation=False
+    def initialize_message(message):
+        message.request_mac = b''
+        message.xfr = False
+        message.origin = None
+        message.tsig_ctx = None
+
+    reader = _WireReader(wire, initialize_message, question_only=True,
+                 one_rr_per_rrset=False, ignore_trailing=False,
+                 keyring=None, multi=False)
+    try:
+        m = reader.read()
+    except dns.exception.FormError:
+        if reader.message and (reader.message.flags & dns.flags.TC) and \
+           raise_on_truncation:
+            raise dns.message.Truncated(message=reader.message)
+        else:
+            raise
+    # Reading a truncated message might not have any errors, so we
+    # have to do this check here too.
+    if m.flags & dns.flags.TC and raise_on_truncation:
+        raise dns.message.Truncated(message=m)
+
+    return m
+    
 async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     """on dnstap"""
     # decode binary payload
@@ -83,23 +141,27 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
         
     # handle query message
     if (dm.type % 2 ) == 1 :
-        dnstap_parsed = dnslib.DNSRecord.parse(dm.query_message)
+        dnstap_parsed = from_wire(dm.query_message,
+                                  #question_only=True
+                                  )
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
         
     # handle response message
     if (dm.type % 2 ) == 0 :
-        dnstap_parsed = dnslib.DNSRecord.parse(dm.response_message)
+        dnstap_parsed = from_wire(dm.response_message,
+                                  #question_only=True
+                                  )
         tap["length"] = len(dm.response_message)
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
         
     # common params
-    if len(dnstap_parsed.questions):
-        tap["query-name"] = str(dnstap_parsed.questions[0].get_qname())
-        tap["query-type"] = dnslib.QTYPE[dnstap_parsed.questions[0].qtype]
-    tap["code"] = dnslib.RCODE[dnstap_parsed.header.rcode]
+    if len(dnstap_parsed.question):
+        tap["query-name"] = dnstap_parsed.question[0].name
+        tap["query-type"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
+    tap["code"] = dns.rcode.to_text(dnstap_parsed.rcode())
     
     # filtering by qname ?
     if cfg["filter"]["qname-regex"] is not None:

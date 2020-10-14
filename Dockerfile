@@ -11,7 +11,7 @@ COPY . /home/dnstap/
 
 RUN true \
     && adduser -D dnstap \
-    && pip install --no-cache-dir dnslib protobuf pyyaml\
+    && pip install --no-cache-dir dnspython protobuf pyyaml\
     && cd /home/dnstap \
     && chmod 755 start.sh \
     && chown -R dnstap:dnstap /home/dnstap \
