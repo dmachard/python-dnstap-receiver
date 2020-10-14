@@ -198,8 +198,8 @@ async def cb_onconnect(reader, writer, cfg, queue, metrics):
         logging.debug(f'Input handler: {peername} - closed')
 
 class Metrics:
-    def __init__(self):
-        """metrics class"""
+    def prepare(self):
+        """prepare stats"""
         self.stats = {"total-queries": 0}
         self.queries = {}
         self.rtype = {}
@@ -208,6 +208,19 @@ class Metrics:
         self.nxdomains = {}
         self.proto = {}
         self.family = {}
+    
+    def reset(self):
+        """reset statistics"""
+        del self.stats
+        del self.queries
+        del self.rtype
+        del self.rcode
+        del self.clients
+        del self.nxdomains 
+        del self.proto
+        del self.family
+        
+        self.prepare()
         
     def record_dnstap(self, dnstap):
         """add dnstap message"""
@@ -289,6 +302,7 @@ def start_receiver():
     # prepare output
     queue = asyncio.Queue()
     metrics = Metrics()
+    metrics.prepare()
     
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")

@@ -239,14 +239,16 @@ output:
     # enable or disable
     enable: true
     # print every N seconds.
-    interval: 5
+    interval: 300
+    # cumulative statistics, without clearing them after printing
+    cumulative: false
 ```
 
-Example of output on syslog server
+Example of output
 
 ```
-596 QUERIES, 0.6 QPS, 5 CLIENTS, 596 IP4, 0 IP6, 596 UDP, 0 TCP, 161 NOERROR, 435 NXDOMAIN, 587 A, 9 AAAA
-614 QUERIES, 3.6 QPS, 5 CLIENTS, 614 IP4, 0 IP6, 614 UDP, 0 TCP, 164 NOERROR, 450 NXDOMAIN, 605 A, 9 AAAA
+2020-10-13 05:19:35,522 18 QUERIES, 3.6 QPS, 1 CLIENTS, 18 IP4, 0 IP6, 
+18 UDP, 0 TCP, 17 NOERROR, 1 NXDOMAIN, 18 A, 0 AAAA
 ```
 
 ## More options
@@ -561,12 +563,12 @@ input(type="imtcp" port="514")
 
 ### Logstash
 
-vim /etc/logstash/conf.d/00-dnstap.conf
+Edit the file /etc/logstash/conf.d/00-dnstap.conf
 
 ```
 input {
   tcp {
-      port => 8192
+      port => 6000
       codec => json
   }
 }
@@ -586,19 +588,19 @@ output {
 }
 ```
 
-## Systemd service file configuration
+## Systemd service file
 
-System service file for CentOS:
+Systemd service file
+
+Create the file /etc/systemd/system/dnstap_receiver.service
 
 ```bash
-vim /etc/systemd/system/dnstap_receiver.service
-
 [Unit]
 Description=Python DNS tap Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/dnstap_receiver -u /etc/dnsdist/dnstap.sock -f 10.0.0.2:8192
+ExecStart=/usr/local/bin/dnstap_receiver -c /etc/dnstap_receiver/dnstap.conf
 Restart=on-abort
 Type=simple
 User=root

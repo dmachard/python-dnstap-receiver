@@ -8,6 +8,8 @@ async def handle(cfg, metrics):
     while True:
         await asyncio.sleep(cfg["interval"])
         
+        if not cfg["cumulative"]:
+            queries_prev = 0
         queries_cur = metrics.stats["total-queries"]
         qps = (queries_cur - queries_prev ) / cfg["interval"] 
         queries_prev = queries_cur
@@ -30,3 +32,7 @@ async def handle(cfg, metrics):
 
         # print to stdout
         logging.info(", ".join(msg))
+        
+        # reset stats?
+        if not cfg["cumulative"]:
+            metrics.reset()
