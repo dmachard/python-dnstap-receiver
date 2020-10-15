@@ -1,6 +1,6 @@
 # Dnstap streams receiver
  
-![Pypi](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20PyPI/badge.svg) ![Build](https://github.com/dmachard/dnsdist-console/workflows/Build/badge.svg) ![Testing](https://github.com/dmachard/dnstap_receiver/workflows/Testing/badge.svg) 
+![Pypi](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20PyPI/badge.svg) ![Dockerhub](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20DockerHub/badge.svg) ![Build](https://github.com/dmachard/dnsdist-console/workflows/Build/badge.svg) ![Testing](https://github.com/dmachard/dnstap_receiver/workflows/Testing/badge.svg) 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
@@ -8,11 +8,12 @@
 This Python module acts as a DNS tap streams receiver for DNS servers.
 Input streams can be a unix socket or multiple remote dns servers.
 The output is printed directly to stdout or send to remote tcp address 
-in JSON, YAML or one line text format. 
+in JSON, YAML or one line text format and more. 
 
 ## Table of contents
 * [Installation](#installation)
-* [Start dnstap receiver](#start-dnstap-receiver)
+    * [PyPI](#pypi)
+    * [Docker Hub](#docker-hub)
 * [Inputs handler](#inputs-handler)
     * [TCP socket](#tcp-socket)
     * [Unix socket](#unix-socket)
@@ -20,7 +21,6 @@ in JSON, YAML or one line text format.
     * [Stdout](#stdout)
     * [TCP socket](#tcp-socket)
     * [Syslog](#syslog)
-    * [Metrics](#metrics)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -39,13 +39,13 @@ in JSON, YAML or one line text format.
 
 ## Installation
 
+### PyPI
+
 Deploy the dnstap receiver in your DNS server with the pip command.
 
 ```python
 pip install dnstap_receiver
 ```
-
-## Start dnstap receiver
 
 After installation, you can execute the `dnstap_receiver` to start-it.
 
@@ -63,6 +63,20 @@ optional arguments:
   -c C        external config file
 ```
 
+
+### Docker Hub
+
+Pull the dnstap receiver image from Docker Hub.
+
+```bash
+docker pull dmachard/dnstap-receiver:latest
+```
+
+Deploy the container
+
+```bash
+docker run -d -p 6000:6000 --name=dnstap01 dmachard/dnstap-receiver
+```
 
 ## Inputs handler
 
@@ -226,29 +240,6 @@ Example of output on syslog server
 ```
 Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 IP4 UDP 173b www.netflix.fr. A
 Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 IP4 UDP 203b www.netflix.fr. AAAA
-```
-
-### Metrics
-
-This output enables to generate metrics and print to stdout.
-Add the following configuration as external config to activate this output:
-
-```yaml
-output:
-  metrics:
-    # enable or disable
-    enable: true
-    # print every N seconds.
-    interval: 300
-    # cumulative statistics, without clearing them after printing
-    cumulative: false
-```
-
-Example of output
-
-```
-2020-10-13 05:19:35,522 18 QUERIES, 3.6 QPS, 1 CLIENTS, 18 IP4, 0 IP6, 
-18 UDP, 0 TCP, 17 NOERROR, 1 NXDOMAIN, 18 A, 0 AAAA
 ```
 
 ## More options
@@ -471,8 +462,7 @@ su - nsd -s /bin/bash -c "dnstap_receiver -u "/var/run/nsd/dnstap.sock""
 
 ### unbound
 
-![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green) ![unbound 1.12.0](https://img.shields.io/badge/1.12.0-tested-green)
-
+![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green)
 
 Dnstap messages supported:
  - CLIENT_QUERY
@@ -563,12 +553,12 @@ input(type="imtcp" port="514")
 
 ### Logstash
 
-Edit the file /etc/logstash/conf.d/00-dnstap.conf
+vim /etc/logstash/conf.d/00-dnstap.conf
 
 ```
 input {
   tcp {
-      port => 6000
+      port => 8192
       codec => json
   }
 }
@@ -588,19 +578,19 @@ output {
 }
 ```
 
-## Systemd service file
+## Systemd service file configuration
 
-Systemd service file
-
-Create the file /etc/systemd/system/dnstap_receiver.service
+System service file for CentOS:
 
 ```bash
+vim /etc/systemd/system/dnstap_receiver.service
+
 [Unit]
 Description=Python DNS tap Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/dnstap_receiver -c /etc/dnstap_receiver/dnstap.conf
+ExecStart=/usr/local/bin/dnstap_receiver -u /etc/dnsdist/dnstap.sock -f 10.0.0.2:8192
 Restart=on-abort
 Type=simple
 User=root
