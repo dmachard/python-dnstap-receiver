@@ -1,0 +1,25 @@
+name: Publish to DockerHub
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: |
+        docker build . --file Dockerfile -t dnstap-receiver
+    - name: Tag image
+      run: |
+        VERSION=$(cat ./dnstap_receiver/__init__.py | tr '"' $'\n' | sed -n 2p)
+        docker tag dnstap-receiver dmachard/dnstap-receiver:${VERSION}
+        docker tag dnstap-receiver dmachard/dnstap-receiver:latest
+    - name: Upload to DockerHub
+      run: |
+        docker login -u ${{ secrets.DOCKERHUB_LOGIN }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+        VERSION=$(cat ./dnstap_receiver/__init__.py | tr '"' $'\n' | sed -n 2p)
+        docker push dmachard/dnstap-receiver:latest
+        docker push dmachard/dnstap-receiver:${VERSION}

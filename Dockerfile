@@ -1,7 +1,7 @@
 FROM python:3.8-alpine
 
 LABEL name="Python dnstap receiver" \
-      description="Dnstap streams receiver." \
+      description="Dnstap streams receiver" \
       url="https://github.com/dmachard/dnstap-receiver" \
       maintainer="d.machard@gmail.com"
       

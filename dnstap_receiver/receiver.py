@@ -67,18 +67,10 @@ class _WireReader(dns.message._WireReader):
         self.one_rr_per_rrset = \
             self.message._get_one_rr_per_rrset(self.one_rr_per_rrset)
         self._get_question(dns.message.MessageSection.QUESTION, qcount)
-        if self.question_only:
-            return self.message
-        self._get_section(dns.message.MessageSection.ANSWER, ancount)
-        self._get_section(dns.message.MessageSection.AUTHORITY, aucount)
-        self._get_section(dns.message.MessageSection.ADDITIONAL, adcount)
-        if not self.ignore_trailing and self.parser.remaining() != 0:
-            raise dns.message.TrailingJunk
-        if self.multi and self.message.tsig_ctx and not self.message.had_tsig:
-            self.message.tsig_ctx.update(self.parser.wire)
+        
         return self.message
 
-def from_wire(wire):
+def from_wire(wire, question_only=True):
     """decode wire message - waiting fix with dnspython 2.1"""
     raise_on_truncation=False
     def initialize_message(message):
@@ -87,7 +79,7 @@ def from_wire(wire):
         message.origin = None
         message.tsig_ctx = None
 
-    reader = _WireReader(wire, initialize_message, question_only=True,
+    reader = _WireReader(wire, initialize_message, question_only=question_only,
                  one_rr_per_rrset=False, ignore_trailing=False,
                  keyring=None, multi=False)
     try:
@@ -142,8 +134,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     # handle query message
     if (dm.type % 2 ) == 1 :
         dnstap_parsed = from_wire(dm.query_message,
-                                  #question_only=True
-                                  )
+                                  question_only=True)
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
@@ -151,8 +142,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     # handle response message
     if (dm.type % 2 ) == 0 :
         dnstap_parsed = from_wire(dm.response_message,
-                                  #question_only=True
-                                  )
+                                  question_only=True)
         tap["length"] = len(dm.response_message)
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
