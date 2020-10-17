@@ -21,6 +21,7 @@ in JSON, YAML or one line text format and more.
     * [Stdout](#stdout)
     * [TCP socket](#tcp-socket)
     * [Syslog](#syslog)
+    * [Metrics](#metrics)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -240,6 +241,28 @@ Example of output on syslog server
 ```
 Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 IP4 UDP 173b www.netflix.fr. A
 Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 IP4 UDP 203b www.netflix.fr. AAAA
+```
+
+### Metrics
+
+This output enables to generate metrics and print to stdout. Add the following configuration as external config to activate this output:
+
+```
+output:
+  metrics:
+    # enable or disable
+    enable: true
+    # print every N seconds.
+    interval: 300
+    # cumulative statistics, without clearing them after printing
+    cumulative: false
+```
+
+Example of output
+
+```
+2020-10-13 05:19:35,522 18 QUERIES, 3.6 QPS, 1 CLIENTS, 18 IP4, 0 IP6, 
+18 UDP, 0 TCP, 17 NOERROR, 1 NXDOMAIN, 18 A, 0 AAAA
 ```
 
 ## More options
