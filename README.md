@@ -35,7 +35,6 @@ in JSON, YAML or one line text format and more.
 * [Tested Logs Collectors](#tested-logs-collectors)
     * [Rsyslog](#rsyslog)
     * [Logstash](#logstash)
-* [Systemd service file configuration](#systemd-service-file-configuration)
 * [About](#about)
 
 ## Installation
@@ -77,6 +76,12 @@ Deploy the container
 
 ```bash
 docker run -d -p 6000:6000 --name=dnstap01 dmachard/dnstap-receiver
+```
+
+Follow containers logs 
+
+```bash
+docker logs dnstap01 -f
 ```
 
 ## Inputs handler
@@ -599,34 +604,6 @@ output {
     index => "dnstap-lb"
   }
 }
-```
-
-## Systemd service file configuration
-
-System service file for CentOS:
-
-```bash
-vim /etc/systemd/system/dnstap_receiver.service
-
-[Unit]
-Description=Python DNS tap Service
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/dnstap_receiver -u /etc/dnsdist/dnstap.sock -f 10.0.0.2:8192
-Restart=on-abort
-Type=simple
-User=root
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-systemctl daemon-reload
-systemctl start dnstap_receiver
-systemctl status dnstap_receiver
-systemctl enable dnstap_receiver
 ```
 
 # About
