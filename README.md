@@ -174,7 +174,7 @@ JSON format:
     "transport": "UDP",
     "source-port": 42222,
     "length": 43,
-    "timestamp": "2020-09-12 22:24:34.132",
+    "timestamp": "2020-09-16T18:51:53.591736+00:00",
     "code": "NOERROR"
 }
 ```
@@ -190,7 +190,7 @@ query-name: dns4.comlaude-dns.eu.
 query-type: AAAA
 source-ip: '-'
 source-port: '-'
-timestamp: '2020-09-12 14:13:53.948'
+timestamp: '2020-09-16T18:51:53.591736+00:00'
 transport: UDP
 
 ```
@@ -490,7 +490,7 @@ su - nsd -s /bin/bash -c "dnstap_receiver -u "/var/run/nsd/dnstap.sock""
 
 ### unbound
 
-![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green)
+![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green) ![unbound 1.112.0](https://img.shields.io/badge/1.12.0-tested-green)
 
 Dnstap messages supported:
  - CLIENT_QUERY
@@ -586,14 +586,14 @@ vim /etc/logstash/conf.d/00-dnstap.conf
 ```
 input {
   tcp {
-      port => 8192
+      port => 6000
       codec => json
   }
 }
 
 filter {
   date {
-     match => [ "dt_query" , "yyyy-MM-dd HH:mm:ss.SSS" ]
+     match => [ "timestamp" , "yyyy-MM-dd HH:mm:ss.SSS" ]
      target => "@timestamp"
   }
 }
@@ -610,7 +610,8 @@ output {
 
 | | |
 | ------------- | ------------- |
-| Author |  Denis Machard <d.machard@gmail.com> |
-| License |  MIT | 
-| PyPI |  https://pypi.org/project/dnstap_receiver/ |
+| Author | Denis Machard <d.machard@gmail.com> |
+| PyPI | https://pypi.org/project/dnstap_receiver/ |
+| Github | https://github.com/dmachard/dnstap-receiver |
+| DockerHub | https://hub.docker.com/r/dmachard/dnstap-receiver |
 | | |
