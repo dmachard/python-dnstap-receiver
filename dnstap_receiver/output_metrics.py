@@ -1,13 +1,18 @@
 import logging
 import asyncio
 
-async def handle(cfg, metrics):
+async def handle(cfg, queue, metrics):
     """stdout output handler"""
     
     queries_prev = metrics.stats["total-queries"]
     while True:
         await asyncio.sleep(cfg["interval"])
         
+        # clear queue
+        for _ in range(queue.qsize()):
+            queue.get_nowait()
+            queue.task_done()
+ 
         if not cfg["cumulative"]:
             queries_prev = 0
         queries_cur = metrics.stats["total-queries"]

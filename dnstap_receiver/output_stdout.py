@@ -2,7 +2,7 @@ import logging
 
 from dnstap_receiver import transform
 
-async def handle(output_cfg, queue):
+async def handle(output_cfg, queue, metrics):
     """stdout output handler"""
     
     while True:

@@ -31,7 +31,7 @@ async def syslog_tcpclient(output_cfg, queue):
     # something 
     logging.error("Output handler: connection lost")
  
-async def handle(output_cfg, queue):
+async def handle(output_cfg, queue, metrics):
     """handle output"""
     server_address = (output_cfg["remote-address"], output_cfg["remote-port"])
     loop = asyncio.get_event_loop()

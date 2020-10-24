@@ -87,8 +87,8 @@ docker logs dnstap01 -f
 ## Inputs handler
 
 Severals inputs handler are supported to read incoming dnstap messages:
-- TCP socket
-- Unix socket
+- [TCP socket](#tcp-socket)
+- [Unix socket](#unix-socket)
 
 ### TCP socket
 
@@ -133,9 +133,10 @@ Configure the path of the socket with the `-u` argument.
 ## Outputs handler
 
 Outputs handler can be configured to forward messages in several modes.
-- stdout
-- remote tcp socket
-- syslog
+- [Stdout](#stdout)
+- [TCP socket](#tcp-socket)
+- [Syslog](#syslog)
+- [Metrics](#metrics)
 
 ### Stdout
 
@@ -145,6 +146,8 @@ Add the following configuration as external config to activate this output:
 ```yaml
 output:
   stdout:
+    # enable or disable
+    enable: true
     # format available text|json|yaml
     format: text
 ```

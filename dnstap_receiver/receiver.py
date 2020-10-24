@@ -164,8 +164,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
         
     # finally add decoded tap message in queue for outputs
     # except for metrics
-    if cfg["output"]["metrics"]["enable"]:
-        return
+    # if cfg["output"]["metrics"]["enable"]:
+        # return
         
     queue.put_nowait(tap)
 
@@ -359,22 +359,26 @@ def start_receiver():
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")
         loop.create_task(output_syslog.handle(cfg["output"]["syslog"], 
-                                              queue))
+                                              queue,
+                                              metrics))
         
     if cfg["output"]["tcp-socket"]["enable"]:
         logging.debug("Output handler: tcp")
         loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"],
-                                           queue))
+                                           queue,
+                                           metrics))
 
     if cfg["output"]["stdout"]["enable"]:
         logging.debug("Output handler: stdout")
         loop.create_task(output_stdout.handle(cfg["output"]["stdout"],
-                                              queue))
+                                              queue,
+                                              metrics))
 
     
     if cfg["output"]["metrics"]["enable"]:
         logging.debug("Output handler: metrics")
         loop.create_task(output_metrics.handle(cfg["output"]["metrics"],
+                                              queue,
                                               metrics))
                                               
 
