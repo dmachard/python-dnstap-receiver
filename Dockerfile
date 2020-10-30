@@ -21,4 +21,4 @@ USER dnstap
 
 EXPOSE 6000/tcp
 
-ENTRYPOINT ["/home/dnstap/start.sh"]
+ENTRYPOINT ["python", "-c", "from dnstap_receiver.receiver import start_receiver; start_receiver()"]
