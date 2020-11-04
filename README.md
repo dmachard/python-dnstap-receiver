@@ -32,9 +32,6 @@ in JSON, YAML or one line text format and more.
     * [PowerDNS - dnsdist](#dnsdist)
     * [NLnet Labs - nsd](#nsd)
     * [NLnet Labs - unbound](#unbound)
-* [Tested Logs Collectors](#tested-logs-collectors)
-    * [Rsyslog](#rsyslog)
-    * [Logstash](#logstash)
 * [About](#about)
 
 ## Installation
@@ -93,7 +90,7 @@ Severals inputs handler are supported to read incoming dnstap messages:
 ### TCP socket
 
 The TCP socket input enable to receive dnstap messages from multiple dns servers.
-This is the default input if you exectute the binary without arguments.
+This is the default input if you execute the binary without arguments.
 The receiver is listening on `localhost` interface and the tcp port `6000`.
 You can change binding options with `-l` and `-p` arguments.
 
@@ -200,7 +197,7 @@ transport: UDP
 
 ### TCP socket
 
-This output enables to forward dnstap message to a remote tcp collector
+This output enables to forward dnstap message to a remote tcp collector.
 Add the following configuration as external config to activate this output:
 
 ```yaml
@@ -568,45 +565,6 @@ dnstap:
     dnstap-send-version: yes
     dnstap-log-client-query-messages: yes
     dnstap-log-client-response-messages: yes
-```
-
-
-## Tested Logs Collectors
-
-### Rsyslog
-
-Edit the config file `/etc/rsyslog.conf` to activate tcp mode 
-
-```
-module(load="imtcp")
-input(type="imtcp" port="514")
-```
-
-### Logstash
-
-vim /etc/logstash/conf.d/00-dnstap.conf
-
-```
-input {
-  tcp {
-      port => 6000
-      codec => json
-  }
-}
-
-filter {
-  date {
-     match => [ "timestamp" , "yyyy-MM-dd HH:mm:ss.SSS" ]
-     target => "@timestamp"
-  }
-}
-
-output {
-   elasticsearch {
-    hosts => ["http://localhost:9200"]
-    index => "dnstap-lb"
-  }
-}
 ```
 
 # About
