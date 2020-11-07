@@ -33,7 +33,7 @@ DNSTAP_TYPE = { 1: 'AUTH_QUERY', 2: 'AUTH_RESPONSE',
                 5: 'CLIENT_QUERY', 6: 'CLIENT_RESPONSE',
                 7: 'FORWARDER_QUERY', 8: 'FORWARDER_RESPONSE',
                 9: 'STUB_QUERY', 10: 'STUB_RESPONSE',
-                11: 'TOOL_QUERY', 2: 'TOOL_RESPONSE' }
+                11: 'TOOL_QUERY', 12: 'TOOL_RESPONSE' }
 DNSTAP_FAMILY = {1: 'IP4', 2: 'IP6'}
 DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}    
 
