@@ -1,6 +1,6 @@
 # Dnstap streams receiver
- 
-![Pypi](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20PyPI/badge.svg) ![Dockerhub](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20DockerHub/badge.svg) ![Build](https://github.com/dmachard/dnstap_receiver/workflows/Build/badge.svg) ![Testing](https://github.com/dmachard/dnstap_receiver/workflows/Testing/badge.svg) 
+
+![Testing](https://github.com/dmachard/dnstap_receiver/workflows/Testing/badge.svg) ![Build](https://github.com/dmachard/dnstap_receiver/workflows/Build/badge.svg) ![Pypi](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20PyPI/badge.svg) ![Dockerhub](https://github.com/dmachard/dnstap_receiver/workflows/Publish%20to%20DockerHub/badge.svg) 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
