@@ -157,8 +157,8 @@ Output can be formatted in different way:
 Text format:
 
 ```
-2020-09-16T18:51:53.547352+00:00 centos RESOLVER_QUERY NOERROR - - IP4 UDP 43b ns2.google.com. A
-2020-09-16T18:51:53.591736+00:00 centos RESOLVER_RESPONSE NOERROR - - IP4 UDP 59b ns2.google.com. A
+2020-09-16T18:51:53.547352+00:00 centos RESOLVER_QUERY NOERROR - - INET UDP 43b ns2.google.com. A
+2020-09-16T18:51:53.591736+00:00 centos RESOLVER_RESPONSE NOERROR - - INET UDP 59b ns2.google.com. A
 ```
 
 JSON format:
@@ -170,8 +170,8 @@ JSON format:
     "query-type": "A",
     "source-ip": "192.168.1.114",
     "message": "CLIENT_QUERY",
-    "protocol": "IP4",
-    "transport": "UDP",
+    "family": "INET",
+    "protocol": "UDP",
     "source-port": 42222,
     "length": 43,
     "timestamp": "2020-09-16T18:51:53.591736+00:00",
@@ -185,13 +185,13 @@ YAML format:
 code: NOERROR
 length: 49
 message: RESOLVER_QUERY
-protocol: IP4
+family: INET
 query-name: dns4.comlaude-dns.eu.
 query-type: AAAA
 source-ip: '-'
 source-port: '-'
 timestamp: '2020-09-16T18:51:53.591736+00:00'
-transport: UDP
+protocol: UDP
 
 ```
 
@@ -244,8 +244,8 @@ output:
 Example of output on syslog server
 
 ```
-Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 IP4 UDP 173b www.netflix.fr. A
-Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 IP4 UDP 203b www.netflix.fr. AAAA
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 INET UDP 173b www.netflix.fr. A
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 INET UDP 203b www.netflix.fr. AAAA
 ```
 
 ### Stdout metrics
@@ -266,7 +266,7 @@ output:
 Example of output
 
 ```
-2020-10-13 05:19:35,522 18 QUERIES, 3.6 QPS, 1 CLIENTS, 18 IP4, 0 IP6, 
+2020-10-13 05:19:35,522 18 QUERIES, 3.6 QPS, 1 CLIENTS, 18 INET, 0 INET6, 
 18 UDP, 0 TCP, 17 NOERROR, 1 NXDOMAIN, 18 A, 0 AAAA
 ```
 

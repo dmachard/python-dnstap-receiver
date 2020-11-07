@@ -32,7 +32,7 @@ class UnknownValue:
     name = "-"
 
 DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
-DNSTAP_FAMILY = {1: 'IP4', 2: 'IP6'}
+DNSTAP_FAMILY = dnstap_pb2._SOCKETFAMILY.values_by_number
 DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}    
 
 # command line arguments definition
@@ -119,8 +119,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     
     # decode type message
     tap["message"] = DNSTAP_TYPE.get(dm.type, UnknownValue).name
-    tap["protocol"] = DNSTAP_FAMILY.get(dm.socket_family, "-")
-    tap["transport"] = DNSTAP_PROTO.get(dm.socket_protocol, "-")
+    tap["family"] = DNSTAP_FAMILY.get(dm.socket_family, UnknownValue).name
+    tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, "-")
 
     # decode query address
     if len(dm.query_address) and dm.socket_family == 1:
