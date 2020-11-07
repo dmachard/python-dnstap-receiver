@@ -274,15 +274,15 @@ class Metrics:
         """add dnstap message"""
         self.stats["total-queries"] += 1
 
-        if dnstap["transport"] not in self.proto:
-            self.proto[dnstap["transport"]] = 1
+        if dnstap["protocol"] not in self.proto:
+            self.proto[dnstap["protocol"]] = 1
         else:
-            self.proto[dnstap["transport"]] += 1
+            self.proto[dnstap["protocol"]] += 1
             
-        if dnstap["protocol"] not in self.family:
-            self.family[dnstap["protocol"]] = 1
+        if dnstap["family"] not in self.family:
+            self.family[dnstap["family"]] = 1
         else:
-            self.family[dnstap["protocol"]] += 1
+            self.family[dnstap["family"]] += 1
             
         if dnstap["query-name"] not in self.queries:
             self.queries[dnstap["query-name"]] = 1

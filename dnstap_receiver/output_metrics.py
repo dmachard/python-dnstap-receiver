@@ -23,8 +23,8 @@ async def handle(cfg, queue, metrics):
         msg.append( "%s QPS" % round(qps, 2))
         msg.append( "%s CLIENTS" % len(metrics.clients) )
         
-        msg.append( "%s IP4" % metrics.family.get("IP4", 0) )   
-        msg.append( "%s IP6" % metrics.family.get("IP6", 0) )
+        msg.append( "%s INET" % metrics.family.get("INET", 0) )   
+        msg.append( "%s INET6" % metrics.family.get("INET6", 0) )
 
         msg.append( "%s UDP" % metrics.proto.get("UDP", 0) )
         msg.append( "%s TCP" % metrics.proto.get("TCP", 0) )
