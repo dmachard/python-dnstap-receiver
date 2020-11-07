@@ -396,7 +396,6 @@ su - pdns-recursor -s /bin/bash -c "dnstap_receiver -u "/var/run/pdns-recursor/d
 
 #### TCP stream
 
-
 Update the configuration file to activate the dnstap feature with tcp mode 
 and execute the dnstap receiver in listening tcp socket mode:
 
@@ -408,6 +407,8 @@ vim /etc/pdns-recursor/recursor.lua
 dnstapFrameStreamServer("10.0.0.100:6000")
 ```
 
+Note: TCP stream are only supported with a recent version of libfstrm.
+ 
 ### dnsdist
 
 ![dnsdist 1.4.0](https://img.shields.io/badge/1.4.0-tested-green) ![dnsdist 1.5.0](https://img.shields.io/badge/1.5.0-tested-green)
