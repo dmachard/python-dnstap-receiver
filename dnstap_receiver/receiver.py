@@ -28,12 +28,10 @@ from dnstap_receiver import output_syslog
 from dnstap_receiver import output_tcp
 from dnstap_receiver import output_metrics
 
-DNSTAP_TYPE = { 1: 'AUTH_QUERY', 2: 'AUTH_RESPONSE',
-                3: 'RESOLVER_QUERY', 4: 'RESOLVER_RESPONSE',
-                5: 'CLIENT_QUERY', 6: 'CLIENT_RESPONSE',
-                7: 'FORWARDER_QUERY', 8: 'FORWARDER_RESPONSE',
-                9: 'STUB_QUERY', 10: 'STUB_RESPONSE',
-                11: 'TOOL_QUERY', 12: 'TOOL_RESPONSE' }
+class UnknownValue:
+    name = "-"
+
+DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
 DNSTAP_FAMILY = {1: 'IP4', 2: 'IP6'}
 DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}    
 
@@ -53,6 +51,8 @@ import dns.exception
 import dns.opcode
 import dns.flags
 
+# waiting fix with dnspython 2.1
+# will be removed in the future
 class _WireReader(dns.message._WireReader):
     def read(self):
         """issue fixed - waiting fix with dnspython 2.1"""
@@ -70,6 +70,8 @@ class _WireReader(dns.message._WireReader):
         
         return self.message
 
+# waiting fix with dnspython 2.1
+# will be removed in the future
 def from_wire(wire, question_only=True):
     """decode wire message - waiting fix with dnspython 2.1"""
     raise_on_truncation=False
@@ -106,19 +108,17 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     # filtering by dnstap identity ?
     tap_ident = dnstap_decoder.identity.decode()
     if not len(tap_ident):
-        tap_ident = "-"
+        tap_ident = UnknownValue.name
     if cfg["filter"]["dnstap-identities"] is not None:
         if re.match(cfg["filter"]["dnstap-identities"], dnstap_decoder.identity.decode()) is None:
             del dm
             return
             
-    tap = { "identity": tap_ident,
-            "query-name": "-", 
-            "query-type": "-", 
-            "source-ip": "-"}
+    tap = { "identity": tap_ident, "query-name": UnknownValue.name, 
+            "query-type": UnknownValue.name, "source-ip": UnknownValue.name}
     
     # decode type message
-    tap["message"] = DNSTAP_TYPE.get(dm.type, "-")
+    tap["message"] = DNSTAP_TYPE.get(dm.type, UnknownValue).name
     tap["protocol"] = DNSTAP_FAMILY.get(dm.socket_family, "-")
     tap["transport"] = DNSTAP_PROTO.get(dm.socket_protocol, "-")
 
@@ -162,11 +162,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     # update metrics 
     metrics.record_dnstap(dnstap=tap)
         
-    # finally add decoded tap message in queue for outputs
-    # except for metrics
-    # if cfg["output"]["metrics"]["enable"]:
-        # return
-        
+    # append the dnstap message to the queue
     queue.put_nowait(tap)
 
 async def cb_onconnect(reader, writer, cfg, queue, metrics):
