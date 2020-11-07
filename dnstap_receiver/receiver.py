@@ -33,7 +33,7 @@ class UnknownValue:
 
 DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
 DNSTAP_FAMILY = dnstap_pb2._SOCKETFAMILY.values_by_number
-DNSTAP_PROTO = {1: 'UDP', 2: 'TCP'}    
+DNSTAP_PROTO = dnstap_pb2._SOCKETPROTOCOL.values_by_number  
 
 # command line arguments definition
 parser = argparse.ArgumentParser()
