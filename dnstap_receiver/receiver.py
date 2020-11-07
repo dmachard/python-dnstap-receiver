@@ -120,7 +120,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
     # decode type message
     tap["message"] = DNSTAP_TYPE.get(dm.type, UnknownValue).name
     tap["family"] = DNSTAP_FAMILY.get(dm.socket_family, UnknownValue).name
-    tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, "-")
+    tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, UnknownValue).name
 
     # decode query address
     if len(dm.query_address) and dm.socket_family == 1:
