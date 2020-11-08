@@ -338,7 +338,7 @@ web-api:
     # web api key
     api-key: secret
     # listening address ipv4 0.0.0.0 or ipv6 [::]
-    local-address: 0.0.0.0
+    local-address: 127.0.0.1
     # listing on port
     local-port: 8080
 ```

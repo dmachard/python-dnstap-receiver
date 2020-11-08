@@ -18,7 +18,7 @@ class Handlers:
         if req_auth is None or req_auth != self.api_key:
             return False
         return True
-        
+   
     async def handle_reset(self, request):
         auth = self.check_auth(request=request)
         if not auth:
