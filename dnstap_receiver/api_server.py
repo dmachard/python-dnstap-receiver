@@ -19,6 +19,14 @@ class Handlers:
             return False
         return True
         
+    async def handle_reset(self, request):
+        auth = self.check_auth(request=request)
+        if not auth:
+            return web.Response(status=401)
+      
+        self.stats.reset()
+        return web.json_response({"message": "success"})
+        
     async def handle_top(self, request):
         auth = self.check_auth(request=request)
         if not auth:
@@ -59,6 +67,7 @@ async def create_server(loop, cfg, stats):
  
     # endpoints
     app.router.add_get('/top', hdlrs.handle_top)
+    app.router.add_get('/reset', hdlrs.handle_reset)
 
     # create the server
     listen_address = (cfg["local-address"], cfg["local-port"])

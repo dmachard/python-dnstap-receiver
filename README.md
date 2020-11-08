@@ -27,6 +27,8 @@ in JSON, YAML or one line text format and more.
     * [Verbose mode](#verbose-mode)
     * [Filtering feature](#filtering-feature)
 * [API](#api)
+    * [Configuration](#configuration)
+    * [URL endpoints](#url-endpoints)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
@@ -324,6 +326,8 @@ filter:
 
 ## API
 
+### Configuration
+
 Enable the REST API 
 
 ```yaml
@@ -362,6 +366,26 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 
 {"top": [{"description": "Top queries noerror", "rows": [["www.google.fr.", 11]]}....
+```
+
+**GET /reset**
+
+Reset statistics
+
+Example request:
+
+```
+GET /reset HTTP/1.1
+X-API-Key: secret
+```
+
+Example response:
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+
+{"message": "success"}
 ```
 
 ## Tested DNS servers

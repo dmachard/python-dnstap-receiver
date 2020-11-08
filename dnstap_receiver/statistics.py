@@ -15,6 +15,10 @@ class Stats:
         self.clts_qr = {}
         self.clts_bw = {}
         
+    def reset(self):
+        """reset all stats"""
+        self.prepare()
+        
     def record_dnstap(self, dnstap):
         """record the dnstap message"""
         # global counter for queries
