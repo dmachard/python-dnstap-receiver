@@ -10,6 +10,8 @@ WORKDIR /home/dnstap
 COPY . /home/dnstap/
 
 RUN true \
+    && apk update \
+    && apk add gcc
     && adduser -D dnstap \
     && pip install --no-cache-dir dnspython protobuf pyyaml aiohttp\
     && cd /home/dnstap \
