@@ -4,7 +4,7 @@ import asyncio
 async def handle(cfg, queue, metrics):
     """stdout output handler"""
     
-    queries_prev = metrics.stats["total-queries"]
+    queries_prev = metrics.qr_total
     while True:
         await asyncio.sleep(cfg["interval"])
         
@@ -15,7 +15,7 @@ async def handle(cfg, queue, metrics):
  
         if not cfg["cumulative"]:
             queries_prev = 0
-        queries_cur = metrics.stats["total-queries"]
+        queries_cur = metrics.qr_total
         qps = (queries_cur - queries_prev ) / cfg["interval"] 
         queries_prev = queries_cur
         
@@ -32,8 +32,8 @@ async def handle(cfg, queue, metrics):
         msg.append( "%s NOERROR" % metrics.rcode.get("NOERROR", 0) )
         msg.append( "%s NXDOMAIN" % metrics.rcode.get("NXDOMAIN", 0) )
 
-        msg.append( "%s A" % metrics.rtype.get("A", 0) )
-        msg.append( "%s AAAA" % metrics.rtype.get("AAAA", 0) )
+        msg.append( "%s A" % metrics.qtype.get("A", 0) )
+        msg.append( "%s AAAA" % metrics.qtype.get("AAAA", 0) )
 
         # print to stdout
         logging.info(", ".join(msg))

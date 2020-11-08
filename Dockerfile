@@ -19,5 +19,6 @@ RUN true \
 USER dnstap
 
 EXPOSE 6000/tcp
+EXPOSE 8080/tcp
 
 ENTRYPOINT ["python", "-c", "from dnstap_receiver.receiver import start_receiver; start_receiver()"]

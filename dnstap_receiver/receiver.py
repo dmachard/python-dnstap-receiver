@@ -23,10 +23,14 @@ import dns.message
 
 from dnstap_receiver import dnstap_pb2 # more informations on dnstap http://dnstap.info/
 from dnstap_receiver import fstrm  # framestreams decoder
+
 from dnstap_receiver import output_stdout
 from dnstap_receiver import output_syslog
 from dnstap_receiver import output_tcp
 from dnstap_receiver import output_metrics
+
+from dnstap_receiver import api_server
+from dnstap_receiver import statistics
 
 class UnknownValue:
     name = "-"
@@ -129,7 +133,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
         tap["source-ip"] = socket.inet_ntop(socket.AF_INET6, dm.query_address)
     tap["source-port"] = dm.query_port
     if tap["source-port"] == 0:
-        tap["source-port"] = "-"
+        tap["source-port"] = UnknownValue.name
         
     # handle query message
     if (dm.type % 2 ) == 1 :
@@ -149,7 +153,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
         
     # common params
     if len(dnstap_parsed.question):
-        tap["query-name"] = dnstap_parsed.question[0].name
+        tap["query-name"] = dnstap_parsed.question[0].name.to_text()
         tap["query-type"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
     tap["code"] = dns.rcode.to_text(dnstap_parsed.rcode())
     
@@ -244,66 +248,7 @@ async def cb_onconnect(reader, writer, cfg, queue, metrics):
         logging.debug(f'Input handler: {peername} - disconnected')
     finally:
         logging.debug(f'Input handler: {peername} - closed')
-
-class Metrics:
-    def prepare(self):
-        """prepare stats"""
-        self.stats = {"total-queries": 0}
-        self.queries = {}
-        self.rtype = {}
-        self.rcode = {}
-        self.clients = {}
-        self.nxdomains = {}
-        self.proto = {}
-        self.family = {}
-    
-    def reset(self):
-        """reset statistics"""
-        del self.stats
-        del self.queries
-        del self.rtype
-        del self.rcode
-        del self.clients
-        del self.nxdomains 
-        del self.proto
-        del self.family
-        
-        self.prepare()
-        
-    def record_dnstap(self, dnstap):
-        """add dnstap message"""
-        self.stats["total-queries"] += 1
-
-        if dnstap["protocol"] not in self.proto:
-            self.proto[dnstap["protocol"]] = 1
-        else:
-            self.proto[dnstap["protocol"]] += 1
-            
-        if dnstap["family"] not in self.family:
-            self.family[dnstap["family"]] = 1
-        else:
-            self.family[dnstap["family"]] += 1
-            
-        if dnstap["query-name"] not in self.queries:
-            self.queries[dnstap["query-name"]] = 1
-        else:
-            self.queries[dnstap["query-name"]] += 1
-        
-        if dnstap["source-ip"] not in self.clients:
-            self.clients[dnstap["source-ip"]] = 1
-        else:
-            self.clients[dnstap["source-ip"]] += 1
-         
-        if dnstap["query-type"] not in self.rtype:
-            self.rtype[dnstap["query-type"]] = 1
-        else:
-            self.rtype[dnstap["query-type"]] += 1
-        
-        if dnstap["code"] not in self.rcode:
-            self.rcode[dnstap["code"]] = 1
-        else:
-            self.rcode[dnstap["code"]] += 1
-            
+     
 def start_receiver():
     """start dnstap receiver"""
     # Handle command-line arguments.
@@ -338,10 +283,12 @@ def start_receiver():
             sys.exit(1)
             
     # init logging
+    
     level = logging.INFO
     if cfg["verbose"]:
         level = logging.DEBUG
-    logging.basicConfig(format='%(asctime)s %(message)s', stream=sys.stdout, level=level)
+    logging.basicConfig(format='%(asctime)s %(message)s', 
+                        stream=sys.stdout, level=level)
 
     # start receiver and get event loop
     logging.debug("Start receiver...")
@@ -349,40 +296,39 @@ def start_receiver():
 
     # prepare output
     queue = asyncio.Queue()
-    metrics = Metrics()
-    metrics.prepare()
+    stats = statistics.Stats()
+    stats.prepare()
     
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")
         loop.create_task(output_syslog.handle(cfg["output"]["syslog"], 
                                               queue,
-                                              metrics))
+                                              stats))
         
     if cfg["output"]["tcp-socket"]["enable"]:
         logging.debug("Output handler: tcp")
         loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"],
                                            queue,
-                                           metrics))
+                                           stats))
 
     if cfg["output"]["stdout"]["enable"]:
         logging.debug("Output handler: stdout")
         loop.create_task(output_stdout.handle(cfg["output"]["stdout"],
                                               queue,
-                                              metrics))
+                                              stats))
 
     
     if cfg["output"]["metrics"]["enable"]:
         logging.debug("Output handler: metrics")
         loop.create_task(output_metrics.handle(cfg["output"]["metrics"],
                                               queue,
-                                              metrics))
-                                              
+                                              stats))
 
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
         logging.debug("Input handler: unix socket")
         logging.debug("Input handler: listening on %s" % args.u)
-        socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg, queue, metrics),
+        socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats),
                                                   path=cfg["input"]["unix-socket"]["path"],
                                                   loop=loop)
     # default mode: asynchronous tcp socket
@@ -397,7 +343,7 @@ def start_receiver():
             logging.debug("Input handler - tls support enabled")
         logging.debug("Input handler: listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
                                               cfg["input"]["tcp-socket"]["local-port"])), 
-        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg, queue, metrics),
+        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats),
                                              cfg["input"]["tcp-socket"]["local-address"],
                                              cfg["input"]["tcp-socket"]["local-port"],
                                              ssl=ssl_context,
@@ -405,9 +351,15 @@ def start_receiver():
 
     # run until complete
     loop.run_until_complete(socket_server)
+                                                  
 
-    # run event loop
+    # start the restapi
+    if cfg["web-api"]["enable"]:
+        api_svr = api_server.create_server(loop, cfg=cfg["web-api"], stats=stats)
+        loop.run_until_complete(api_svr)
+
+    # run event loop 
     try:
-        loop.run_forever()
+       loop.run_forever()
     except KeyboardInterrupt:
         pass

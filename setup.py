@@ -35,6 +35,7 @@ setuptools.setup(
     install_requires=[
         "dnspython",
         "protobuf",
-        "pyyaml"
+        "pyyaml",
+        "aiohttp"
     ]
 )
