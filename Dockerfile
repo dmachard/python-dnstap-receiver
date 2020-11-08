@@ -11,7 +11,7 @@ COPY . /home/dnstap/
 
 RUN true \
     && adduser -D dnstap \
-    && pip install --no-cache-dir dnspython protobuf pyyaml\
+    && pip install --no-cache-dir dnspython protobuf pyyaml aiohttp\
     && cd /home/dnstap \
     && chown -R dnstap:dnstap /home/dnstap \
     && true
