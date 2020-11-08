@@ -11,7 +11,7 @@ COPY . /home/dnstap/
 
 RUN true \
     && apk update \
-    && apk add gcc \
+    && apk add gcc musl-dev \
     && adduser -D dnstap \
     && pip install --no-cache-dir dnspython protobuf pyyaml aiohttp\
     && cd /home/dnstap \
