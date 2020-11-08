@@ -339,7 +339,7 @@ web-api:
     local-port: 8080
 ```
 
-To access to the API, apikey must be sent in the X-API-Key request header.
+To access to the API, key must be sent in the X-API-Key request header.
 An HTTP 401 response is returned when a wrong or no API key is received.
 
 ### URL Endpoints
@@ -361,7 +361,7 @@ Example response:
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 
-{"top": [{"description": "Top queries noerror", "rows": [["www.google.fr.", 11]]}, {"description": "Top queries nxdomain", "rows": []}, {"description": "Top queries refused", "rows": []}, {"description": "Top dnstap messages", "rows": [["CLIENT_RESPONSE", 11]]}, {"description": "Top queries type", "rows": [["ANY", 8], ["A", 2], ["TXT", 1]]}, {"description": "Top clients with most queries", "rows": [["127.0.0.1", 11]]}, {"description": "Top clients with most bandwidth", "rows": [["127.0.0.1", 906]]}, {"description": "Top responses rcode", "rows": [["NOERROR", 11]]}], "total": {"queries": 11, "udp": 3, "tcp": 8, "inet": 11, "inet6": 0}}
+{"top": [{"description": "Top queries noerror", "rows": [["www.google.fr.", 11]]}....
 ```
 
 ## Tested DNS servers
