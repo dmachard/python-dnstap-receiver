@@ -3,7 +3,6 @@ import logging
 import json
 
 from aiohttp import web
-import aiohttp_cors
 
 from collections import Counter
 
