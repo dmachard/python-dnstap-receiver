@@ -248,7 +248,16 @@ async def cb_onconnect(reader, writer, cfg, queue, metrics):
         logging.debug(f'Input handler: {peername} - disconnected')
     finally:
         logging.debug(f'Input handler: {peername} - closed')
-     
+
+def merge_cfg(u, o):
+    """merge config"""
+    for k,v in u.items():
+        if k in o:
+            if isinstance(v, dict):
+                merge_cfg(u=v,o=o[k])
+            else:
+                o[k] = v
+                
 def start_receiver():
     """start dnstap receiver"""
     # Handle command-line arguments.
@@ -269,12 +278,12 @@ def start_receiver():
     cfg["input"]["unix-socket"]["path"] = args.u
     cfg["input"]["tcp-socket"]["local-address"] = args.l
     cfg["input"]["tcp-socket"]["local-port"] = args.p
-    
+
     # overwrite config with external file ?    
     if args.c:
         try:
             with open(args.c) as file:
-                cfg.update( yaml.safe_load(file) )
+                merge_cfg(u=yaml.safe_load(file),o=cfg)
         except FileNotFoundError:
             logging.error("external config file not found")
             sys.exit(1)
@@ -283,13 +292,14 @@ def start_receiver():
             sys.exit(1)
             
     # init logging
-    
     level = logging.INFO
     if cfg["verbose"]:
         level = logging.DEBUG
     logging.basicConfig(format='%(asctime)s %(message)s', 
                         stream=sys.stdout, level=level)
 
+    if args.c:
+        logging.debug("external config file loaded")
     # start receiver and get event loop
     logging.debug("Start receiver...")
     loop = asyncio.get_event_loop()

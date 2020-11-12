@@ -33,3 +33,4 @@ jobs:
         sudo python3 -m pip install --upgrade dnspython
         sudo python3 -m unittest tests.test_receiver_tcpsocket -v
         sudo python3 -m unittest tests.test_receiver_unixsocket -v
+        sudo python3 -m unittest tests.test_external_config -v
