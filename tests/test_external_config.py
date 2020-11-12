@@ -7,7 +7,7 @@ import shlex
 class TestExternalConfig(unittest.TestCase):
     def test1_external_cfg(self):
         """test external config"""
-        cmd = 'su - _dnsdist -s /bin/bash -c \'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -c ./tests/dnstap.conf\''
+        cmd = 'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -c ./tests/dnstap.conf'
 
         args = shlex.split(cmd)
 
