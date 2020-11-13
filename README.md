@@ -28,6 +28,7 @@ in JSON, YAML or one line text format and more.
     * [Filtering feature](#filtering-feature)
 * [API](#api)
     * [Configuration](#configuration)
+    * [Security](#security)
     * [URL endpoints](#url-endpoints)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
@@ -343,8 +344,14 @@ web-api:
     local-port: 8080
 ```
 
+### Security
+
 To access to the API, key must be sent in the X-API-Key request header.
 An HTTP 401 response is returned when a wrong or no API key is received.
+
+```
+X-API-Key: secret
+```
 
 ### URL Endpoints
 
@@ -355,8 +362,7 @@ Get statistics from the dnstap-receiver in JSON format
 Example request:
 
 ```
-GET /top HTTP/1.1
-X-API-Key: secret
+GET /top
 ```
 
 Example response:
@@ -375,8 +381,7 @@ Reset statistics
 Example request:
 
 ```
-GET /reset HTTP/1.1
-X-API-Key: secret
+GET /reset
 ```
 
 Example response:
