@@ -299,7 +299,7 @@ def start_receiver():
                         stream=sys.stdout, level=level)
 
     if args.c:
-        logging.debug("external config file loaded")
+        logging.debug("External config file loaded")
     # start receiver and get event loop
     logging.debug("Start receiver...")
     loop = asyncio.get_event_loop()
