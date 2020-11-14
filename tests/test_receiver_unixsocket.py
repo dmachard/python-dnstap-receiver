@@ -2,12 +2,12 @@
 import time
 import unittest
 import subprocess
+import shlex
 import dns.resolver
 
 my_resolver = dns.resolver.Resolver(configure=False)
 my_resolver.nameservers = ['127.0.0.1']
 
-import shlex
 class TestUnixSocket(unittest.TestCase):
     def test1_listening(self):
         """test listening unix socket"""
