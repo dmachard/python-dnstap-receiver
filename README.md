@@ -21,7 +21,7 @@ in JSON, YAML or one line text format and more.
     * [Stdout](#stdout)
     * [TCP socket](#tcp-socket)
     * [Syslog](#syslog)
-    * [Metrics](#metrics)
+    * [Metrics](#sdout-metrics)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
