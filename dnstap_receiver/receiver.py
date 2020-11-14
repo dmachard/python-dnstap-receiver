@@ -164,7 +164,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
             return
 
     # update metrics 
-    metrics.record_dnstap(dnstap=tap)
+    metrics.record(dnstap=tap)
         
     # append the dnstap message to the queue
     queue.put_nowait(tap)
@@ -306,9 +306,8 @@ def start_receiver():
 
     # prepare output
     queue = asyncio.Queue()
-    stats = statistics.Stats()
-    stats.prepare()
-    
+    stats = statistics.Statistics()
+
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")
         loop.create_task(output_syslog.handle(cfg["output"]["syslog"], 

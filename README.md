@@ -271,7 +271,7 @@ Example of output
 
 ```
 2020-10-13 05:19:35,522 18 QUERIES, 3.6 QPS, 1 CLIENTS, 18 INET, 0 INET6, 
-18 UDP, 0 TCP, 17 NOERROR, 1 NXDOMAIN, 18 A, 0 AAAA
+18 UDP, 0 TCP, 17 DOMAINS
 ```
 
 ## More options
@@ -362,7 +362,7 @@ Get statistics from the dnstap-receiver in JSON format
 Example request:
 
 ```
-GET /top
+GET /top?[max=1]&[streams=identity]
 ```
 
 Example response:
@@ -371,7 +371,29 @@ Example response:
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 
-{"top": [{"description": "Top queries noerror", "rows": [["www.google.fr.", 11]]}....
+{
+    "streams": [ "-" ], 
+    "current": null, 
+    "top": {
+        "clients": [["127.0.0.1", 4]],
+        "clients-bw": [["127.0.0.1", 456]],
+        "queries-types": [["A", 4]],
+        "dnstap-types": [["CLIENT_RESPONSE", 4]], 
+        "responses-codes": [["NOERROR", 4]], 
+        "responses-noerror": [["www.google.com.", 4]],
+        "responses-nx": [], 
+        "responses-refused": [], 
+        "responses-other": []}, 
+    "total": {
+        "clients": 1, 
+        "domains": 1,
+        "UDP": 4, 
+        "TCP": 0, 
+        "INET": 4, 
+        "INET6": 0, 
+        "queries": 4
+        }
+}
 ```
 
 **GET /reset**

@@ -4,8 +4,6 @@ import json
 
 from aiohttp import web
 
-from collections import Counter
-
 class Handlers:
     def __init__(self, apikey, stats):
         self.api_key = apikey
@@ -32,30 +30,13 @@ class Handlers:
         if not auth:
             return web.Response(status=401)
 
-        data = { "top": [ 
-                            { "description": "Top queries noerror",
-                              "rows":  Counter(self.stats.qr_noerror).most_common(self.top) },
-                            { "description": "Top queries nxdomain",
-                              "rows": Counter(self.stats.qr_nxdomains).most_common(self.top) },
-                            { "description": "Top queries refused",
-                              "rows": Counter(self.stats.qr_refused).most_common(self.top) },
-                            { "description": "Top dnstap messages",
-                              "rows": Counter(self.stats.dtype).most_common(self.top) },
-                            { "description": "Top queries type",
-                              "rows": Counter(self.stats.qtype).most_common(self.top) },
-                            { "description": "Top clients with most queries",
-                              "rows": Counter(self.stats.clts_qr).most_common(self.top) },
-                            { "description": "Top clients with most bandwidth",
-                              "rows": Counter(self.stats.clts_bw).most_common(self.top) },
-                            { "description": "Top responses rcode",
-                              "rows": Counter(self.stats.rcode).most_common(self.top) }
-                        ],
-                  "total": { "queries": self.stats.qr_total, 
-                             "udp": self.stats.proto["UDP"],
-                             "tcp": self.stats.proto["TCP"],
-                             "inet": self.stats.family["INET"],
-                             "inet6": self.stats.family["INET6"] }
-                }
+        top = request.query.get("max", self.top)
+        stream = request.query.get("stream", None)
+
+        data = { "streams": self.stats.get_nameslist(),
+                 "current": stream,
+                 "top": self.stats.get_mostcommon(top,stream),
+                 "total": self.stats.get_counters(stream) }
         return web.json_response(data)
 
 async def create_server(loop, cfg, stats):
