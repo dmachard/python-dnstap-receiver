@@ -24,6 +24,6 @@ class TestApiServer(unittest.TestCase):
         """check if the api is running properly"""
         time.sleep(2)
         
-        o = proc.stdout.read()
+        o = self.proc.stdout.read()
         print(o)
         self.assertRegex(o, b"Api rest: listening on 127.0.0.1:8080")
