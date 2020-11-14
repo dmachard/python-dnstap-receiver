@@ -307,15 +307,23 @@ def start_receiver():
 
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")
-        loop.create_task(output_syslog.handle(cfg["output"]["syslog"], 
+        if cfg["output"]["tcp-socket"]["remote-address"] is None or \
+            cfg["output"]["tcp-socket"]["remote-port"] is None:
+            logging.error("Output handler: no remote address or port provided")
+        else:
+            loop.create_task(output_syslog.handle(cfg["output"]["syslog"], 
                                               queue,
                                               stats))
         
     if cfg["output"]["tcp-socket"]["enable"]:
         logging.debug("Output handler: tcp")
-        loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"],
-                                           queue,
-                                           stats))
+        if cfg["output"]["tcp-socket"]["remote-address"] is None or \
+            cfg["output"]["tcp-socket"]["remote-port"] is None:
+            logging.error("Output handler: no remote address or port provided")
+        else:
+            loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"],
+                                               queue,
+                                               stats))
 
     if cfg["output"]["stdout"]["enable"]:
         logging.debug("Output handler: stdout")
