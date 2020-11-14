@@ -337,7 +337,7 @@ web-api:
     # enable or disable
     enable: true
     # web api key
-    api-key: secret
+    api-key: changeme
     # listening address ipv4 0.0.0.0 or ipv6 [::]
     local-address: 127.0.0.1
     # listing on port
@@ -357,12 +357,16 @@ X-API-Key: secret
 
 **GET /top**
 
-Get statistics from the dnstap-receiver in JSON format
+Get statistics from the dnstap-receiver in JSON format.
+This endpoint accepts a top or stream query for different statistics:
 
+- max: number of elements to return
+- stream: return statistic according to the dnstap identity or all if not provided
+ 
 Example request:
 
 ```
-GET /top?[max=1]&[streams=identity]
+GET /top?max=10
 ```
 
 Example response:
@@ -409,9 +413,6 @@ GET /reset
 Example response:
 
 ```
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
-
 {"message": "success"}
 ```
 
