@@ -34,3 +34,4 @@ jobs:
         sudo python3 -m unittest tests.test_receiver_tcpsocket -v
         sudo python3 -m unittest tests.test_receiver_unixsocket -v
         sudo python3 -m unittest tests.test_external_config -v
+        sudo python3 -m unittest tests.test_api_server -v
