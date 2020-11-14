@@ -16,18 +16,15 @@ import dns.rcode
 import dns.rdatatype
 import dns.message
 
-# wget https://raw.githubusercontent.com/dnstap/dnstap.pb/master/dnstap.proto
-# wget https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip
-# python3 -m pip install protobuf
-# bin/protoc --python_out=. dnstap.proto
+# import framestreams and dnstap protobuf decoder
+from dnstap_receiver.codec import dnstap_pb2 
+from dnstap_receiver.codec import fstrm 
 
-from dnstap_receiver import dnstap_pb2 # more informations on dnstap http://dnstap.info/
-from dnstap_receiver import fstrm  # framestreams decoder
-
-from dnstap_receiver import output_stdout
-from dnstap_receiver import output_syslog
-from dnstap_receiver import output_tcp
-from dnstap_receiver import output_metrics
+# import all outputs
+from dnstap_receiver.outputs import output_stdout
+from dnstap_receiver.outputs import output_syslog
+from dnstap_receiver.outputs import output_tcp
+from dnstap_receiver.outputs import output_metrics
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
