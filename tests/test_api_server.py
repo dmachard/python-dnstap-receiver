@@ -10,20 +10,20 @@ api_key = "changeme"
 
 class TestApiServer(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """start the receiver"""
         print("starting receiver")
         cmd = 'python3 -c "from dnstap_receiver.receiver '
         cmd += 'import start_receiver; start_receiver()"'
-        self.proc = subprocess.Popen(shlex.split(cmd), 
+        cls.proc = subprocess.Popen(shlex.split(cmd), 
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT)
         time.sleep(2)
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """kill the process"""
         print("stop receiver")
-        self.proc.kill()
+        cls.proc.kill()
         
     def test1_authvalid(self):
         """test valid authentication"""
