@@ -358,9 +358,8 @@ X-API-Key: secret
 **GET /top**
 
 Get statistics from the dnstap-receiver in JSON format.
-This endpoint accepts a top or stream query for different statistics:
-
-- max: number of elements to return
+This endpoint accepts optional arguments in the query:
+- max: number of elements to return, default is 10
 - stream: return statistic according to the dnstap identity or all if not provided
  
 Example request:
