@@ -21,7 +21,7 @@ in JSON, YAML or one line text format and more.
     * [Stdout](#stdout)
     * [TCP socket](#tcp-socket)
     * [Syslog](#syslog)
-    * [Metrics](#sdout-metrics)
+    * [Metrics](#stdout-metrics)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -464,7 +464,7 @@ su - named -s /bin/bash -c "dnstap_receiver -u "/var/run/named/dnstap.sock""
 
 ### pdns-recursor
 
-![pdns-recursor 4.3.4](https://img.shields.io/badge/4.3.4-tested-green)
+![pdns-recursor 4.3.4](https://img.shields.io/badge/4.3.4-tested-green) ![pdns-recursor 4.4.0](https://img.shields.io/badge/4.4.0-tested-green)
 
 Dnstap messages supported:
  - RESOLVER_QUERY
