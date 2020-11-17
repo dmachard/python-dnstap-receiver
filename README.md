@@ -170,8 +170,8 @@ JSON format:
 ```json
 {
     "identity": "dev-centos8",
-    "query-name": "www.google.com.",
-    "query-type": "A",
+    "qname": "www.google.com.",
+    "rrtype": "A",
     "source-ip": "192.168.1.114",
     "message": "CLIENT_QUERY",
     "family": "INET",
@@ -179,19 +179,19 @@ JSON format:
     "source-port": 42222,
     "length": 43,
     "timestamp": "2020-09-16T18:51:53.591736+00:00",
-    "code": "NOERROR"
+    "rcode": "NOERROR"
 }
 ```
 
 YAML format:
 
 ```yaml
-code: NOERROR
+rcode: NOERROR
 length: 49
 message: RESOLVER_QUERY
 family: INET
-query-name: dns4.comlaude-dns.eu.
-query-type: AAAA
+qname: dns4.comlaude-dns.eu.
+rrtype: AAAA
 source-ip: '-'
 source-port: '-'
 timestamp: '2020-09-16T18:51:53.591736+00:00'
@@ -359,8 +359,8 @@ X-API-Key: secret
 
 Get statistics from the dnstap-receiver in JSON format.
 This endpoint accepts optional arguments in the query:
-- max: number of elements to return, default is 10
-- stream: return statistic according to the dnstap identity or all if not provided
+- **max** (default is 10): number of elements to return
+- **stream**: return statistic according to the dnstap identity or all if not provided
  
 Example request:
 

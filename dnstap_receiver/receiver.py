@@ -150,9 +150,9 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
         
     # common params
     if len(dnstap_parsed.question):
-        tap["query-name"] = dnstap_parsed.question[0].name.to_text()
-        tap["query-type"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
-    tap["code"] = dns.rcode.to_text(dnstap_parsed.rcode())
+        tap["qname"] = dnstap_parsed.question[0].name.to_text()
+        tap["rrtype"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
+    tap["rcode"] = dns.rcode.to_text(dnstap_parsed.rcode())
     
     # filtering by qname ?
     if cfg["filter"]["qname-regex"] is not None:
@@ -304,7 +304,7 @@ def start_receiver():
     # prepare output
     queue = asyncio.Queue()
     stats = statistics.Statistics()
-
+                                              
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")
         if cfg["output"]["tcp-socket"]["remote-address"] is None or \
