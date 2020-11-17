@@ -8,14 +8,14 @@ def convert_dnstap(fmt, tapmsg):
         msg_list.append("%s" % tapmsg["timestamp"])
         msg_list.append("%s" % tapmsg["identity"])
         msg_list.append("%s" % tapmsg["message"])
-        msg_list.append("%s" % tapmsg["code"]) 
+        msg_list.append("%s" % tapmsg["rcode"]) 
         msg_list.append("%s" % tapmsg["source-ip"])
         msg_list.append("%s" % tapmsg["source-port"])
         msg_list.append("%s" % tapmsg["family"])
         msg_list.append("%s" % tapmsg["protocol"])
         msg_list.append("%sb" % tapmsg["length"])
-        msg_list.append("%s" % tapmsg["query-name"])
-        msg_list.append("%s" % tapmsg["query-type"])
+        msg_list.append("%s" % tapmsg["qname"])
+        msg_list.append("%s" % tapmsg["rrtype"])
         
         msg = " ".join(msg_list)
         del msg_list
