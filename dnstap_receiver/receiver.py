@@ -304,7 +304,7 @@ def start_receiver():
     # prepare output
     queue = asyncio.Queue()
     stats = statistics.Statistics()
-    loop.create_task(statistics.watcher(cfg["statistics"],stats))
+    #loop.create_task(statistics.watcher(cfg["statistics"],stats))
     
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")
