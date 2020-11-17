@@ -36,41 +36,41 @@ class StatsStream:
             self.buf["dnstap-types"][dnstap["message"]] += 1
         
         # count unique domains according to the return code
-        if dnstap["code"] == "NOERROR":
-            if dnstap["query-name"] not in self.buf["responses-noerror"]:
-                self.buf["responses-noerror"][dnstap["query-name"]] = 1
+        if dnstap["rcode"] == "NOERROR":
+            if dnstap["qname"] not in self.buf["responses-noerror"]:
+                self.buf["responses-noerror"][dnstap["qname"]] = 1
             else:
-                self.buf["responses-noerror"][dnstap["query-name"]] += 1
+                self.buf["responses-noerror"][dnstap["qname"]] += 1
             
-        elif dnstap["code"] == "NXDOMAIN": 
+        elif dnstap["rcode"] == "NXDOMAIN": 
             if dnstap["query-name"] not in self.buf["responses-nx"]:
-                self.buf["responses-nx"][dnstap["query-name"]] = 1
+                self.buf["responses-nx"][dnstap["qname"]] = 1
             else:
-                self.buf["responses-nx"][dnstap["query-name"]] += 1
+                self.buf["responses-nx"][dnstap["qname"]] += 1
                 
-        elif dnstap["code"] == "REFUSED": 
-            if dnstap["query-name"] not in self.buf["responses-refused"]:
-                self.buf["responses-refused"][dnstap["query-name"]] = 1
+        elif dnstap["rcode"] == "REFUSED": 
+            if dnstap["qname"] not in self.buf["responses-refused"]:
+                self.buf["responses-refused"][dnstap["qname"]] = 1
             else:
-                self.buf["responses-refused"][dnstap["query-name"]] += 1
+                self.buf["responses-refused"][dnstap["qname"]] += 1
                 
         else:
-            if dnstap["query-name"] not in self.buf["responses-other"]:
-                self.buf["responses-other"][dnstap["query-name"]] = 1
+            if dnstap["qname"] not in self.buf["responses-other"]:
+                self.buf["responses-other"][dnstap["qname"]] = 1
             else:
-                self.buf["responses-other"][dnstap["query-name"]] += 1
+                self.buf["responses-other"][dnstap["qname"]] += 1
 
         # count per return code
-        if dnstap["query-type"] not in self.buf["queries-types"]:
-            self.buf["queries-types"][dnstap["query-type"]] = 1
+        if dnstap["rrtype"] not in self.buf["queries-types"]:
+            self.buf["queries-types"][dnstap["rrtype"]] = 1
         else:
-            self.buf["queries-types"][dnstap["query-type"]] += 1
+            self.buf["queries-types"][dnstap["rrtype"]] += 1
         
         # count per return code 
-        if dnstap["code"] not in self.buf["responses-codes"]:
-            self.buf["responses-codes"][dnstap["code"]] = 1
+        if dnstap["rcode"] not in self.buf["responses-codes"]:
+            self.buf["responses-codes"][dnstap["rcode"]] = 1
         else:
-            self.buf["responses-codes"][dnstap["code"]] += 1
+            self.buf["responses-codes"][dnstap["rcode"]] += 1
         
         # count the number of queries per client ip
         if dnstap["source-ip"] not in self.buf["clients"]:
@@ -146,10 +146,10 @@ class Statistics:
             
             counters["nxdomains"] += len(s.buf["responses-nx"])
 
-            if "A" in s.buf["queries-types"]:
-                counters["A"] += s.buf["queries-types"]["A"]
-            if "AAAA" in s.buf["queries-types"]:
-                counters["AAAA"] += s.buf["queries-types"]["AAAA"]
+            if "A" in s.buf["rrtypes"]:
+                counters["A"] += s.buf["rrçtypes"]["A"]
+            if "AAAA" in s.buf["rrtypes"]:
+                counters["AAAA"] += s.buf["rrtypes"]["AAAA"]
                 
         return counters
  
