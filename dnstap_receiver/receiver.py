@@ -372,7 +372,10 @@ def start_receiver():
 
     # start the restapi
     if cfg["web-api"]["enable"]:
-        api_svr = api_server.create_server(loop, cfg=cfg["web-api"], stats=stats)
+        api_svr = api_server.create_server(loop, 
+                                           cfg=cfg["web-api"], 
+                                           stats=stats, 
+                                           cfg_stats=cfg["statistics"])
         loop.run_until_complete(api_svr)
 
     # run event loop 

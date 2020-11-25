@@ -72,9 +72,9 @@ class Handlers:
         data = { "streams": self.stats.get_nameslist() }
         return web.json_response(data)
         
-async def create_server(loop, cfg, stats):
+async def create_server(loop, cfg, stats, cfg_stats):
     # api ressources
-    hdlrs = Handlers(cfg["api-key"], stats, cfg["statistics"])
+    hdlrs = Handlers(cfg["api-key"], stats, cfg_stats)
     
     # rest api server
     app = web.Application(loop=loop)
