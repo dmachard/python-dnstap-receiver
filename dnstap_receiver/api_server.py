@@ -48,10 +48,10 @@ class Handlers:
 
         n = request.query.get("n", self.top)
         s = request.query.get("stream", None)
-        more_filters = request.query.get("more".split(","), [])
+        more_filters = request.query.get("more", [])
 
         filters = ["noerror/response", "nxdomain/response"]
-        filters.extend(more_filters)
+        filters.extend(more_filters.split(","))
 
         data = { "stream": s,
                  "top-domain": self.stats.top_domains(int(n),s, filters=filters),
