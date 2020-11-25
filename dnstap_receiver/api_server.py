@@ -36,7 +36,7 @@ class Handlers:
 
         filters = [ "clients", "domains", "query", "response", "qps",
                      "response/noerror", "response/nxdomain" ]
-        filters.extend(more_filters)
+        filters.extend(more_filters.split(","))
         
         data = {"stream": s, "counters": self.stats.get_counters(s, filters=filters)}
         return web.json_response(data)
@@ -48,7 +48,7 @@ class Handlers:
 
         n = request.query.get("n", self.top)
         s = request.query.get("stream", None)
-        more_filters = request.query.get("more", [])
+        more_filters = request.query.get("more".split(","), [])
 
         filters = ["noerror/response", "nxdomain/response"]
         filters.extend(more_filters)

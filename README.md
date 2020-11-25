@@ -264,7 +264,7 @@ output:
     # print every N seconds.
     interval: 300
     # cumulative statistics, without clearing them after printing
-    cumulative: false
+    cumulative: true
 ```
 
 Example of output
@@ -381,7 +381,15 @@ Example JSON response:
 Get some counters like number of queries, clients, ...
 This endpoint accepts optional arguments in the query:
 - **more**: additional counters to return
- 
+    - query|response: total of queries or response
+    - qps: query per second
+    - clients: total unique clients ip
+    - domains: total unique domains
+    - query|response/[inet|inet6] : total of IPv4 or IPv6 queries or responses
+    - query|response/[udp|tcp]: total of queries or responses with UDP or TCP protocol
+    - query|response/[rcode]: total of queries or responses according to the rcode (noerror, nxdomain, ...)
+    - query|response/[rrtype]: total of queries or responses acccording to the record resource type (a, aaaa, ...)
+                               
 Example request:
 
 ```
@@ -412,7 +420,9 @@ This endpoint accepts optional arguments in the query:
 - **n** (default is 10): number of elements to return
 - **stream**: return statistic according to the dnstap identity or all if not provided
 - **more**: additional criteria to return for top domain
- 
+    - [rcode]/response|query: top n domains according to the rcode (noerror, nxdomain, refused, ...)
+    - [rrtype]/response|query: top n domains according to the rrtype (aa, aaaa, cname, ...)
+    
 Example request:
 
 ```
