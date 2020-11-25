@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import sys
 
 metrics_logger = logging.getLogger("dnstap_receiver.output.metrics")
 
