@@ -487,13 +487,13 @@ Reset statistics
 Example request:
 
 ```
-GET /reset
+DELETE /reset
 ```
 
 Example response:
 
 ```
-{"message": "success"}
+204 No Content
 ```
 
 ## Tested DNS servers
