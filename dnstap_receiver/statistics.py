@@ -1,115 +1,152 @@
 
 from collections import Counter
+import asyncio
+import re
 
+# watcher for compute qps
+async def watcher(statistics):
+    """watcher for statistics"""
+    while True:
+        # sleep during one second
+        await asyncio.sleep(1)
+        
+        # compute qps every interval
+        statistics.compute_qps()
+        
 class StatsStream:
     def __init__(self, name):
         """constructor"""
         self.name = name
-        self.cnt = {
-                "UDP": 0, "TCP": 0,
-                "INET": 0, "INET6": 0,
-                "queries": 0
-            }
-        self.buf = {
-                "clients": {}, "clients-bw": {},
-                "queries-types": {}, "dnstap-types": {},
-                "responses-codes": {}, "responses-noerror": {},
-                "responses-nx":{}, "responses-refused": {},
-                "responses-other": {},
-            }
-        
-    def record(self, dnstap):
-        """record dnstap message"""
-        # global counter for queries
-        self.cnt["queries"] += 1
-        
-        # count query by the protocol udp or tcp
-        self.cnt[dnstap["protocol"]] += 1
-        
-        # count query by family
-        self.cnt[dnstap["family"]] += 1
-        
-        # count dnstap message per type
-        if dnstap["message"] not in self.buf["dnstap-types"]:
-            self.buf["dnstap-types"][dnstap["message"]] = 1
-        else:
-            self.buf["dnstap-types"][dnstap["message"]] += 1
-        
-        # count unique domains according to the return code
-        if dnstap["rcode"] == "NOERROR":
-            if dnstap["qname"] not in self.buf["responses-noerror"]:
-                self.buf["responses-noerror"][dnstap["qname"]] = 1
-            else:
-                self.buf["responses-noerror"][dnstap["qname"]] += 1
-            
-        elif dnstap["rcode"] == "NXDOMAIN": 
-            if dnstap["query-name"] not in self.buf["responses-nx"]:
-                self.buf["responses-nx"][dnstap["qname"]] = 1
-            else:
-                self.buf["responses-nx"][dnstap["qname"]] += 1
-                
-        elif dnstap["rcode"] == "REFUSED": 
-            if dnstap["qname"] not in self.buf["responses-refused"]:
-                self.buf["responses-refused"][dnstap["qname"]] = 1
-            else:
-                self.buf["responses-refused"][dnstap["qname"]] += 1
-                
-        else:
-            if dnstap["qname"] not in self.buf["responses-other"]:
-                self.buf["responses-other"][dnstap["qname"]] = 1
-            else:
-                self.buf["responses-other"][dnstap["qname"]] += 1
 
-        # count per return code
-        if dnstap["rrtype"] not in self.buf["queries-types"]:
-            self.buf["queries-types"][dnstap["rrtype"]] = 1
-        else:
-            self.buf["queries-types"][dnstap["rrtype"]] += 1
+        self.bufq = {}
+        self.bufr = {}
+        self.bufi = {}
+
+        self.prev_qr = 0
         
-        # count per return code 
-        if dnstap["rcode"] not in self.buf["responses-codes"]:
-            self.buf["responses-codes"][dnstap["rcode"]] = 1
-        else:
-            self.buf["responses-codes"][dnstap["rcode"]] += 1
+        self.cnts = Counter()
+        self.cnts_rcode = Counter()
+        self.cnts_rrtype = Counter()
+
+    def record(self, tap):
+        """record only response dnstap message"""
+        qname = tap["qname"]; srcip = tap["source-ip"]; 
+        qr = tap["type"]; rcode = tap["rcode"]; rrtype = tap["rrtype"]
         
-        # count the number of queries per client ip
-        if dnstap["source-ip"] not in self.buf["clients"]:
-            self.buf["clients"][dnstap["source-ip"]] = 1
-        else:
-            self.buf["clients"][dnstap["source-ip"]] += 1
-            
-        # count the total bandwidth per client ip
-        if dnstap["source-ip"] not in self.buf["clients-bw"]:
-            self.buf["clients-bw"][dnstap["source-ip"]] = dnstap["length"]
-        else:
-            self.buf["clients-bw"][dnstap["source-ip"]] += dnstap["length"]
-            
+        # count number of hit and bytes for each source ip
+        if srcip not in self.bufi: self.bufi[srcip] = Counter()
+        for i in ["hit", "length"]:
+            self.bufi[srcip].update({i:tap.get(i, 1)})
+        self.cnts["clients"] = len(self.bufi)
+        
+        # count number of dnstap query or response.
+        self.cnts.update({qr:1})
+        
+        # count number of dnstap according to the protocol and family
+        self.cnts.update({"%s/%s" % (qr,tap["protocol"].lower()):1})
+        self.cnts.update({"%s/%s" % (qr,tap["family"].lower()):1})
+
+        # prepare the buffer according to the dnstap message
+        buf = self.bufq if qr == "query" else self.bufr 
+        if qname not in buf: buf[qname] = Counter()
+
+        # count number of hit and byte for each qname
+        buf[qname].update({"hit": 1})
+        buf[qname].update({"length": tap["length"]})
+        
+        # count number of rcode and rrtype for each qname
+        buf[qname].update({rcode.lower(): 1})
+        buf[qname].update({rrtype.lower(): 1})
+        
+        # count number of rcode and rrtype for each qname
+        self.cnts_rcode.update({ "%s/%s" % (qr,rcode.lower()): 1})
+        self.cnts_rrtype.update({ "%s/%s" % (qr,rrtype.lower()): 1})
+
+        # finaly count number of unique domains
+        qnames = set(self.bufq)
+        qnames.update(set(self.bufr))
+        self.cnts["domains"] = len(qnames)
+
     def reset(self):
         """reset the stream"""
-        # reset all counters to zero
-        for k,v in self.cnt.items():
-            self.cnt[k] = 0
-            
-        # reset all buffers
-        for k,v in self.buf.items():
-            self.buf[k].clear()
+        # reset all counters and buffers
+        self.bufi.clear()
+        self.bufq.clear()
+        self.bufr.clear()
+        
+        self.cnts.clear()
+        self.cnts_rcode.clear()
+        self.cnts_rrtype.clear()
+        
+        self.prev_qr = 0
 
+    def compute_qps(self):
+        """compute qps query/qps and response/qps"""
+        cur_qr = self.cnts.get("query", 0)
+        if cur_qr == 0: return
+
+        qps = cur_qr - self.prev_qr
+        if qps < 0: qps = 0
+        self.cnts["qps"]  = qps
+        self.prev_qr = cur_qr
+        
 class Statistics:
     def __init__(self):
         """constructor"""
         self.streams = {}
         
-    def record(self, dnstap):
+        # Counter({'query/response': <int>, 'query|response/udp|tcp': <int>, 
+        # 'query|response/inet|inet6': <int>, 'domains': <int>, 'clients': <int>})
+        self.cnts = Counter()
+        # Counter({'query|response/<rcode>': <int>})
+        self.cnts_rcode = Counter()
+        # Counter({'query|response/<rrtype>': <int>})
+        self.cnts_rrtype = Counter()
+        
+        self.global_qps = Counter()
+        
+    def record(self, tap):
         """record dnstap message"""
-        if dnstap["identity"] not in self.streams:
-            s = StatsStream(name=dnstap["identity"])
-            self.streams[dnstap["identity"]] = s
-        self.streams[dnstap["identity"]].record(dnstap=dnstap)
-          
+        if tap["identity"] not in self.streams:
+            s = StatsStream(name=tap["identity"])
+            self.streams[tap["identity"]] = s
+        self.streams[tap["identity"]].record(tap=tap)
+    
+        # update global counters
+        self.update_counters()
+        
+    def update_counters(self):
+        """create global counters"""
+        # update global counters
+        self.cnts.clear()
+        self.cnts_rcode.clear()
+        self.cnts_rrtype.clear()
+        qnames = set()
+        ips = set()
+        for s in self.streams:
+            ips.update(set(self.streams[s].bufi))
+            
+            qnames.update(set(self.streams[s].bufr))
+            qnames.update(set(self.streams[s].bufq))
+            
+            self.cnts.update(self.streams[s].cnts)
+            self.cnts_rcode.update(self.streams[s].cnts_rcode)
+            self.cnts_rrtype.update(self.streams[s].cnts_rrtype)
+  
+        self.cnts["clients"] = len(ips)
+        self.cnts["domains"] = len(qnames)
+  
     def reset(self):
         """reset all streams"""
-        for _,s in self.streams.items():
+        # reset all counters and buffer in all streams
+        for s in self.get_streams():
             s.reset()
+
+        # reset global counters
+        self.cnts.clear()
+        self.cnts_rcode.clear()
+        self.cnts_rrtype.clear()
+        self.global_qps.clear()
 
     def get_streams(self, stream=None):
         """return list of stream object"""
@@ -125,50 +162,82 @@ class Statistics:
     def get_nameslist(self):
         """return stream name in a list"""
         return list(self.streams.keys())
-  
-    def get_counters(self, stream=None):
-        """return all counters"""
-        counters = { "UDP": 0, "TCP": 0,
-                     "INET": 0, "INET6": 0, "queries": 0,
-                     "clients": 0, "domains": 0, 
-                     "nxdomains": 0, "A": 0, "AAAA": 0 }
-        for s in self.get_streams(stream=stream):    
-            for k,v in s.cnt.items():
-                if k not in counters:
-                    counters[k] = 0
-                counters[k] += v
-                
-            counters["clients"] += len(s.buf["clients"])
-            
-            domains = len(s.buf["responses-noerror"]) + len(s.buf["responses-nx"]) + \
-                      len(s.buf["responses-refused"]) + len(s.buf["responses-other"])
-            counters["domains"] += domains
-            
-            counters["nxdomains"] += len(s.buf["responses-nx"])
 
-            if "A" in s.buf["rrtypes"]:
-                counters["A"] += s.buf["rrçtypes"]["A"]
-            if "AAAA" in s.buf["rrtypes"]:
-                counters["AAAA"] += s.buf["rrtypes"]["AAAA"]
-                
-        return counters
- 
-    def get_mostcommon(self, max, stream=None):
-        """return top list"""
-        # aggregation of all most common values
-        mostcommon_ = {}
-        for s in self.get_streams(stream=stream):
-            for k,v in s.buf.items():
-                if k not in mostcommon_:
-                    mostcommon_[k] = {}
-                for k2,v2 in Counter(v).most_common(int(max)):
-                    if k2 in mostcommon_[k]:
-                        mostcommon_[k][k2] += v2
-                    else:
-                        mostcommon_[k][k2] = v2
+    def compute_qps(self):
+        """create some global counters"""
+        self.global_qps.clear()
         
-        # return final most commons list
-        mostcommon = {}
-        for k,v in mostcommon_.items():
-            mostcommon[k] = Counter(v).most_common(int(max))
-        return mostcommon
+        for s in self.get_streams():
+            s.compute_qps()
+            self.global_qps.update({"qps": s.cnts["qps"]})
+        
+        self.cnts["qps"] = self.global_qps["qps"]
+      
+    def get_counters(self, stream=None, filters=[]):
+        """return all counters"""
+        # get computed counters according to the stream
+        # if the stream is not found, return the global counters
+        s = self.streams.get(stream)
+        _cnt = Counter()
+        if s is None:
+            _cnt.update(self.cnts)
+            _cnt.update(self.cnts_rcode)
+            _cnt.update(self.cnts_rrtype)
+        else:
+            _cnt.update(s.cnts)
+            _cnt.update(s.cnts_rcode)
+            _cnt.update(s.cnts_rrtype)
+
+        # set counters
+        c = {}
+        for f in filters:
+            c[f] = _cnt.get(f,0)
+            
+        return c
+
+    def top_dnscode(self, n, stream=None, rcode=True):
+        """return top- hit/response|query"""
+        top = {}
+        s = self.streams.get(stream)
+        if rcode:
+            cnt = s.cnts_rcode if s is not None else self.cnts_rcode
+        else:
+            cnt = s.cnts_rrtype if s is not None else self.cnts_rrtype
+            
+        for qr in [ "query", "response" ]:
+            cnt_ = Counter(dict(filter(lambda x:x[0].startswith("%s" % qr), cnt.items())))
+            top["hit/%s" % qr] = cnt_.most_common(n)
+        return top
+
+    def top_clients(self, n, stream):
+        """return top clients"""
+        top = {}
+        for flag in [ "hit", "length" ]:
+            cnt_ = Counter()
+            for s in self.get_streams(stream=stream):
+                for ip in s.bufi: 
+                    cnt_.update({ip:s.bufi[ip][flag]})         
+            top["%s/ip" % flag] = cnt_.most_common(n)
+        return top
+    
+    def top_domains(self, n, stream, filters=[]):
+        """return top domains"""
+        top = {}
+        for flag in filters:
+            
+            if "/" not in flag: break
+            by, qr = flag.split("/")
+            if qr not in ["query", "response"]: break
+            
+            top_list = []
+            for s in self.get_streams(stream=stream):
+                s_ = s.bufq if qr == "query" else s.bufr
+                f = filter(lambda x:x[1].get(by, 0) > 0, s_.items())
+                top_list.extend( sorted(f, key= lambda x:x[1][by], reverse=True)[:n] )
+
+            # remove duplicate
+            cnt_ = Counter()
+            for (domain, counters) in top_list:
+                cnt_.update({domain: counters[by]})
+            top[flag] = cnt_.most_common(n)
+        return top

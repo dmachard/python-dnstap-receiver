@@ -139,6 +139,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
+        tap["type"] = "query"
         
     # handle response message
     if (dm.type % 2 ) == 0 :
@@ -147,6 +148,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
         tap["length"] = len(dm.response_message)
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
+        tap["type"] = "response"
         
     # common params
     if len(dnstap_parsed.question):
@@ -161,7 +163,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
             return
 
     # update metrics 
-    metrics.record(dnstap=tap)
+    metrics.record(tap=tap)
         
     # append the dnstap message to the queue
     queue.put_nowait(tap)
@@ -304,7 +306,7 @@ def start_receiver():
     # prepare output
     queue = asyncio.Queue()
     stats = statistics.Statistics()
-    #loop.create_task(statistics.watcher(cfg["statistics"],stats))
+    loop.create_task(statistics.watcher(stats))
     
     if cfg["output"]["syslog"]["enable"]:
         logging.debug("Output handler: syslog")

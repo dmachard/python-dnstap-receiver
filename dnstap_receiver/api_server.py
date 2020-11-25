@@ -25,20 +25,49 @@ class Handlers:
         self.stats.reset()
         return web.json_response({"message": "success"})
         
+    async def handle_count(self, request):
+        auth = self.check_auth(request=request)
+        if not auth:
+            return web.Response(status=401)
+
+        n = request.query.get("n", self.top)
+        s = request.query.get("stream", None)
+        more_filters = request.query.get("more", [])
+
+        filters = [ "clients", "domains", "query", "response", "qps",
+                     "response/noerror", "response/nxdomain" ]
+        filters.extend(more_filters)
+        
+        data = {"stream": s, "counters": self.stats.get_counters(s, filters=filters)}
+        return web.json_response(data)
+        
     async def handle_top(self, request):
         auth = self.check_auth(request=request)
         if not auth:
             return web.Response(status=401)
 
-        top = request.query.get("max", self.top)
-        stream = request.query.get("stream", None)
+        n = request.query.get("n", self.top)
+        s = request.query.get("stream", None)
+        more_filters = request.query.get("more", [])
 
-        data = { "streams": self.stats.get_nameslist(),
-                 "current": stream,
-                 "top": self.stats.get_mostcommon(top,stream),
-                 "total": self.stats.get_counters(stream) }
+        filters = ["noerror/response", "nxdomain/response"]
+        filters.extend(more_filters)
+
+        data = { "stream": s,
+                 "top-domain": self.stats.top_domains(int(n),s, filters=filters),
+                 "top-client": self.stats.top_clients(int(n), s),
+                 "top-rcode": self.stats.top_dnscode(int(n), s, rcode=True),
+                 "top-rrtype": self.stats.top_dnscode(int(n),s, rcode=False) }
         return web.json_response(data)
+        
+    async def handle_streams(self, request):
+        auth = self.check_auth(request=request)
+        if not auth:
+            return web.Response(status=401)
 
+        data = { "streams": self.stats.get_nameslist() }
+        return web.json_response(data)
+        
 async def create_server(loop, cfg, stats):
     # api ressources
     hdlrs = Handlers(cfg["api-key"], stats)
@@ -48,6 +77,8 @@ async def create_server(loop, cfg, stats):
  
     # endpoints
     app.router.add_get('/top', hdlrs.handle_top)
+    app.router.add_get('/count', hdlrs.handle_count)
+    app.router.add_get('/streams', hdlrs.handle_streams)
     app.router.add_get('/reset', hdlrs.handle_reset)
 
     # create the server

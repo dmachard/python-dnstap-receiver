@@ -355,51 +355,120 @@ X-API-Key: secret
 
 ### URL Endpoints
 
-**GET /top**
+**GET /streams**
 
-Get statistics from the dnstap-receiver in JSON format.
+Get streams list by dnstap identity.
+
+Example request:
+
+```
+GET /streams
+```
+
+Example JSON response:
+
+```json
+{
+  "streams": [
+               "dnsdist1", 
+               "unbound1"
+             ]
+}
+```
+
+**GET /count**
+
+Get some counters like number of queries, clients, ...
 This endpoint accepts optional arguments in the query:
-- **max** (default is 10): number of elements to return
-- **stream**: return statistic according to the dnstap identity or all if not provided
+- **more**: additional counters to return
  
 Example request:
 
 ```
-GET /top?max=10
+GET /count
 ```
 
-Example response:
+Example JSON response:
 
-```
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
-
+```json
 {
-    "streams": [ "-" ], 
-    "current": null, 
-    "top": {
-        "clients": [["127.0.0.1", 4]],
-        "clients-bw": [["127.0.0.1", 456]],
-        "queries-types": [["A", 4]],
-        "dnstap-types": [["CLIENT_RESPONSE", 4]], 
-        "responses-codes": [["NOERROR", 4]], 
-        "responses-noerror": [["www.google.com.", 4]],
-        "responses-nx": [], 
-        "responses-refused": [], 
-        "responses-other": []}, 
-    "total": {
-        "clients": 1, 
-        "domains": 1,
-        "UDP": 4, 
-        "TCP": 0, 
-        "INET": 4, 
-        "INET6": 0, 
-        "queries": 4
-        }
+  "stream": null,
+  "counters": {
+                "clients": 2,
+                "domains": 13,
+                "query": 5983,
+                "response": 5983,
+                "qps": 0,
+                "response/noerror": 5983,
+                "response/nxdomain": 0
+               }
 }
 ```
 
-**GET /reset**
+**GET /top**
+
+Get top statistics from the dnstap-receiver in JSON format.
+This endpoint accepts optional arguments in the query:
+- **n** (default is 10): number of elements to return
+- **stream**: return statistic according to the dnstap identity or all if not provided
+- **more**: additional criteria to return for top domain
+ 
+Example request:
+
+```
+GET /top?n=15
+```
+
+Example JSON response:
+
+```json
+{
+  "stream": null, 
+  "top-domain": {
+                  "noerror/response": [
+                                        ["www.google.fr.", 2969], 
+                                        ["d220140hrb0h87.cloudfront.net.", 3],
+                                        ["uu.net.", 1], 
+                                        ["fr.uu.net.", 1], 
+                                        ["nan2.fr.uu.net.", 1], 
+                                        ["cloudfront.net.", 1], 
+                                        ["awsdns-53.net.", 1], 
+                                        ["ns-942.awsdns-53.net.", 1]
+                                        ], 
+                   "nxdomain/response": []
+                 }, 
+   "top-client": {
+                  "hit/ip": [
+                             ["127.0.0.1", 11938],
+                             ["-", 28]
+                            ],
+                  "length/ip": [
+                                ["127.0.0.1", 969528],
+                                ["-", 7048]
+                               ]
+                 }, 
+   "top-rcode": {
+                  "hit/query": [
+                                ["query/noerror", 5983]
+                               ], 
+                  "hit/response": [
+                                   ["response/noerror", 5983]
+                                  ]
+                }, 
+   "top-rrtype": {
+                  "hit/query": [
+                                 ["query/a", 3982], 
+                                 ["query/aaaa", 2001]
+                               ], 
+                  "hit/response": [
+                                    ["response/a", 3982], 
+                                    ["response/aaaa", 2001]
+                                   ]
+                 }
+}
+```
+
+**DELETE /reset**
 
 Reset statistics
 
