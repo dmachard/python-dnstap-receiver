@@ -25,6 +25,7 @@ from dnstap_receiver.codec import fstrm
 
 # import all outputs
 from dnstap_receiver.outputs import output_stdout
+from dnstap_receiver.outputs import output_file
 from dnstap_receiver.outputs import output_syslog
 from dnstap_receiver.outputs import output_tcp
 from dnstap_receiver.outputs import output_metrics
@@ -333,7 +334,7 @@ def setup_outputs(cfg, queue, stats, loop):
                                                
     if cfg["output"]["file"]["enable"]:
         clogger.debug("Output handler: file")
-        loop.create_task(output_stdout.handle(cfg["output"]["file"],
+        loop.create_task(output_file.handle(cfg["output"]["file"],
                                               queue,
                                               stats))
                                               
