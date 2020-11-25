@@ -23,7 +23,7 @@ class Handlers:
             return web.Response(status=401)
       
         self.stats.reset()
-        return web.json_response({"message": "success"})
+        return web.Response(status=204)
         
     async def handle_count(self, request):
         auth = self.check_auth(request=request)
@@ -79,7 +79,7 @@ async def create_server(loop, cfg, stats):
     app.router.add_get('/top', hdlrs.handle_top)
     app.router.add_get('/count', hdlrs.handle_count)
     app.router.add_get('/streams', hdlrs.handle_streams)
-    app.router.add_get('/reset', hdlrs.handle_reset)
+    app.router.add_delete('/reset', hdlrs.handle_reset)
 
     # create the server
     listen_address = (cfg["local-address"], cfg["local-port"])
