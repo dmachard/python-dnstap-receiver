@@ -33,10 +33,12 @@ class Handlers:
         n = request.query.get("n", self.top)
         s = request.query.get("stream", None)
         more_filters = request.query.get("more", [])
-
+        if not isinstance(more_filters, list):
+            more_filters = more_filters.split(",")
+            
         filters = [ "clients", "domains", "query", "response", "qps",
                      "response/noerror", "response/nxdomain" ]
-        filters.extend(more_filters.split(","))
+        filters.extend(more_filters)
         
         data = {"stream": s, "counters": self.stats.get_counters(s, filters=filters)}
         return web.json_response(data)
@@ -49,9 +51,11 @@ class Handlers:
         n = request.query.get("n", self.top)
         s = request.query.get("stream", None)
         more_filters = request.query.get("more", [])
-
+        if not isinstance(more_filters, list):
+            more_filters = more_filters.split(",")
+            
         filters = ["noerror/response", "nxdomain/response"]
-        filters.extend(more_filters.split(","))
+        filters.extend(more_filters)
 
         data = { "stream": s,
                  "top-domain": self.stats.top_domains(int(n),s, filters=filters),
