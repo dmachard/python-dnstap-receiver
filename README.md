@@ -380,7 +380,7 @@ Example JSON response:
 
 Get some counters like number of queries, clients, ...
 This endpoint accepts optional arguments in the query:
-- **more**: additional counters to return
+- **more** (optional): additional counters to return
     - query|response: total of queries or response
     - qps: query per second
     - clients: total unique clients ip
@@ -418,15 +418,15 @@ Example JSON response:
 Get top statistics from the dnstap-receiver in JSON format.
 This endpoint accepts optional arguments in the query:
 - **n** (default is 10): number of elements to return
-- **stream**: return statistic according to the dnstap identity or all if not provided
-- **more**: additional criteria to return for top domain
+- **stream** (optional): return statistic according to the dnstap identity or all if not provided
+- **more** (optional): additional criteria to return for top domain
     - [rcode]/response|query: top n domains according to the rcode (noerror, nxdomain, refused, ...)
     - [rrtype]/response|query: top n domains according to the rrtype (aa, aaaa, cname, ...)
     
 Example request:
 
 ```
-GET /top?n=15
+GET /top
 ```
 
 Example JSON response:
