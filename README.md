@@ -291,9 +291,11 @@ You can execute the binary in verbose mode with the `-v` argument:
 
 ```
 ./dnstap_receiver -v
-2020-09-12 23:47:35,833 Start dnstap receiver...
-2020-09-12 23:47:35,833 Using selector: EpollSelector
-2020-09-12 23:47:35,834 Listening on 0.0.0.0:6000
+2020-11-25 20:26:59,790 DEBUG Start receiver...
+2020-11-25 20:26:59,790 DEBUG Output handler: stdout
+2020-11-25 20:26:59,790 DEBUG Input handler: tcp socket
+2020-11-25 20:26:59,790 DEBUG Input handler: listening on 0.0.0.0:6000
+2020-11-25 20:26:59,790 DEBUG Api rest: listening on 0.0.0.0:8080
 ```
 
 ### Filtering feature

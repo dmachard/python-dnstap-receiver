@@ -16,6 +16,9 @@ import dns.rcode
 import dns.rdatatype
 import dns.message
 
+# create default logger for the dnstap receiver
+clogger = logging.getLogger("dnstap_receiver.console")
+
 # import framestreams and dnstap protobuf decoder
 from dnstap_receiver.codec import dnstap_pb2 
 from dnstap_receiver.codec import fstrm 
@@ -100,7 +103,7 @@ def from_wire(wire, question_only=True):
 
     return m
     
-async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
+async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
@@ -163,18 +166,18 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics):
             return
 
     # update metrics 
-    metrics.record(tap=tap)
+    stats.record(tap=tap)
         
     # append the dnstap message to the queue
     queue.put_nowait(tap)
 
-async def cb_onconnect(reader, writer, cfg, queue, metrics):
+async def cb_onconnect(reader, writer, cfg, queue, stats):
     """callback when a connection is established"""
     # get peer name
     peername = writer.get_extra_info('peername')
     if not len(peername):
         peername = "(unix-socket)"
-    logging.debug(f"Input handler: new connection from {peername}")
+    clogger.debug(f"Input handler: new connection from {peername}")
 
     # access control list check
     if len(writer.get_extra_info('peername')):
@@ -189,10 +192,10 @@ async def cb_onconnect(reader, writer, cfg, queue, metrics):
         
         if not acl_allow:
             writer.close()
-            logging.debug("Input handler: checking acl refused")
+            clogger.debug("Input handler: checking acl refused")
             return
         
-        logging.debug("Input handler: checking acl allowed")
+        clogger.debug("Input handler: checking acl allowed")
         
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
@@ -220,33 +223,33 @@ async def cb_onconnect(reader, writer, cfg, queue, metrics):
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue, metrics))
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
-                    logging.debug(f"Input handler: control ready received from {peername}")
+                    clogger.debug(f"Input handler: control ready received from {peername}")
                     ctrl_accept = fstrm_handler.encode(fs=fstrm.FSTRM_CONTROL_ACCEPT)
                     # respond with accept only if the content type is dnstap
                     writer.write(ctrl_accept)
                     await writer.drain()
-                    logging.debug(f"Input handler: sending control accept to {peername}")
+                    clogger.debug(f"Input handler: sending control accept to {peername}")
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_START:
-                    logging.debug(f"Input handler: control start received from {peername}")
+                    clogger.debug(f"Input handler: control start received from {peername}")
    
                 # handle the control frame STOP
                 if fs == fstrm.FSTRM_CONTROL_STOP:
-                    logging.debug(f"Input handler: control stop received from {peername}")
+                    clogger.debug(f"Input handler: control stop received from {peername}")
                     fstrm_handler.reset()           
     except asyncio.CancelledError:
-        logging.debug(f'Input handler: {peername} - closing connection.')
+        clogger.debug(f'Input handler: {peername} - closing connection.')
         writer.close()
         await writer.wait_closed()
     except asyncio.IncompleteReadError:
-        logging.debug(f'Input handler: {peername} - disconnected')
+        clogger.debug(f'Input handler: {peername} - disconnected')
     finally:
-        logging.debug(f'Input handler: {peername} - closed')
+        clogger.debug(f'Input handler: {peername} - closed')
 
 def merge_cfg(u, o):
     """merge config"""
@@ -256,24 +259,21 @@ def merge_cfg(u, o):
                 merge_cfg(u=v,o=o[k])
             else:
                 o[k] = v
-                
-def start_receiver():
-    """start dnstap receiver"""
-    # Handle command-line arguments.
-    args = parser.parse_args()
-
+   
+def setup_config(args):
+    """setup config"""
     # set default config
     try:
         cfg =  yaml.safe_load(pkgutil.get_data(__package__, 'dnstap.conf')) 
     except FileNotFoundError:
-        logging.error("default config file not found")
+        print("default config file not found")
         sys.exit(1)
     except yaml.parser.ParserError:
-        logging.error("invalid default yaml config file")
+        print("invalid default yaml config file")
         sys.exit(1)
     
     # update default config with command line arguments
-    cfg["verbose"] = args.v
+    cfg["trace"]["verbose"] = args.v
     cfg["input"]["unix-socket"]["path"] = args.u
     cfg["input"]["tcp-socket"]["local-address"] = args.l
     cfg["input"]["tcp-socket"]["local-port"] = args.p
@@ -284,81 +284,107 @@ def start_receiver():
             with open(args.c) as file:
                 merge_cfg(u=yaml.safe_load(file),o=cfg)
         except FileNotFoundError:
-            logging.error("external config file not found")
+            print("external config file not found")
             sys.exit(1)
         except yaml.parser.ParserError:
-            logging.error("external invalid yaml config file")
+            print("external invalid yaml config file")
             sys.exit(1)
-            
-    # init logging
-    level = logging.INFO
-    if cfg["verbose"]:
-        level = logging.DEBUG
-    logging.basicConfig(format='%(asctime)s %(message)s', 
-                        stream=sys.stdout, level=level)
-
-    if args.c:
-        logging.debug("External config file loaded")
-    # start receiver and get event loop
-    logging.debug("Start receiver...")
-    loop = asyncio.get_event_loop()
-
-    # prepare output
-    queue = asyncio.Queue()
-    stats = statistics.Statistics()
-    loop.create_task(statistics.watcher(stats))
+    return cfg
     
+def setup_logger(cfg):
+    """setup loggers"""
+
+    loglevel = logging.DEBUG if cfg["verbose"] else logging.INFO
+    logfmt = '%(asctime)s %(levelname)s %(message)s'
+    
+    clogger.setLevel(loglevel)
+    clogger.propagate = False
+    
+    if cfg["file"] is None:
+        lh = logging.StreamHandler(stream=sys.stdout )
+    else:
+        lh = logging.FileHandler(cfg["file"])
+    lh.setLevel(loglevel)
+    lh.setFormatter(logging.Formatter(logfmt))    
+    
+    clogger.addHandler(lh)
+    
+def setup_outputs(cfg, queue, stats, loop):
+    """setup outputs"""
     if cfg["output"]["syslog"]["enable"]:
-        logging.debug("Output handler: syslog")
+        clogger.debug("Output handler: syslog")
         if cfg["output"]["tcp-socket"]["remote-address"] is None or \
             cfg["output"]["tcp-socket"]["remote-port"] is None:
-            logging.error("Output handler: no remote address or port provided")
+            clogger.error("Output handler: no remote address or port provided")
         else:
             loop.create_task(output_syslog.handle(cfg["output"]["syslog"], 
                                               queue,
                                               stats))
         
     if cfg["output"]["tcp-socket"]["enable"]:
-        logging.debug("Output handler: tcp")
+        clogger.debug("Output handler: tcp")
         if cfg["output"]["tcp-socket"]["remote-address"] is None or \
             cfg["output"]["tcp-socket"]["remote-port"] is None:
-            logging.error("Output handler: no remote address or port provided")
+            clogger.error("Output handler: no remote address or port provided")
         else:
             loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"],
                                                queue,
                                                stats))
 
     if cfg["output"]["stdout"]["enable"]:
-        logging.debug("Output handler: stdout")
+        clogger.debug("Output handler: stdout")
         loop.create_task(output_stdout.handle(cfg["output"]["stdout"],
                                               queue,
                                               stats))
 
     
     if cfg["output"]["metrics"]["enable"]:
-        logging.debug("Output handler: metrics")
+        clogger.debug("Output handler: metrics")
         loop.create_task(output_metrics.handle(cfg["output"]["metrics"],
                                               queue,
                                               stats))
 
+def start_receiver():
+    """start dnstap receiver"""
+    # Handle command-line arguments.
+    args = parser.parse_args()
+
+    # init config
+    cfg = setup_config(args=args)
+            
+    # init logging
+    setup_logger(cfg=cfg["trace"])
+
+    if args.c: clogger.debug("External config file loaded")
+    
+    # start receiver and get event loop
+    clogger.debug("Start receiver...")
+    loop = asyncio.get_event_loop()
+    queue = asyncio.Queue()
+    stats = statistics.Statistics()
+    loop.create_task(statistics.watcher(stats))
+    
+    # prepare outputs
+    setup_outputs(cfg, queue, stats, loop)
+    
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
-        logging.debug("Input handler: unix socket")
-        logging.debug("Input handler: listening on %s" % args.u)
+        clogger.debug("Input handler: unix socket")
+        clogger.debug("Input handler: listening on %s" % args.u)
         socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats),
                                                   path=cfg["input"]["unix-socket"]["path"],
                                                   loop=loop)
     # default mode: asynchronous tcp socket
     else:
-        logging.debug("Input handler: tcp socket")
+        clogger.debug("Input handler: tcp socket")
         
         ssl_context = None
         if cfg["input"]["tcp-socket"]["tls-support"]:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ssl_context.load_cert_chain(certfile=cfg["input"]["tcp-socket"]["tls-server-cert"], 
                                         keyfile=cfg["input"]["tcp-socket"]["tls-server-key"])
-            logging.debug("Input handler - tls support enabled")
-        logging.debug("Input handler: listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
+            clogger.debug("Input handler - tls support enabled")
+        clogger.debug("Input handler: listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
                                               cfg["input"]["tcp-socket"]["local-port"])), 
         socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats),
                                              cfg["input"]["tcp-socket"]["local-address"],
@@ -372,10 +398,7 @@ def start_receiver():
 
     # start the restapi
     if cfg["web-api"]["enable"]:
-        api_svr = api_server.create_server(loop, 
-                                           cfg=cfg["web-api"], 
-                                           stats=stats, 
-                                           cfg_stats=cfg["statistics"])
+        api_svr = api_server.create_server(loop, cfg=cfg["web-api"], stats=stats, cfg_stats=cfg["statistics"])
         loop.run_until_complete(api_svr)
 
     # run event loop 
