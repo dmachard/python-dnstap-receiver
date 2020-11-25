@@ -5,8 +5,9 @@ import json
 from aiohttp import web
 
 class Handlers:
-    def __init__(self, apikey, stats):
+    def __init__(self, apikey, stats, cfg_stats):
         self.api_key = apikey
+        self.cfg_stats = cfg_stats
         self.stats = stats
         self.top = 10
         
@@ -36,8 +37,7 @@ class Handlers:
         if not isinstance(more_filters, list):
             more_filters = more_filters.split(",")
             
-        filters = [ "clients", "domains", "query", "response", "qps",
-                     "response/noerror", "response/nxdomain" ]
+        filters = self.cfg_stats["default-counters"]
         filters.extend(more_filters)
         
         data = {"stream": s, "counters": self.stats.get_counters(s, filters=filters)}
@@ -54,7 +54,7 @@ class Handlers:
         if not isinstance(more_filters, list):
             more_filters = more_filters.split(",")
             
-        filters = ["noerror/response", "nxdomain/response"]
+        filters = self.cfg_stats["default-top"]
         filters.extend(more_filters)
 
         data = { "stream": s,
@@ -74,7 +74,7 @@ class Handlers:
         
 async def create_server(loop, cfg, stats):
     # api ressources
-    hdlrs = Handlers(cfg["api-key"], stats)
+    hdlrs = Handlers(cfg["api-key"], stats, cfg["statistics"])
     
     # rest api server
     app = web.Application(loop=loop)
