@@ -1,13 +1,14 @@
 import asyncio
 import logging
+clogger = logging.getLogger("dnstap_receiver.console")
 
 from dnstap_receiver import transform
 
 async def plaintext_tcpclient(output_cfg, queue):
     host, port = output_cfg["remote-address"], output_cfg["remote-port"]
-    logging.debug("Output handler: connection to %s:%s" % (host,port) )
+    clogger.debug("Output handler: connection to %s:%s" % (host,port) )
     reader, tcp_writer = await asyncio.open_connection(host, port)
-    logging.debug("Output handler: connected")
+    clogger.debug("Output handler: connected")
     
     # consume queue
     while True:
@@ -28,24 +29,24 @@ async def plaintext_tcpclient(output_cfg, queue):
         queue.task_done()
         
     # something 
-    logging.error("Output handler: connection lost")
+    clogger.error("Output handler: connection lost")
 
 async def handle(output_cfg, queue, metrics):
     """tcp reconnect"""
     server_address = (output_cfg["remote-address"], output_cfg["remote-port"])
     loop = asyncio.get_event_loop()
 
-    logging.debug("Output handler: TCP enabled")
+    clogger.debug("Output handler: TCP enabled")
     while True:
         try:
             await plaintext_tcpclient(output_cfg, queue)
         except ConnectionRefusedError:
-            logging.error('Output handler: connection to tcp server failed!')
+            clogger.error('Output handler: connection to tcp server failed!')
         except asyncio.TimeoutError:
-            logging.error('Output handler: connection to tcp server timed out!')
+            clogger.error('Output handler: connection to tcp server timed out!')
         else:
-            logging.error('Output handler: connection to tcp is closed.')
+            clogger.error('Output handler: connection to tcp is closed.')
             
-        logging.debug("'Output handler: retry to connect every 5s")
+        clogger.debug("'Output handler: retry to connect every 5s")
         await asyncio.sleep(output_cfg["retry"])
 

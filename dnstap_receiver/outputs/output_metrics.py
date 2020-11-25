@@ -1,8 +1,27 @@
 import logging
 import asyncio
 
+metrics_logger = logging.getLogger("dnstap_receiver.output.metrics")
+
+def setup_metricslogger():
+    """setup loggers"""
+    logfmt = '%(message)s'
+    
+    metrics_logger.setLevel(logging.INFO)
+    metrics_logger.propagate = False
+    
+    lh = logging.StreamHandler(stream=sys.stdout)
+    lh.setLevel(logging.INFO)
+    lh.setFormatter(logging.Formatter(logfmt))    
+    
+    metrics_logger.addHandler(lh)
+    
+    
 async def handle(cfg, queue, metrics):
     """stdout output handler"""
+    # init tap logger
+    setup_metricslogger()
+    
     while True:
         await asyncio.sleep(cfg["interval"])
         
@@ -38,7 +57,7 @@ async def handle(cfg, queue, metrics):
         msg.append( "%s AAAA" % counters["query/aaaa"] )
         
         # print to stdout
-        logging.info(", ".join(msg))
+        metrics_logger.info(", ".join(msg))
         
         # reset stats?
         if not cfg["cumulative"]:
