@@ -330,7 +330,13 @@ def setup_outputs(cfg, queue, stats, loop):
             loop.create_task(output_tcp.handle(cfg["output"]["tcp-socket"],
                                                queue,
                                                stats))
-
+                                               
+    if cfg["output"]["file"]["enable"]:
+        clogger.debug("Output handler: file")
+        loop.create_task(output_stdout.handle(cfg["output"]["file"],
+                                              queue,
+                                              stats))
+                                              
     if cfg["output"]["stdout"]["enable"]:
         clogger.debug("Output handler: stdout")
         loop.create_task(output_stdout.handle(cfg["output"]["stdout"],

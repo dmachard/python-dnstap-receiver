@@ -4,9 +4,9 @@ import sys
 
 metrics_logger = logging.getLogger("dnstap_receiver.output.metrics")
 
-def setup_metricslogger():
+def setup_logger():
     """setup loggers"""
-    logfmt = '%(message)s'
+    logfmt = '%(asctime)s %(message)s'
     
     metrics_logger.setLevel(logging.INFO)
     metrics_logger.propagate = False
@@ -20,8 +20,8 @@ def setup_metricslogger():
     
 async def handle(cfg, queue, metrics):
     """stdout output handler"""
-    # init tap logger
-    setup_metricslogger()
+    # init logger
+    setup_logger()
     
     while True:
         await asyncio.sleep(cfg["interval"])

@@ -1,28 +1,28 @@
 import logging
 import sys
 
-tap_logger = logging.getLogger("dnstap_receiver.output.stdout")
+file_logger = logging.getLogger("dnstap_receiver.output.file")
 
 from dnstap_receiver import transform
 
-def setup_logger():
+def setup_logger(cfg):
     """setup loggers"""
-    logfmt = '%(message)s'
+    logfmt = '%(asctime)s %(message)s'
     
-    tap_logger.setLevel(logging.INFO)
-    tap_logger.propagate = False
+    file_logger.setLevel(logging.INFO)
+    file_logger.propagate = False
     
-    lh = logging.StreamHandler(stream=sys.stdout)
+    lh = logging.FileHandler(cfg["file"])
     lh.setLevel(logging.INFO)
     lh.setFormatter(logging.Formatter(logfmt))    
     
-    tap_logger.addHandler(lh)
+    file_logger.addHandler(lh)
     
 async def handle(output_cfg, queue, metrics):
     """stdout output handler"""
     
-    # init logger
-    setup_logger()
+    # init output logger
+    setup_logger(cfg)
     
     while True:
         # read item from queue
@@ -32,7 +32,7 @@ async def handle(output_cfg, queue, metrics):
         msg = transform.convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
         
         # print to stdout
-        tap_logger.info(msg.decode())
+        file_logger.info(msg.decode())
         
         # all done
         queue.task_done()
