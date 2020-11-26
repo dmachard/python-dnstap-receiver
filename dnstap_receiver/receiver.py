@@ -334,7 +334,7 @@ def setup_outputs(cfg, queue, stats, loop):
         if not output_metrics.checking_conf(cfg=conf["metrics"]): return
         loop.create_task(output_metrics.handle(conf["metrics"], queue, stats))
 
-def setup_inputs(cfg, queue, stats, loop):
+def setup_inputs(args, cfg, queue, stats, loop):
     """setup inputs"""
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
