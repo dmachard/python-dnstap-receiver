@@ -1,1 +1,3 @@
 include dnstap_receiver/dnstap.conf
+
+recursive-include dnstap_receiver/ *.py
