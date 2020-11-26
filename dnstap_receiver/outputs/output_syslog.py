@@ -1,9 +1,26 @@
 import asyncio
 import logging
+
 clogger = logging.getLogger("dnstap_receiver.console")
 
 from dnstap_receiver import transform
 
+def checking_conf(cfg):
+    """validate the config"""
+    clogger.debug("Output handler: syslog")
+    
+    valid_conf = True
+    
+    if cfg["remote-address"] is None:
+        valid_conf = False
+        clogger.error("Output handler: no remote address provided")
+        
+    if cfg["remote-port"] is None:
+        valid_conf = False
+        clogger.error("Output handler: no port provided")
+            
+    return valid_conf
+    
 async def syslog_tcpclient(output_cfg, queue):
     host, port = output_cfg["remote-address"], output_cfg["remote-port"]
     clogger.debug("Output handler: connection to %s:%s" % (host,port) )

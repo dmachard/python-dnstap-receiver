@@ -313,60 +313,26 @@ def setup_logger(cfg):
 def setup_outputs(cfg, queue, stats, loop):
     """setup outputs"""
     conf = cfg["output"]
-    
+
     if conf["syslog"]["enable"]:
-        # if not output_syslog.checking_conf(cfg=conf["syslog"]):
-            # return
-            
-        clogger.debug("Output handler: syslog")
-        if conf["syslog"]["remote-address"] is None or \
-            conf["syslog"]["remote-port"] is None:
-            clogger.error("Output handler: no remote address or port provided")
-        else:
-            loop.create_task(output_syslog.handle(conf["syslog"], 
-                                              queue,
-                                              stats))
-        
+        if not output_syslog.checking_conf(cfg=conf["syslog"]): return
+        loop.create_task(output_syslog.handle(conf["syslog"], queue, stats))    
+
     if conf["tcp-socket"]["enable"]:
-        # if not output_tcp.checking_conf(cfg=conf["tcp-socket"]):
-            # return
-            
-        clogger.debug("Output handler: tcp")
-        if conf["tcp-socket"]["remote-address"] is None or \
-            conf["tcp-socket"]["remote-port"] is None:
-            clogger.error("Output handler: no remote address or port provided")
-        else:
-            loop.create_task(output_tcp.handle(conf["tcp-socket"],
-                                               queue,
-                                               stats))
+        if not output_tcp.checking_conf(cfg=conf["tcp-socket"]): return
+        loop.create_task(output_tcp.handle(conf["tcp-socket"], queue, stats))
                                                
     if conf["file"]["enable"]:
-        # if not output_file.checking_conf(cfg=conf["file"]):
-            # return
-            
-        clogger.debug("Output handler: file")
-        loop.create_task(output_file.handle(conf["file"],
-                                              queue,
-                                              stats))
+        if not output_file.checking_conf(cfg=conf["file"]): return
+        loop.create_task(output_file.handle(conf["file"], queue, stats))
                                               
     if conf["stdout"]["enable"]:
-        # if not output_stdout.checking_conf(cfg=conf["stdout"]):
-            # return
-            
-        clogger.debug("Output handler: stdout")
-        loop.create_task(output_stdout.handle(conf["stdout"],
-                                              queue,
-                                              stats))
+        if not output_stdout.checking_conf(cfg=conf["stdout"]): return
+        loop.create_task(output_stdout.handle(conf["stdout"], queue, stats))
 
-    
     if conf["metrics"]["enable"]:
-        # if not output_stdout.checking_conf(cfg=conf["metrics"]):
-            # return
-            
-        clogger.debug("Output handler: metrics")
-        loop.create_task(output_metrics.handle(conf["metrics"],
-                                              queue,
-                                              stats))
+        if not output_stdout.checking_conf(cfg=conf["metrics"]): return
+        loop.create_task(output_metrics.handle(conf["metrics"], queue, stats))
 
 def start_receiver():
     """start dnstap receiver"""

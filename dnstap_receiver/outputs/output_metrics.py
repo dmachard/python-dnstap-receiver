@@ -2,8 +2,14 @@ import logging
 import asyncio
 import sys
 
+clogger = logging.getLogger("dnstap_receiver.console")
 metrics_logger = logging.getLogger("dnstap_receiver.output.metrics")
 
+def checking_conf(cfg):
+    """validate the config"""
+    clogger.debug("Output handler: metrics")
+    return True
+    
 def setup_logger(cfg):
     """setup loggers"""
     logfmt = '%(asctime)s %(message)s'

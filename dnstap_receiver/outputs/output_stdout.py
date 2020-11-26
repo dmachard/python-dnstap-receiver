@@ -1,10 +1,16 @@
 import logging
 import sys
 
+clogger = logging.getLogger("dnstap_receiver.console")
 tap_logger = logging.getLogger("dnstap_receiver.output.stdout")
 
 from dnstap_receiver import transform
 
+def checking_conf(cfg):
+    """validate the config"""
+    clogger.debug("Output handler: stdout")
+    return True
+    
 def setup_logger():
     """setup loggers"""
     logfmt = '%(message)s'
