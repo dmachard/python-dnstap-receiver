@@ -396,7 +396,7 @@ def start_receiver():
     setup_outputs(cfg, queue, stats, loop)
     
     # prepare inputs
-    setup_inputs(cfg, queue, stats, loop)
+    setup_inputs(args, cfg, queue, stats, loop)
 
     # start the rest api
     setup_api(cfg, queue, stats, loop)
