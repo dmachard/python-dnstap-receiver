@@ -262,7 +262,7 @@ def merge_cfg(u, o):
                 o[k] = v
    
 def setup_config(args):
-    """setup config"""
+    """load default config and update it with arguments if provided"""
     # set default config
     try:
         cfg =  yaml.safe_load(pkgutil.get_data(__package__, 'dnstap.conf')) 
@@ -293,7 +293,7 @@ def setup_config(args):
     return cfg
     
 def setup_logger(cfg):
-    """setup loggers"""
+    """setup main logger"""
 
     loglevel = logging.DEBUG if cfg["verbose"] else logging.INFO
     logfmt = '%(asctime)s %(levelname)s %(message)s'
@@ -331,7 +331,7 @@ def setup_outputs(cfg, queue, stats, loop):
         loop.create_task(output_stdout.handle(conf["stdout"], queue, stats))
 
     if conf["metrics"]["enable"]:
-        if not output_stdout.checking_conf(cfg=conf["metrics"]): return
+        if not output_metrics.checking_conf(cfg=conf["metrics"]): return
         loop.create_task(output_metrics.handle(conf["metrics"], queue, stats))
 
 def start_receiver():
