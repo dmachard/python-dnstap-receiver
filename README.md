@@ -19,6 +19,7 @@ in JSON, YAML or one line text format and more.
     * [Unix socket](#unix-socket)
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
+    * [File](#file)
     * [TCP socket](#tcp-socket)
     * [Syslog](#syslog)
     * [Metrics](#stdout-metrics)
@@ -135,7 +136,8 @@ Configure the path of the socket with the `-u` argument.
 
 Outputs handler can be configured to forward messages in several modes.
 - [Stdout](#stdout)
-- [Stdout metrics](#stdout-metrics)
+- [File](#file)
+- [Metrics](#metrics)
 - [TCP socket](#tcp-socket)
 - [Syslog](#syslog)
 
@@ -199,6 +201,26 @@ protocol: UDP
 
 ```
 
+### File
+
+This output enables to forward dnstap messages directly to a log file.
+Add the following configuration as external config to activate this output:
+
+```yaml
+  # forward to log file
+  file:
+    # enable or disable
+    enable: true
+    # format available text|json|yaml
+    format: text
+    # log file path or null to print to stdout
+    file: /var/log/dnstap.log
+    # max size for log file
+    file-max-size: 10M
+    # number of max log files
+    file-count: 10
+```
+
 ### TCP socket
 
 This output enables to forward dnstap message to a remote tcp collector.
@@ -252,7 +274,7 @@ Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 INET UDP 173b w
 Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 INET UDP 203b www.netflix.fr. AAAA
 ```
 
-### Stdout metrics
+### Metrics
 
 This output enables to generate metrics in one line and print-it to stdout. Add the following configuration as external config to activate this output:
 
