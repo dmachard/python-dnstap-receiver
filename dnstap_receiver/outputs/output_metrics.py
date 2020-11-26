@@ -4,14 +4,22 @@ import sys
 
 metrics_logger = logging.getLogger("dnstap_receiver.output.metrics")
 
-def setup_logger():
+def setup_logger(cfg):
     """setup loggers"""
     logfmt = '%(asctime)s %(message)s'
+    max_bytes = int(cfg["file-max-size"].split('M')[0]) * 1024 * 1024
     
     metrics_logger.setLevel(logging.INFO)
     metrics_logger.propagate = False
     
-    lh = logging.StreamHandler(stream=sys.stdout)
+    if cfg["file"] is not None:
+        lh = logging.handlers.RotatingFileHandler(
+            cfg["file"],
+            maxBytes=max_bytes,
+            backupCount=cfg["file-count"]
+        )
+    else:
+        lh = logging.StreamHandler(stream=sys.stdout)
     lh.setLevel(logging.INFO)
     lh.setFormatter(logging.Formatter(logfmt))    
     
@@ -21,7 +29,7 @@ def setup_logger():
 async def handle(cfg, queue, metrics):
     """stdout output handler"""
     # init logger
-    setup_logger()
+    setup_logger(cfg)
     
     while True:
         await asyncio.sleep(cfg["interval"])
