@@ -334,29 +334,8 @@ def setup_outputs(cfg, queue, stats, loop):
         if not output_metrics.checking_conf(cfg=conf["metrics"]): return
         loop.create_task(output_metrics.handle(conf["metrics"], queue, stats))
 
-def start_receiver():
-    """start dnstap receiver"""
-    # Handle command-line arguments.
-    args = parser.parse_args()
-
-    # init config
-    cfg = setup_config(args=args)
-            
-    # init logging
-    setup_logger(cfg=cfg["trace"])
-
-    if args.c: clogger.debug("External config file loaded")
-    
-    # start receiver and get event loop
-    clogger.debug("Start receiver...")
-    loop = asyncio.get_event_loop()
-    queue = asyncio.Queue()
-    stats = statistics.Statistics()
-    loop.create_task(statistics.watcher(stats))
-    
-    # prepare outputs
-    setup_outputs(cfg, queue, stats, loop)
-    
+def setup_inputs(cfg, queue, stats, loop):
+    """setup inputs"""
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
         clogger.debug("Input handler: unix socket")
@@ -381,15 +360,46 @@ def start_receiver():
                                              cfg["input"]["tcp-socket"]["local-port"],
                                              ssl=ssl_context,
                                              loop=loop)
-
+                                             
     # run until complete
     loop.run_until_complete(socket_server)
-                                                  
-
-    # start the restapi
+    
+def setup_api(cfg, queue, stats, loop):
+    """setup web api"""
     if cfg["web-api"]["enable"]:
-        api_svr = api_server.create_server(loop, cfg=cfg["web-api"], stats=stats, cfg_stats=cfg["statistics"])
+        api_svr = api_server.create_server(loop, cfg=cfg["web-api"], 
+                                           stats=stats, cfg_stats=cfg["statistics"])
         loop.run_until_complete(api_svr)
+    
+def start_receiver():
+    """start dnstap receiver"""
+    # Handle command-line arguments.
+    args = parser.parse_args()
+
+    # init config
+    cfg = setup_config(args=args)
+            
+    # init logging
+    setup_logger(cfg=cfg["trace"])
+
+    # add debug message if external config is used
+    if args.c: clogger.debug("External config file loaded")
+    
+    # start receiver and get event loop
+    clogger.debug("Start receiver...")
+    loop = asyncio.get_event_loop()
+    queue = asyncio.Queue()
+    stats = statistics.Statistics()
+    loop.create_task(statistics.watcher(stats))
+    
+    # prepare outputs
+    setup_outputs(cfg, queue, stats, loop)
+    
+    # prepare inputs
+    setup_inputs(cfg, queue, stats, loop)
+
+    # start the rest api
+    setup_api(cfg, queue, stats, loop)
 
     # run event loop 
     try:
