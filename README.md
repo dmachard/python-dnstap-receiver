@@ -27,6 +27,7 @@ in JSON, YAML or one line text format and more.
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
     * [Filtering feature](#filtering-feature)
+    * [Dashboard](#dashboard)
 * [API](#api)
     * [Configuration](#configuration)
     * [Security](#security)
@@ -354,6 +355,11 @@ filter:
   # qname filtering feature with regex support
   qname-regex: ".*.com"
 ```
+
+### Dashboard
+
+Use the [dnstop](https://github.com/dmachard/dnstop) command to follow metrics of your dns server in real-time.
+Metrics are based on the rest API of the dnstap receiver.
 
 ## API
 
