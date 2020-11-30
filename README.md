@@ -28,6 +28,7 @@ in JSON, YAML or one line text format and more.
     * [Verbose mode](#verbose-mode)
     * [Filtering feature](#filtering-feature)
     * [Dashboard](#dashboard)
+    * [GeoIP support](#geoip-support)
 * [API](#api)
     * [Configuration](#configuration)
     * [Security](#security)
@@ -360,6 +361,25 @@ filter:
 
 Use the [dnstop](https://github.com/dmachard/dnstop) command to follow metrics of your dns server in real-time.
 Metrics are based on the rest API of the dnstap receiver.
+
+### GeoIP support
+
+The dnstap-receiver can be extended with GeoIP. To do that, you need to configure your own city database in binary format.
+
+```yaml
+# geoip support, can be used to get the country, and city
+# according to the source ip in the dnstap message
+geoip:
+    # enable or disable
+    enable: true
+    # city database path in binary format
+    city-database: /var/geoip/GeoLite2-City.mmdb
+```
+
+With the GeoIP support, the following new fields will be added:
+ - country
+ - city
+
 
 ## API
 

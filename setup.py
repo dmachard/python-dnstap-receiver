@@ -36,6 +36,7 @@ setuptools.setup(
         "dnspython",
         "protobuf",
         "pyyaml",
-        "aiohttp"
+        "aiohttp",
+        "geoip2"
     ]
 )

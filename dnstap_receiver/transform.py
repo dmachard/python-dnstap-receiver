@@ -17,6 +17,11 @@ def convert_dnstap(fmt, tapmsg):
         msg_list.append("%s" % tapmsg["qname"])
         msg_list.append("%s" % tapmsg["rrtype"])
         
+        # geoip activated ?
+        if "country" in tapmsg:
+            msg_list.append("%s" % tapmsg["country"])
+            msg_list.append("%s" % tapmsg["city"])
+            
         msg = " ".join(msg_list)
         del msg_list
         return msg.encode()

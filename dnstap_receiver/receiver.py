@@ -11,6 +11,8 @@ import ipaddress
 
 from datetime import datetime, timezone
 
+import geoip2.database
+
 # python3 -m pip dnspython
 import dns.rcode
 import dns.rdatatype
@@ -20,8 +22,8 @@ import dns.message
 clogger = logging.getLogger("dnstap_receiver.console")
 
 # import framestreams and dnstap protobuf decoder
-from dnstap_receiver.codec import dnstap_pb2 
-from dnstap_receiver.codec import fstrm 
+from dnstap_receiver.codecs import dnstap_pb2 
+from dnstap_receiver.codecs import fstrm 
 
 # import all outputs
 from dnstap_receiver.outputs import output_stdout
@@ -104,7 +106,7 @@ def from_wire(wire, question_only=True):
 
     return m
     
-async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats):
+async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
@@ -166,13 +168,26 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats):
             del dm; del tap;
             return
 
+    # geoip support 
+    if geoip_reader is not None:
+        try:
+            response = geoip_reader.city(tap["source-ip"])
+            tap["country"] = response.country.name
+            if response.city.name is not None:
+                tap["city"] = response.city.name
+            else:
+                tap["city"] = UnknownValue.name
+        except Exception as e:
+            tap["country"] = UnknownValue.name
+            tap["city"] = UnknownValue.name
+            
     # update metrics 
     stats.record(tap=tap)
         
     # append the dnstap message to the queue
     queue.put_nowait(tap)
 
-async def cb_onconnect(reader, writer, cfg, queue, stats):
+async def cb_onconnect(reader, writer, cfg, queue, stats, geoip_reader):
     """callback when a connection is established"""
     # get peer name
     peername = writer.get_extra_info('peername')
@@ -224,7 +239,7 @@ async def cb_onconnect(reader, writer, cfg, queue, stats):
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats))
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
@@ -334,13 +349,13 @@ def setup_outputs(cfg, queue, stats, loop):
         if not output_metrics.checking_conf(cfg=conf["metrics"]): return
         loop.create_task(output_metrics.handle(conf["metrics"], queue, stats))
 
-def setup_inputs(args, cfg, queue, stats, loop):
+def setup_inputs(args, cfg, queue, stats, loop, geoip_reader):
     """setup inputs"""
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
         clogger.debug("Input handler: unix socket")
         clogger.debug("Input handler: listening on %s" % args.u)
-        socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats),
+        socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats, geoip_reader),
                                                   path=cfg["input"]["unix-socket"]["path"],
                                                   loop=loop)
     # default mode: asynchronous tcp socket
@@ -355,7 +370,7 @@ def setup_inputs(args, cfg, queue, stats, loop):
             clogger.debug("Input handler - tls support enabled")
         clogger.debug("Input handler: listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
                                               cfg["input"]["tcp-socket"]["local-port"])), 
-        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats),
+        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats, geoip_reader),
                                              cfg["input"]["tcp-socket"]["local-address"],
                                              cfg["input"]["tcp-socket"]["local-port"],
                                              ssl=ssl_context,
@@ -371,6 +386,18 @@ def setup_api(cfg, queue, stats, loop):
                                            stats=stats, cfg_stats=cfg["statistics"])
         loop.run_until_complete(api_svr)
     
+def setup_geoip(cfg):
+    if not cfg["enable"]: return None
+    if cfg["city-database"] is None: return None
+    
+    reader = None
+    try:
+        reader = geoip2.database.Reader(cfg["city-database"])
+    except Exception as e:
+        clogger.error("geoip setup: %s" % e)
+        
+    return reader
+    
 def start_receiver():
     """start dnstap receiver"""
     # Handle command-line arguments.
@@ -382,6 +409,9 @@ def start_receiver():
     # init logging
     setup_logger(cfg=cfg["trace"])
 
+    # setup geoip is activated 
+    geoip_reader = setup_geoip(cfg=cfg["geoip"])
+    
     # add debug message if external config is used
     if args.c: clogger.debug("External config file loaded")
     
@@ -396,7 +426,7 @@ def start_receiver():
     setup_outputs(cfg, queue, stats, loop)
     
     # prepare inputs
-    setup_inputs(args, cfg, queue, stats, loop)
+    setup_inputs(args, cfg, queue, stats, loop, geoip_reader)
 
     # start the rest api
     setup_api(cfg, queue, stats, loop)
@@ -406,3 +436,6 @@ def start_receiver():
        loop.run_forever()
     except KeyboardInterrupt:
         pass
+
+    # close geoip
+    if geoip_reader is not None: geoip_reader.close()
