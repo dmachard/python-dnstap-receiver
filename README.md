@@ -406,6 +406,7 @@ Some statistics are computed on the fly and stored in memory, you can get them f
 - **query/[rrtype]**: total of queries per record resource type
     
 [rcode] = noerror, nxdomain, refused,...
+
 [rrtype] = a, aaaa, cname,...
 
 ### Tables
