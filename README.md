@@ -389,25 +389,23 @@ Some statistics are computed on the fly are stored in memory, you can get them f
 
 ### Counters
 
-Counters:
-- query|response: total of queries or responses
-- qps: number of queries per second
-- clients: number of unique clients ip
-- domains: number of unique domains
-- query|response/[inet|inet6] : total of IPv4 or IPv6 queries or responses
-- query|response/[udp|tcp]: total of queries or responses with UDP or TCP protocol
-- query|response/[rcode]: total of queries or responses according to the rcode (noerror, nxdomain, ...)
-- query|response/[rrtype]: total of queries or responses acccording to the record resource type (a, aaaa, ...)
+- **query|response**: total of queries or responses
+- **qps**: number of queries per second
+- **clients**: number of unique clients ip
+- **domains**: number of unique domains
+- **query|response/inet|inet6**: total of IPv4 or IPv6 queries or responses
+- **query|response/udp|tcp**: total of queries or responses with UDP or TCP protocol
+- **query|response/rcode**: total of queries or responses according to the rcode (noerror, nxdomain, ...)
+- **query|response/rrtype**: total of queries or responses acccording to the record resource type (a, aaaa, ...)
     
 ### Tables
 
-Tables:
-- top-domain: list of domains sorted by return codes and total of queries or responses
-- top-client: 
+- **top-domain**: list of domains sorted by return codes and total of queries or responses
+- **top-client**: 
   - list of ip with total of queries
   - list of ip with total bytes
-- top-rrtype: list of resources record types with total of queries or responses
-- top-rcode: list of return codes with total of queries or responses
+- **top-rrtype**: list of resources record types with total of queries or responses
+- **top-rcode**: list of return codes with total of queries or responses
 
 ## API
 
