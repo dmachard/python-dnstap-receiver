@@ -130,15 +130,21 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, UnknownValue).name
 
     # decode query address
-    if len(dm.query_address) and dm.socket_family == 1:
-        tap["source-ip"] = socket.inet_ntoa(dm.query_address)
-    if len(dm.query_address) and dm.socket_family == 2:
-        tap["source-ip"] = socket.inet_ntop(socket.AF_INET6, dm.query_address)
+    qaddr = dm.query_address
+    if len(qaddr) and dm.socket_family == 1:
+        # condition for coredns, address is 16 bytes long so keept only 4 bytes
+        qaddr = qaddr[12:] if len(qaddr) == 16 else qaddr
+        # convert ip to string
+        tap["source-ip"] = socket.inet_ntoa(qaddr)
+    if len(qaddr) and dm.socket_family == 2:
+        tap["source-ip"] = socket.inet_ntop(socket.AF_INET6, qaddr)
     tap["source-port"] = dm.query_port
     if tap["source-port"] == 0:
         tap["source-port"] = UnknownValue.name
         
     # handle query message
+    # todo catching dns.message.ShortHeader exception
+    # can occured with coredns if the full argument is missing
     if (dm.type % 2 ) == 1 :
         dnstap_parsed = from_wire(dm.query_message,
                                   question_only=True)

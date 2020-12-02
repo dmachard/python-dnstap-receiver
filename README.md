@@ -42,6 +42,7 @@ in JSON, YAML or one line text format and more.
     * [PowerDNS - dnsdist](#dnsdist)
     * [NLnet Labs - nsd](#nsd)
     * [NLnet Labs - unbound](#unbound)
+    * [CoreDNS](#coredns)
 * [About](#about)
 
 ## Installation
@@ -452,15 +453,11 @@ X-API-Key: secret
 
 Get streams list by dnstap identity.
 
-Example request:
-
 ```
 GET /streams
-```
 
-Example JSON response:
-
-```json
+200 OK
+content-type: application/json
 { "streams": [ "dnsdist1", "unbound1" ] }
 ```
 
@@ -564,6 +561,7 @@ This dnstap receiver has been tested with success with the following dns servers
  - **ISC - bind**
  - **PowerDNS - dnsdist, pdns-recursor**
  - **NLnet Labs - nsd, unbound**
+ - **CoreDNS**
 
 ### bind
 
@@ -735,8 +733,6 @@ Dnstap messages supported:
  - CLIENT_RESPONSE
  - RESOLVER_QUERY
  - RESOLVER_RESPONSE
- - CLIENT_QUERY
- - CLIENT_RESPONSE
  
 #### Build with dnstap support
 
@@ -803,6 +799,50 @@ dnstap:
     dnstap-send-version: yes
     dnstap-log-client-query-messages: yes
     dnstap-log-client-response-messages: yes
+```
+
+### CoreDNS
+
+![coredns 1.8.0](https://img.shields.io/badge/1.8.0-tested-green)
+
+Dnstap messages supported:
+ - CLIENT_QUERY
+ - CLIENT_RESPONSE
+ - FORWARDER_QUERY
+ - FORWARDER_RESPONSE
+
+#### Unix socket
+
+corefile example
+
+```
+.:53 {
+    dnstap /tmp/dnstap.sock full
+    forward . 8.8.8.8:53
+}
+```
+
+Then execute CoreDNS with your corefile
+
+```bash
+ ./coredns -conf corefile
+```
+
+#### TCP stream
+
+corefile example
+
+```
+.:53 {
+        dnstap tcp://10.0.0.51:6000 full
+        forward . 8.8.8.8:53
+}
+```
+
+Then execute CoreDNS with your corefile
+
+```bash
+ ./coredns -conf corefile
 ```
 
 # About
