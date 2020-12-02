@@ -29,6 +29,9 @@ in JSON, YAML or one line text format and more.
     * [Filtering feature](#filtering-feature)
     * [Dashboard](#dashboard)
     * [GeoIP support](#geoip-support)
+* [Statistics](#statistics)
+    * [Counters](#counters)
+    * [Tables](#tables)
 * [API](#api)
     * [Configuration](#configuration)
     * [Security](#security)
@@ -380,6 +383,31 @@ With the GeoIP support, the following new fields will be added:
  - country
  - city
 
+## Statistics
+
+Some statistics are computed on the fly are stored in memory, you can get them from the REST API. If you restart the dnstap_receiver, all previous statistics will be lost.
+
+### Counters
+
+Counters:
+    - query|response: total of queries or responses
+    - qps: number of queries per second
+    - clients: number of unique clients ip
+    - domains: number of unique domains
+    - query|response/[inet|inet6] : total of IPv4 or IPv6 queries or responses
+    - query|response/[udp|tcp]: total of queries or responses with UDP or TCP protocol
+    - query|response/[rcode]: total of queries or responses according to the rcode (noerror, nxdomain, ...)
+    - query|response/[rrtype]: total of queries or responses acccording to the record resource type (a, aaaa, ...)
+    
+### Tables
+
+Tables:
+    - top-domain: list of domains sorted by return codes and total of queries or responses
+    - top-client: 
+        - list of ip with total of queries
+        - list of ip with total bytes
+    - top-rrtype: list of resources record types with total of queries or responses
+    - top-rcode: list of return codes with total of queries or responses
 
 ## API
 
@@ -436,20 +464,12 @@ Example JSON response:
 
 Get some counters like number of queries, clients, ...
 This endpoint accepts optional arguments in the query:
-- **more** (optional): additional counters to return
-    - query|response: total of queries or response
-    - qps: query per second
-    - clients: total unique clients ip
-    - domains: total unique domains
-    - query|response/[inet|inet6] : total of IPv4 or IPv6 queries or responses
-    - query|response/[udp|tcp]: total of queries or responses with UDP or TCP protocol
-    - query|response/[rcode]: total of queries or responses according to the rcode (noerror, nxdomain, ...)
-    - query|response/[rrtype]: total of queries or responses acccording to the record resource type (a, aaaa, ...)
-                               
+- **more** (optional): list of [counters](/README.md#counters)
+                
 Example request:
 
 ```
-GET /count
+GET /count?more=response/noerror
 ```
 
 Example JSON response:
