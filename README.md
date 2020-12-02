@@ -385,19 +385,29 @@ With the GeoIP support, the following new fields will be added:
 
 ## Statistics
 
-Some statistics are computed on the fly are stored in memory, you can get them from the REST API. If you restart the dnstap_receiver, all previous statistics will be lost.
+Some statistics are computed on the fly and stored in memory, you can get them from the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
 
 ### Counters
 
-- **query|response**: total of queries or responses
+- **query**: total of queries
+- **response**: total of responses
 - **qps**: number of queries per second
 - **clients**: number of unique clients ip
 - **domains**: number of unique domains
-- **query|response/inet|inet6**: total of IPv4 or IPv6 queries or responses
-- **query|response/udp|tcp**: total of queries or responses with UDP or TCP protocol
-- **query|response/rcode**: total of queries or responses according to the rcode (noerror, nxdomain, ...)
-- **query|response/rrtype**: total of queries or responses acccording to the record resource type (a, aaaa, ...)
+- **query/inet**: total of IPv4 queries
+- **query/inet6**: total of IPv6 queries
+- **response/inet**: total of IPv4 responses
+- **response/inet6**: total of IPv6 responses
+- **query/udp**: total of queries with UDP
+- **query/tcp**: total of queries withTCP protocol
+- **response/udp**: total of responses with UDP,protocol
+- **response/tcp**: total of responses with TCP protocol
+- **response/[rcode]**: total of responses per specific rcode
+- **query/[rrtype]**: total of queries per record resource type
     
+* [rcode] = noerror, nxdomain, refused,...
+* [rrtype] = a, aaaa, cname,...
+
 ### Tables
 
 - **top-domain**: list of domains sorted by return codes and total of queries or responses
