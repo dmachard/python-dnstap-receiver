@@ -411,12 +411,12 @@ Some statistics are computed on the fly and stored in memory, you can get them f
 
 ### Tables
 
-- **top-domain**: list of domains sorted by return codes and total of queries or responses
-- **top-client**: 
+- **top-domains**: list of domains sorted by return codes and total of queries or responses
+- **top-clients**: 
   - list of ip with total of queries
   - list of ip with total bytes
-- **top-rrtype**: list of resources record types with total of queries or responses
-- **top-rcode**: list of return codes with total of queries or responses
+- **top-rrtypes**: list of resources record types with total of queries or responses
+- **top-rcodes**: list of return codes with total of queries or responses
 
 ## API
 
@@ -461,12 +461,7 @@ GET /streams
 Example JSON response:
 
 ```json
-{
-  "streams": [
-               "dnsdist1", 
-               "unbound1"
-             ]
-}
+{ "streams": [ "dnsdist1", "unbound1" ] }
 ```
 
 **GET /count**
@@ -519,7 +514,7 @@ Example JSON response:
 ```json
 {
   "stream": null, 
-  "top-domain": {
+  "top-domains": {
                   "noerror/response": [
                                         ["www.google.fr.", 2969], 
                                         ["d220140hrb0h87.cloudfront.net.", 3],
@@ -529,37 +524,21 @@ Example JSON response:
                                         ["cloudfront.net.", 1], 
                                         ["awsdns-53.net.", 1], 
                                         ["ns-942.awsdns-53.net.", 1]
-                                        ], 
+                                       ], 
                    "nxdomain/response": []
                  }, 
-   "top-client": {
-                  "hit/ip": [
-                             ["127.0.0.1", 11938],
-                             ["-", 28]
-                            ],
-                  "length/ip": [
-                                ["127.0.0.1", 969528],
-                                ["-", 7048]
-                               ]
-                 }, 
-   "top-rcode": {
-                  "hit/query": [
-                                ["query/noerror", 5983]
-                               ], 
-                  "hit/response": [
-                                   ["response/noerror", 5983]
-                                  ]
-                }, 
-   "top-rrtype": {
-                  "hit/query": [
-                                 ["query/a", 3982], 
-                                 ["query/aaaa", 2001]
-                               ], 
-                  "hit/response": [
-                                    ["response/a", 3982], 
-                                    ["response/aaaa", 2001]
-                                   ]
-                 }
+   "top-clients": {
+          "hit/ip": [ ["127.0.0.1", 11938], ["-", 28] ],
+          "length/ip": [ ["127.0.0.1", 969528], ["-", 7048] ]
+         }, 
+   "top-rcodes": {
+          "hit/query": [ ["query/noerror", 5983] ], 
+          "hit/response": [ ["response/noerror", 5983]  ]
+        }, 
+   "top-rrtypes": {
+      "hit/query": [ ["query/a", 3982], ["query/aaaa", 2001] ], 
+      "hit/response": [ ["response/a", 3982], ["response/aaaa", 2001] ]
+   }
 }
 ```
 

@@ -60,10 +60,10 @@ class Handlers:
         filters.extend(more_filters)
 
         data = { "stream": s,
-                 "top-domain": self.stats.top_domains(int(n),s, filters=filters),
-                 "top-client": self.stats.top_clients(int(n), s),
-                 "top-rcode": self.stats.top_dnscode(int(n), s, rcode=True),
-                 "top-rrtype": self.stats.top_dnscode(int(n),s, rcode=False) }
+                 "top-domains": self.stats.top_domains(int(n),s, filters=filters),
+                 "top-clients": self.stats.top_clients(int(n), s),
+                 "top-rcodes": self.stats.top_dnscode(int(n), s, rcode=True),
+                 "top-rrtypes": self.stats.top_dnscode(int(n),s, rcode=False) }
         return web.json_response(data)
         
     async def handle_streams(self, request):
