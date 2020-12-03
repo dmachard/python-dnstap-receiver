@@ -313,7 +313,7 @@ Example of output
 ### External config file
 
 The `dnstap_receiver` binary can takes an external config file with the `-c` argument
-See [config file](https://github.com/dmachard/dnstap-receiver/blob/master/dnstap_receiver/dnstap.conf) example.
+See [config file](/dnstap_receiver/dnstap.conf) example.
 
 ```
 ./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
@@ -363,12 +363,11 @@ filter:
 
 ### Dashboard
 
-Use the [dnstop](https://github.com/dmachard/dnstop) command to follow metrics of your dns server in real-time.
-Metrics are based on the rest API of the dnstap receiver.
+Use the [dnstap-dashboard](https://github.com/dmachard/dnstap-dashboard) command to follow metrics of your dns server in real-time. Metrics are based on the rest API of the dnstap receiver.
 
 ### GeoIP support
 
-The dnstap-receiver can be extended with GeoIP. To do that, you need to configure your own city database in binary format.
+The `dnstap receiver` can be extended with GeoIP. To do that, you need to configure your own city database in binary format.
 
 ```yaml
 # geoip support, can be used to get the country, and city
@@ -386,7 +385,7 @@ With the GeoIP support, the following new fields will be added:
 
 ## Statistics
 
-Some statistics are computed on the fly and stored in memory, you can get them from the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
+Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them from the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
 
 ### Counters
 
@@ -403,21 +402,17 @@ Some statistics are computed on the fly and stored in memory, you can get them f
 - **query/tcp**: total of queries withTCP protocol
 - **response/udp**: total of responses with UDP,protocol
 - **response/tcp**: total of responses with TCP protocol
-- **response/[rcode]**: total of responses per specific rcode
-- **query/[rrtype]**: total of queries per record resource type
-    
-[rcode] = noerror, nxdomain, refused,...
-
-[rrtype] = a, aaaa, cname,...
+- **response/[rcode]**: total of responses per specific rcode = noerror, nxdomain, refused,...
+- **query/[rrtype]**: total of queries per record resource type = = a, aaaa, cname,...
 
 ### Tables
 
-- **top-domains**: list of domains sorted by return codes and total of queries or responses
+- **top-domains**: table of domains sorted by return codes and total of queries or responses
 - **top-clients**: 
-  - list of ip with total of queries
-  - list of ip with total bytes
-- **top-rrtypes**: list of resources record types with total of queries or responses
-- **top-rcodes**: list of return codes with total of queries or responses
+  - table of ip addresses with total of queries
+  - table of ip addresses with total bytes
+- **top-rrtypes**: table of resources record types with total of queries or responses
+- **top-rcodes**: table of return codes with total of queries or responses
 
 ## API
 
@@ -449,7 +444,12 @@ X-API-Key: secret
 
 ### URL Endpoints
 
-**GET /streams**
+- [/streams](#streams)
+- [/count](#count)
+- [/top](#top)
+- [/reset](#reset)
+
+#### streams
 
 Get streams list by dnstap identity.
 
@@ -457,40 +457,32 @@ Get streams list by dnstap identity.
 GET /streams
 
 200 OK
+
 content-type: application/json
 { "streams": [ "dnsdist1", "unbound1" ] }
 ```
 
-**GET /count**
+#### count
 
 Get some counters like number of queries, clients, ...
 This endpoint accepts optional arguments in the query:
 - **more** (optional): list of [counters](/README.md#counters)
-                
-Example request:
 
 ```
 GET /count?more=response/noerror
 ```
 
-Example JSON response:
-
 ```json
-{
-  "stream": null,
-  "counters": {
-                "clients": 2,
-                "domains": 13,
-                "query": 5983,
-                "response": 5983,
-                "qps": 0,
-                "response/noerror": 5983,
-                "response/nxdomain": 0
-               }
+200 OK
+
+{ "stream": null,
+  "counters": { "clients": 2, "domains": 13, "qps": 0,
+                "query": 5983, "response": 5983,
+                "response/noerror": 5983, "response/nxdomain": 0 }
 }
 ```
 
-**GET /top**
+#### top
 
 Get top statistics from the dnstap-receiver in JSON format.
 This endpoint accepts optional arguments in the query:
@@ -506,24 +498,15 @@ Example request:
 GET /top
 ```
 
-Example JSON response:
-
 ```json
+200 OK
+
 {
   "stream": null, 
   "top-domains": {
-                  "noerror/response": [
-                                        ["www.google.fr.", 2969], 
-                                        ["d220140hrb0h87.cloudfront.net.", 3],
-                                        ["uu.net.", 1], 
-                                        ["fr.uu.net.", 1], 
-                                        ["nan2.fr.uu.net.", 1], 
-                                        ["cloudfront.net.", 1], 
-                                        ["awsdns-53.net.", 1], 
-                                        ["ns-942.awsdns-53.net.", 1]
-                                       ], 
-                   "nxdomain/response": []
-                 }, 
+          "noerror/response": [ ["www.google.fr.", 2969], ["d220140hrb0h87.cloudfront.net.", 3] ], 
+          "nxdomain/response": []
+         }, 
    "top-clients": {
           "hit/ip": [ ["127.0.0.1", 11938], ["-", 28] ],
           "length/ip": [ ["127.0.0.1", 969528], ["-", 7048] ]
@@ -539,19 +522,13 @@ Example JSON response:
 }
 ```
 
-**DELETE /reset**
+#### reset
 
-Reset statistics
-
-Example request:
+Reset all counters and tables.
 
 ```
 DELETE /reset
-```
 
-Example response:
-
-```
 204 No Content
 ```
 
