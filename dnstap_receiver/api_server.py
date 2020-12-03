@@ -82,8 +82,8 @@ async def create_server(loop, cfg, stats, cfg_stats):
     app = web.Application(loop=loop)
  
     # endpoints
-    app.router.add_get('/top', hdlrs.handle_top)
-    app.router.add_get('/count', hdlrs.handle_count)
+    app.router.add_get('/tables', hdlrs.handle_top)
+    app.router.add_get('/counters', hdlrs.handle_count)
     app.router.add_get('/streams', hdlrs.handle_streams)
     app.router.add_delete('/reset', hdlrs.handle_reset)
 
