@@ -442,11 +442,13 @@ An HTTP 401 response is returned when a wrong or no API key is received.
 X-API-Key: secret
 ```
 
-### URL Endpoints
+### Swagger
+
+if you want the documentation of the REST API, take a look to the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.json).
 
 - [/streams](#streams)
-- [/count](#count)
-- [/top](#top)
+- [/counters](#counters)
+- [/tables](#tables)
 - [/reset](#reset)
 
 #### streams
@@ -462,14 +464,14 @@ content-type: application/json
 { "streams": [ "dnsdist1", "unbound1" ] }
 ```
 
-#### count
+#### counters
 
 Get some counters like number of queries, clients, ...
 This endpoint accepts optional arguments in the query:
 - **more** (optional): list of [counters](/README.md#counters)
 
 ```
-GET /count?more=response/noerror
+GET /counters?more=response/noerror
 ```
 
 ```json
@@ -482,7 +484,7 @@ GET /count?more=response/noerror
 }
 ```
 
-#### top
+#### tables
 
 Get top statistics from the dnstap-receiver in JSON format.
 This endpoint accepts optional arguments in the query:
@@ -495,7 +497,7 @@ This endpoint accepts optional arguments in the query:
 Example request:
 
 ```
-GET /top
+GET /tables
 ```
 
 ```json

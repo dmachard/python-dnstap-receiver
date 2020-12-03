@@ -19,25 +19,68 @@
     ],
     "tags": [
         {
-          "name": "stream",
-          "description": "dnstap identity"
+          "name": "statistics",
+          "description": ""
         },
         {
-          "name": "counter",
-          "description": "total number of"
-        },
-        {
-          "name": "table",
-          "description": "list of items sortered"
+          "name": "streams",
+          "description": ""
         }
     ],
     "paths": {
+        "/counters": {
+            "get": {
+                "tags": [
+                  "statistics"
+                ],
+                "summary": "Get counters",
+                "description": "Get counters like number of clients, domains, queries, etc...",
+                "operationId": "getCounters",
+                "produces": [
+                  "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                  "200": {
+                    "description": "",
+                     "schema": {
+                          "$ref": "#/definitions/CountersResponse"
+                     }
+                  }
+                }
+            }
+        },
+        "/tables": {
+            "get": {
+                "tags": [
+                  "statistics"
+                ],
+                "summary": "Get tables",
+                "description": "Get tables like top domains, top clients, etc...",
+                "operationId": "getTables",
+                "produces": [
+                  "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                  "200": {
+                    "description": "",
+                     "schema": {
+                          "$ref": "#/definitions/TablesResponse"
+                        }
+                  }
+                }
+            }
+        },
+
         "/streams": {
             "get": {
                 "tags": [
-                  "stream"
+                  "streams"
                 ],
-                "summary": "Get streams by identity",
+                "summary": "Get streams list",
                 "description": "Get a list of all streams by identity received by the dnstap receiver",
                 "operationId": "getStreams",
                 "produces": [
@@ -47,7 +90,7 @@
                 ],
                 "responses": {
                   "200": {
-                    "description": "success",
+                    "description": "",
                     "schema": {
                       "type": "array",
                       "items": {
@@ -55,110 +98,27 @@
                       }
                     }
                   }
-            },
-            "security": [
-              {
-                "api_key": []
-              }
-            ]
+            }
           }  
-        },
-        "/counters": {
-            "get": {
-                "tags": [
-                  "counter"
-                ],
-                "summary": "Get counters",
-                "description": "Get counters like number of clients, domains, queries, etc...",
-                "operationId": "getCounters",
-                "produces": [
-                  "application/json"
-                ],
-                "parameters": [
-                      {
-                        "name": "more",
-                        "in": "path",
-                        "description": "additional counters to return",
-                        "required": false,
-                        "type": "string"
-                      }
-                ],
-                "responses": {
-                  "200": {
-                    "description": "success",
-                     "schema": {
-                          "$ref": "#/definitions/CountersResponse"
-                     }
-                  }
-                }
-            },
-            "security": [
-              {
-                "api_key": []
-              }
-            ]
-        },
-        "/tables": {
-            "get": {
-                "tags": [
-                  "table"
-                ],
-                "summary": "Get tables",
-                "description": "Get tables like top domains, clients, etc...",
-                "operationId": "getTables",
-                "produces": [
-                  "application/json"
-                ],
-                "parameters": [
-                  {
-                    "name": "more",
-                    "in": "path",
-                    "description": "additional tables to return",
-                    "required": false,
-                    "type": "string"
-                  }
-                ],
-                "responses": {
-                  "200": {
-                    "description": "success",
-                     "schema": {
-                          "$ref": "#/definitions/TablesResponse"
-                        }
-                  }
-                }
-            },
-            "security": [
-              {
-                "api_key": []
-              }
-            ]
         },
         "/reset": {
             "delete": {
                 "tags": [
-                  "table"
+                  "streams"
                 ],
-                "summary": "Reset counters and tables",
+                "summary": "Reset statistics",
                 "description": "",
                 "operationId": "resetStatistics",
                 "produces": [
-                  "application/json"
                 ],
                 "parameters": [
-                ]
-            },
-            "security": [
-              {
-                "api_key": []
-              }
-            ]
-        }
-    },
-    "securityDefinitions": {
-        "api_key": {
-          "type": "apiKey",
-          "name": "x-api-key",
-          "in": "header"
+                ],
+                "responses": {
+                  "204": {
+                    "description": "No Content",
+                  }
+                }
+            }
         }
     },
     "definitions": {
@@ -167,17 +127,17 @@
           "properties": {
             "stream": {
               "type": "string"
-            },
-            "top-domains": {
+          },
+          "top-domains": {
+              "type": "object"
+          },
+          "top-clients": {
                 "type": "object"
-            },
-            "top-clients": {
+           },
+           "top-rcodes": {
                 "type": "object"
-            },
-            "top-rcodes": {
-                "type": "object"
-            },
-            "top-rrtypes": {
+          },
+          "top-rrtypes": {
                 "type": "object"
             }
           }
@@ -197,29 +157,29 @@
             "type": "object",
             "properties": {
               "clients": {
-                  "type": "int64"
+                  "type": "integer"
               },
               "domains": {
-                  "type": "int64"
+                  "type": "integer"
               },
               "qps": {
-                  "type": "int64"
+                  "type": "integer"
               },
               "query": {
-                  "type": "int64"
+                  "type": "integer"
               },
               "response": {
-                  "type": "int64"
+                  "type": "integer"
               },
               "response/[rcode]": {
-                  "type": "int64"
+                  "type": "integer"
               }
             }
         },
         "Stream": {
             "type": "object",
             "properties": {
-              "identity": {
+              "dnstap-identity": {
                   "type": "string"
               }
             }

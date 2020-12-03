@@ -5,7 +5,7 @@ import requests
 import subprocess
 import shlex
 
-api_url = "http://127.0.0.1:8080/top"
+api_url = "http://127.0.0.1:8080/tables"
 api_key = "changeme"
 
 class TestApiServer(unittest.TestCase):
