@@ -444,7 +444,7 @@ X-API-Key: secret
 
 ### Swagger
 
-if you want the documentation of the REST API, take a look to the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.json).
+if you want the documentation of the REST API, take a look to the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml).
 
 - [/streams](#streams)
 - [/counters](#counters)

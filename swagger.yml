@@ -1,0 +1,116 @@
+openapi: 3.0.2
+info:
+  title: Swagger for dnstap receiver
+  version: 2.2.0
+  description: This is a swagger for the API of the dnstap receiver.
+  contact:
+    email: d.machard@gmail.com
+  license:
+    name: MIT
+    url: 'https://github.com/dmachard/dnstap-receiver/blob/master/LICENSE'
+  x-logo:
+    url: ''
+servers:
+  - url: 'http://localhost/'
+paths:
+  /counters:
+    get:
+      tags:
+        - statistics
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountersResponse'
+          description: ''
+      operationId: getCounters
+      summary: Get counters
+      description: 'Get counters like number of clients, domains, queries, etc...'
+  /tables:
+    get:
+      tags:
+        - statistics
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TablesResponse'
+          description: ''
+      operationId: getTables
+      summary: Get tables
+      description: 'Get tables like top domains, top clients, etc...'
+  /streams:
+    get:
+      tags:
+        - streams
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: ''
+      operationId: getStreams
+      summary: Get streams list
+      description: Get a list of all streams by identity received by the dnstap receiver
+  /reset:
+    delete:
+      tags:
+        - streams
+      responses:
+        '204':
+          description: No Content
+      operationId: resetStatistics
+      summary: Reset statistics
+      description: ''
+components:
+  schemas:
+    TablesResponse:
+      type: object
+      properties:
+        stream:
+          type: string
+        top-domains:
+          type: object
+        top-clients:
+          type: object
+        top-rcodes:
+          type: object
+        top-rrtypes:
+          type: object
+    CountersResponse:
+      type: object
+      properties:
+        stream:
+          type: string
+        counters:
+          $ref: '#/components/schemas/Counters'
+    Counters:
+      type: object
+      properties:
+        clients:
+          type: integer
+        domains:
+          type: integer
+        qps:
+          type: integer
+        query:
+          type: integer
+        response:
+          type: integer
+        'response/[rcode]':
+          type: integer
+  securitySchemes: {}
+  responses: {}
+  parameters: {}
+tags:
+  - name: statistics
+    description: ''
+  - name: streams
+    description: ''
+security: []
+externalDocs: null
