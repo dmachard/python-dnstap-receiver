@@ -113,4 +113,5 @@ tags:
   - name: streams
     description: ''
 security: []
-externalDocs: null
+externalDocs:
+  url: 'https://github.com/dmachard/dnstap-receiver'
