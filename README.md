@@ -32,10 +32,10 @@ in JSON, YAML or one line text format and more.
 * [Statistics](#statistics)
     * [Counters](#counters)
     * [Tables](#tables)
-* [API](#api)
+* [Web server](#web-server)
     * [Configuration](#configuration)
     * [Security](#security)
-    * [Documentation](#documentation)
+    * [Rest API](#rest-api)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
@@ -385,7 +385,7 @@ With the GeoIP support, the following new fields will be added:
 
 ## Statistics
 
-Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them from the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
+Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them from the web server throught the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
 
 ### Counters
 
@@ -414,7 +414,9 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 - **top-rrtypes**: table of resources record types with total of queries or responses
 - **top-rcodes**: table of return codes with total of queries or responses
 
-## API
+## Web server
+
+The build-in web server can be used to get statistics computed by the dnstap receiver.
 
 ### Configuration
 
@@ -442,10 +444,9 @@ An HTTP 401 response is returned when a wrong or no API key is received.
 X-API-Key: secret
 ```
 
-### Documentation
+### Rest API
 
-if you want the documentation of the REST API, take a look to the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml). ![swagger](https://validator.swagger.io/validator?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml)
-
+See the following [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml)
 
 ## Tested DNS servers
 
