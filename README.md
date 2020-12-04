@@ -7,7 +7,7 @@
 
 This Python module acts as a DNS tap streams receiver for DNS servers.
 Input streams can be a unix socket or multiple remote dns servers.
-The output is printed directly to stdout or send to remote tcp address 
+The output is printed directly to stdout or sent to remote tcp address 
 in JSON, YAML or one line text format and more. 
 
 ## Table of contents
