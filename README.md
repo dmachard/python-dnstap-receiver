@@ -446,7 +446,7 @@ X-API-Key: secret
 
 ### Rest API
 
-See [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml) documentation.
+See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml) documentation.
 
 ## Tested DNS servers
 
