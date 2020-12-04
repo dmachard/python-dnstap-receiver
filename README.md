@@ -385,7 +385,7 @@ With the GeoIP support, the following new fields will be added:
 
 ## Statistics
 
-Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them from the web server throught the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
+Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them from the [web server](#web-server) throught the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
 
 ### Counters
 
@@ -446,7 +446,7 @@ X-API-Key: secret
 
 ### Rest API
 
-See the following [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml)
+See [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml) documentation.
 
 ## Tested DNS servers
 
