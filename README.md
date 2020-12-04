@@ -35,7 +35,7 @@ in JSON, YAML or one line text format and more.
 * [API](#api)
     * [Configuration](#configuration)
     * [Security](#security)
-    * [URL endpoints](#url-endpoints)
+    * [Documentation](#documentation)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
@@ -442,11 +442,9 @@ An HTTP 401 response is returned when a wrong or no API key is received.
 X-API-Key: secret
 ```
 
-### Swagger
+### Documentation
 
-if you want the documentation of the REST API, take a look to the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml).
-
-![swagger](https://validator.swagger.io/validator?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml)
+if you want the documentation of the REST API, take a look to the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml). ![swagger](https://validator.swagger.io/validator?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml)
 
 
 ## Tested DNS servers
