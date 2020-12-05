@@ -389,30 +389,30 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 
 ### Counters
 
-- **query**: total of queries
-- **response**: total of responses
+- **query**: number of queries
+- **response**: number of answers
 - **qps**: number of queries per second
 - **clients**: number of unique clients ip
 - **domains**: number of unique domains
-- **query/inet**: total of IPv4 queries
-- **query/inet6**: total of IPv6 queries
-- **response/inet**: total of IPv4 responses
-- **response/inet6**: total of IPv6 responses
-- **query/udp**: total of queries with UDP
-- **query/tcp**: total of queries withTCP protocol
-- **response/udp**: total of responses with UDP,protocol
-- **response/tcp**: total of responses with TCP protocol
-- **response/[rcode]**: total of responses per specific rcode = noerror, nxdomain, refused,...
-- **query/[rrtype]**: total of queries per record resource type = = a, aaaa, cname,...
+- **query/inet**: number of IPv4 queries
+- **query/inet6**: number of IPv6 queries
+- **response/inet**: number of IPv4 answers
+- **response/inet6**: number of IPv6 answers
+- **query/udp**: number of queries with UDP
+- **query/tcp**: number of queries withTCP protocol
+- **response/udp**: number of answers with UDP,protocol
+- **response/tcp**: number of answers with TCP protocol
+- **response/[rcode]**: number of answers per specific rcode = noerror, nxdomain, refused,...
+- **query/[rrtype]**: number of queries per record resource type = = a, aaaa, cname,...
 
 ### Tables
 
-- **top-domains**: table of domains sorted by return codes and total of queries or responses
+- **top-domains**: table of domains sorted by return codes and number of queries or answers
 - **top-clients**: 
-  - table of ip addresses with total of queries
-  - table of ip addresses with total bytes
-- **top-rrtypes**: table of resources record types with total of queries or responses
-- **top-rcodes**: table of return codes with total of queries or responses
+  - table of ip addresses with number of queries
+  - table of ip addresses with number bytes
+- **top-rrtypes**: table of resources record types with number of queries or answers
+- **top-rcodes**: table of return codes with number of queries or answers
 
 ## Web server
 
