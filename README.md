@@ -437,12 +437,12 @@ web-api:
 
 ### Security
 
-To access to the API, key must be sent in the X-API-Key request header.
-An HTTP 401 response is returned when a wrong or no API key is received.
+The following authentication methods are supported:
+- BasicAuth
+- X-API-Key
 
-```
-X-API-Key: secret
-```
+To access to the API, one of them method must be used in the request header.
+An HTTP 401 response is returned when the authentication failed.
 
 ### HTTP API
 
