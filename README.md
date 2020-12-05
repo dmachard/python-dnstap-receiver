@@ -32,10 +32,10 @@ in JSON, YAML or one line text format and more.
 * [Statistics](#statistics)
     * [Counters](#counters)
     * [Tables](#tables)
-* [Web server](#web-server)
+* [Build-in Webserver](#build-in-webserver)
     * [Configuration](#configuration)
     * [Security](#security)
-    * [Rest API](#rest-api)
+    * [HTTP API](#http-api)
 * [Tested DNS servers](#tested-dns-servers)
     * [ISC - bind](#bind)
     * [PowerDNS - pdns-recursor](#pdns-recursor)
@@ -398,9 +398,9 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 - **query/inet6**: number of IPv6 queries
 - **response/inet**: number of IPv4 answers
 - **response/inet6**: number of IPv6 answers
-- **query/udp**: number of queries with UDP
-- **query/tcp**: number of queries withTCP protocol
-- **response/udp**: number of answers with UDP,protocol
+- **query/udp**: number of queries with UDP protocol
+- **query/tcp**: number of queries with TCP protocol
+- **response/udp**: number of answers with UDP protocol
 - **response/tcp**: number of answers with TCP protocol
 - **response/[rcode]**: number of answers per specific rcode = noerror, nxdomain, refused,...
 - **query/[rrtype]**: number of queries per record resource type = = a, aaaa, cname,...
@@ -414,7 +414,7 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 - **top-rrtypes**: table of resources record types with number of queries or answers
 - **top-rcodes**: table of return codes with number of queries or answers
 
-## Web server
+## Build-in Webserver
 
 The build-in web server can be used to get statistics computed by the dnstap receiver.
 
@@ -444,7 +444,7 @@ An HTTP 401 response is returned when a wrong or no API key is received.
 X-API-Key: secret
 ```
 
-### Rest API
+### HTTP API
 
 See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/dnstap-receiver/master/swagger.yml) documentation.
 

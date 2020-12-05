@@ -3,21 +3,40 @@ import logging
 import json
 
 from aiohttp import web
+from aiohttp import BasicAuth
 
 clogger = logging.getLogger("dnstap_receiver.console")
 
 class Handlers:
-    def __init__(self, apikey, stats, cfg_stats):
+    def __init__(self, apikey, basicauth, stats, cfg_stats):
         self.api_key = apikey
+        self.basic_auth = basicauth
         self.cfg_stats = cfg_stats
         self.stats = stats
         self.top = 10
         
     def check_auth(self, request):
         """check api key value"""
+        # support basic auth or x-api-key authentication
         req_auth = request.headers.get('X-API-Key')
-        if req_auth is None or req_auth != self.api_key:
+        basic_auth = request.headers.get('Authorization')
+
+        if req_auth is None and basic_auth is None:
             return False
+        
+        if req_auth is not None:
+            if req_auth != self.api_key:
+                return False
+                
+        if basic_auth is not None:
+            auth = BasicAuth(login="").decode(auth_header=basic_auth)
+                    
+            print(auth)
+            print(self.basic_auth)
+            
+            if self.basic_auth != auth:
+                return False
+                
         return True
    
     async def handle_reset(self, request):
@@ -76,7 +95,8 @@ class Handlers:
         
 async def create_server(loop, cfg, stats, cfg_stats):
     # api ressources
-    hdlrs = Handlers(cfg["api-key"], stats, cfg_stats)
+    basic_auth = BasicAuth(login=cfg["login"], password=cfg["password"])
+    hdlrs = Handlers(cfg["api-key"], basic_auth, stats, cfg_stats)
     
     # rest api server
     app = web.Application(loop=loop)
