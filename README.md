@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
-This Python module acts as a DNS tap streams receiver for DNS servers.
+This Python module acts as a [dnstap](https://dnstap.info/) streams receiver for DNS servers.
 Input streams can be a unix socket or multiple remote dns servers.
 The output is printed directly on stdout or sent to remote tcp address 
 in JSON, YAML or one line text format and more. 
@@ -27,11 +27,11 @@ in JSON, YAML or one line text format and more.
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
     * [Filtering feature](#filtering-feature)
-    * [Dashboard](#dashboard)
     * [GeoIP support](#geoip-support)
 * [Statistics](#statistics)
     * [Counters](#counters)
     * [Tables](#tables)
+    * [Metrics](#metrics)
 * [Build-in Webserver](#build-in-webserver)
     * [Configuration](#configuration)
     * [Security](#security)
@@ -361,10 +361,6 @@ filter:
   qname-regex: ".*.com"
 ```
 
-### Dashboard
-
-Use the [dnstap-dashboard](https://github.com/dmachard/dnstap-dashboard) command to follow metrics of your dns server in real-time. Metrics are based on the rest API of the dnstap receiver.
-
 ### GeoIP support
 
 The `dnstap receiver` can be extended with GeoIP. To do that, you need to configure your own city database in binary format.
@@ -385,7 +381,10 @@ With the GeoIP support, the following new fields will be added:
 
 ## Statistics
 
-Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them from the [web server](#web-server) throught the REST API. If you restart your dnstap receiver, all previous statistics will be lost.
+Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them: 
+- directly from the [web server](#web-server) through the HTTP API. 
+- with the [dnstap-dashboard](https://github.com/dmachard/dnstap-dashboard), a dnstop-like command
+- from your [Prometheus](https://prometheus.io/) instance
 
 ### Counters
 
@@ -414,13 +413,36 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 - **top-rrtypes**: table of resources record types with number of queries or answers
 - **top-rcodes**: table of return codes with number of queries or answers
 
+### Metrics
+
+Metrics in [Prometheus](https://prometheus.io/) format with global counters and specific by dnstap stream.
+
+```
+# HELP dnstap_queries Number of queries received
+# TYPE dnstap_queries counter
+dnstap_queries 0
+# HELP dnstap_responses Number of responses received
+# TYPE dnstap_responses counter
+dnstap_responses 0
+# HELP dnstap_responses_noerror Number of NOERROR answers
+# TYPE dnstap_responses_noerror counter
+dnstap_responses_noerror 0
+# HELP dnstap_responses_nxdomain Number of NXDomain answers
+# TYPE dnstap_responses_nxdomain counter
+dnstap_responses_nxdomain 0
+# HELP dnstap_responses_serverfail Number of SERVFAIL  answers
+# TYPE dnstap_responses_serverfail counter
+dnstap_responses_serverfail 0
+...
+```
+
 ## Build-in Webserver
 
 The build-in web server can be used to get statistics computed by the dnstap receiver.
 
 ### Configuration
 
-Enable the REST API 
+Enable the HTTP API, don't forget to change the default password.
 
 ```yaml
 # rest api
@@ -429,8 +451,12 @@ web-api:
     enable: true
     # web api key
     api-key: changeme
+    # basicauth login
+    login: admin
+    # basicauth password
+    password: changeme
     # listening address ipv4 0.0.0.0 or ipv6 [::]
-    local-address: 127.0.0.1
+    local-address: 0.0.0.0
     # listing on port
     local-port: 8080
 ```
@@ -451,10 +477,10 @@ See the [swagger](https://generator.swagger.io/?url=https://raw.githubuserconten
 ## Tested DNS servers
 
 This dnstap receiver has been tested with success with the following dns servers:
- - **ISC - bind**
- - **PowerDNS - dnsdist, pdns-recursor**
- - **NLnet Labs - nsd, unbound**
- - **CoreDNS**
+ - [ISC](https://www.isc.org/bind/) - **bind**
+ - [PowerDNS](https://github.com/PowerDNS) - **dnsdist, pdns-recursor**
+ - [NLnet Labs](https://github.com/NLnetLabs) - **nsd, unbound**
+ - [CoreDNS](https://github.com/coredns)
 
 ### bind
 

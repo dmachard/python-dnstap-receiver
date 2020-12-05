@@ -13,6 +13,20 @@ info:
 servers:
   - url: 'http://localhost/'
 paths:
+  /metrics:
+    get:
+      tags:
+        - statistics
+      responses:
+        '200':
+          content:
+            text/plan:
+              schema:
+                $ref: '#/components/schemas/CountersResponse'
+          description: ''
+      operationId: getMetrics
+      summary: Get metrics
+      description: 'Get metrics with prometheus format'
   /counters:
     get:
       tags:
@@ -21,8 +35,7 @@ paths:
         '200':
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/CountersResponse'
+              type: string
           description: ''
       operationId: getCounters
       summary: Get counters
