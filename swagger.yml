@@ -21,8 +21,7 @@ paths:
         '200':
           content:
             text/plan:
-              schema:
-                $ref: '#/components/schemas/CountersResponse'
+              type: string
           description: ''
       operationId: getMetrics
       summary: Get metrics
@@ -35,7 +34,8 @@ paths:
         '200':
           content:
             application/json:
-              type: string
+              schema:
+                $ref: '#/components/schemas/CountersResponse'
           description: ''
       operationId: getCounters
       summary: Get counters
