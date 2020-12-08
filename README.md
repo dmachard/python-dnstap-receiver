@@ -383,7 +383,7 @@ With the GeoIP support, the following new fields will be added:
 
 Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and stored in memory, you can get them: 
 - directly from the [web server](#web-server) through the HTTP API. 
-- with the [dnstap-dashboard](https://github.com/dmachard/dnstap-dashboard), a dnstop-like command
+- with the [dnstap-dashboard](https://github.com/dmachard/dnstap-dashboard), a top-like command
 - from your [Prometheus](https://prometheus.io/) instance
 
 ### Counters
@@ -406,13 +406,19 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 
 ### Tables
 
-- **top-domains**: table of domains sorted by return codes and number of queries or answers
-- **top-clients**: 
-  - table of ip addresses with number of queries
-  - table of ip addresses with number bytes
-- **top-rrtypes**: table of resources record types with number of queries or answers
-- **top-rcodes**: table of return codes with number of queries or answers
-
+- **domains**: 
+  - **[rcode]/query**: table of [n] domains sorted by number of queries
+  - **[rcode]/response**: table of [n] domains sorted by number of answers
+- **clients**: 
+  - **hit/client**: table of [n] ip addresses sorted by number of queries
+  - **length/ip**: table of [n] ip addresses sorted by number of bytes
+- **rrtypes** 
+  - **hit/query**: table of [n] resources record types sorted by the number of queries
+  - **hit/response**: table of [n] resources record types sorted by the number of answers
+- **top-rcodes**:
+  - **hit/query**: table of [n] return codes sorted by the number of queries
+  - **hit/response**: table of [n] return codes sorted by the number of answers
+  
 ### Metrics
 
 Metrics in [Prometheus](https://prometheus.io/) format with global counters and specific by dnstap stream.
