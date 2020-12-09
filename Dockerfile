@@ -13,7 +13,7 @@ RUN true \
     && apk update \
     && apk add gcc musl-dev \
     && adduser -D dnstap \
-    && pip install --no-cache-dir dnspython protobuf pyyaml aiohttp\
+    && pip install --no-cache-dir dnspython protobuf pyyaml aiohttp geoip2 tlds\
     && apk del gcc musl-dev \
     && cd /home/dnstap \
     && sed -i 's/local-address: 127.0.0.1/local-address: 0.0.0.0/g' ./dnstap_receiver/dnstap.conf \
