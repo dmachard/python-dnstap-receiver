@@ -49,7 +49,7 @@ class Handlers:
         if not auth:
             return web.Response(status=401)
   
-        filters = ["qps", "domains", "clients",
+        filters = ["qps", "domains", "clients", "query/bytes", "response/bytes",
                    "query", "query/udp", "query/tcp", "query/inet", "query/inet6", 
                    "query/a", "query/aaaa", "query/svr",
                    "response", "response/udp", "response/tcp", "response/inet", "response/inet6", 
@@ -59,6 +59,14 @@ class Handlers:
         counters = self.stats.get_counters(stream=None, filters=filters)
 
         p = []
+        
+        p.append( "# HELP dnstap_queries_bytes_total Total number of bytes for queries" )
+        p.append( "# TYPE dnstap_queries_bytes_total counter" )
+        p.append( "dnstap_queries_bytes_total %s" % counters["query/bytes"] )
+        
+        p.append( "# HELP dnstap_responses_bytes_total Total number of bytes for responses" )
+        p.append( "# TYPE dnstap_responses_bytes_total counter" )
+        p.append( "dnstap_responses_bytes_total %s" % counters["response/bytes"] )
         
         p.append( "# HELP dnstap_qps Number of queries per second received" )
         p.append( "# TYPE dnstap_qps counter" )
