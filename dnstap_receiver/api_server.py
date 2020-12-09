@@ -148,6 +148,12 @@ class Handlers:
         for s in self.stats.get_nameslist():
             sub_cntrs = self.stats.get_counters(stream=s, filters=filters)
             
+            p.append( "# HELP dnstap_queries_bytes_total Total number of bytes for queries of this dnstap identity" )
+            p.append( "# TYPE dnstap_queries_bytes_total counter" )
+        
+            p.append( "# HELP dnstap_responses_bytes_total Total number of bytes for responses of this dnstap identity" )
+            p.append( "# TYPE dnstap_responses_bytes_total counter" )
+        
             p.append( "# HELP dnstap_qps Number of queries per second for this dnstap identity" )
             p.append( "# TYPE dnstap_qps counter" )
             
@@ -206,6 +212,9 @@ class Handlers:
             p.append( "# TYPE dnstap_responses_serverfail counter" )
             
         
+            p.append( "dnstap_queries_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["query/bytes"]) )
+            p.append( "dnstap_responses_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["response/bytes"]) )
+            
             p.append( "dnstap_qps{identity=\"%s\"} %s" % (s,sub_cntrs["qps"]) )
             p.append( "dnstap_domains{identity=\"%s\"} %s" % (s,sub_cntrs["domains"]) )
             p.append( "dnstap_clients{identity=\"%s\"} %s" % (s,sub_cntrs["clients"]) )
