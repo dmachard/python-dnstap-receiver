@@ -403,6 +403,8 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 - **response/tcp**: number of answers with TCP protocol
 - **response/[rcode]**: number of answers per specific rcode = noerror, nxdomain, refused,...
 - **query/[rrtype]**: number of queries per record resource type = = a, aaaa, cname,...
+- **query/bytes**: total number of bytes with queries
+- **response/bytes**: total number of bytes with answers
 
 ### Tables
 
