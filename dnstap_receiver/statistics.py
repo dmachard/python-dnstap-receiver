@@ -49,6 +49,9 @@ class StatsStream:
         self.cnts.update({"%s/%s" % (qr,tap["protocol"].lower()):1})
         self.cnts.update({"%s/%s" % (qr,tap["family"].lower()):1})
 
+        # count total of bytes
+        self.cnts.update( {"%s/bytes" % qr: tap["length"]} )
+        
         # prepare the buffer according to the dnstap message
         buf = self.bufq if qr == "query" else self.bufr 
         if qname not in buf: buf[qname] = Counter()
