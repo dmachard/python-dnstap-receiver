@@ -255,10 +255,11 @@ class Handlers:
 
         data = { "stream": s,
                  "tables": {
+                     "tlds": self.stats.top_tlds(int(n),s),
                      "domains": self.stats.top_domains(int(n),s, filters=filters),
                      "clients": self.stats.top_clients(int(n), s),
-                     "rcodes": self.stats.top_dnscode(int(n), s, rcode=True),
-                     "rrtypes": self.stats.top_dnscode(int(n),s, rcode=False) }
+                     "rcodes": self.stats.top_rcodes(int(n), s),
+                     "rrtypes": self.stats.top_rrtypes(int(n),s) }
                 }
         return web.json_response(data)
         

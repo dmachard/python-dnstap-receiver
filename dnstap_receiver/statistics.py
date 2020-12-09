@@ -2,6 +2,7 @@
 from collections import Counter
 import asyncio
 import re
+from tlds import tld_set
 
 # watcher for compute qps
 async def watcher(statistics):
@@ -12,7 +13,7 @@ async def watcher(statistics):
         
         # compute qps every interval
         statistics.compute_qps()
-        
+     
 class StatsStream:
     def __init__(self, name):
         """constructor"""
@@ -28,6 +29,8 @@ class StatsStream:
         self.cnts_rcode = Counter()
         self.cnts_rrtype = Counter()
 
+        self.cnts_tlds = Counter()
+        
     def record(self, tap):
         """record only response dnstap message"""
         qname = tap["qname"]; srcip = tap["source-ip"]; 
@@ -62,11 +65,17 @@ class StatsStream:
         self.cnts_rcode.update({ "%s/%s" % (qr,rcode.lower()): 1})
         self.cnts_rrtype.update({ "%s/%s" % (qr,rrtype.lower()): 1})
 
-        # finaly count number of unique domains
+        # count number of unique domains
         qnames = set(self.bufq)
         qnames.update(set(self.bufr))
         self.cnts["domains"] = len(qnames)
 
+        # count tld
+        for tld in tld_set:
+            if qname.endswith( ".%s." % tld): 
+                self.cnts_tlds.update( { "%s/%s" % (qr,tld): 1} )
+                break
+            
     def reset(self):
         """reset the stream"""
         # reset all counters and buffers
@@ -77,6 +86,8 @@ class StatsStream:
         self.cnts.clear()
         self.cnts_rcode.clear()
         self.cnts_rrtype.clear()
+        
+        self.cnts_tlds.clear()
         
         self.prev_qr = 0
 
@@ -103,6 +114,9 @@ class Statistics:
         # Counter({'query|response/<rrtype>': <int>})
         self.cnts_rrtype = Counter()
         
+        # Counter({'query|response/<tlds>': <int>})
+        self.cnts_tlds = Counter()
+        
         self.global_qps = Counter()
         
     def record(self, tap):
@@ -121,6 +135,8 @@ class Statistics:
         self.cnts.clear()
         self.cnts_rcode.clear()
         self.cnts_rrtype.clear()
+        self.cnts_tlds.clear()
+        
         qnames = set()
         ips = set()
         for s in self.streams:
@@ -133,6 +149,8 @@ class Statistics:
             self.cnts_rcode.update(self.streams[s].cnts_rcode)
             self.cnts_rrtype.update(self.streams[s].cnts_rrtype)
   
+            self.cnts_tlds.update(self.streams[s].cnts_tlds)
+            
         self.cnts["clients"] = len(ips)
         self.cnts["domains"] = len(qnames)
   
@@ -148,6 +166,8 @@ class Statistics:
         self.cnts_rrtype.clear()
         self.global_qps.clear()
 
+        self.cnts_tlds.clear()
+        
     def get_streams(self, stream=None):
         """return list of stream object"""
         if stream is None:
@@ -183,10 +203,12 @@ class Statistics:
             _cnt.update(self.cnts)
             _cnt.update(self.cnts_rcode)
             _cnt.update(self.cnts_rrtype)
+            _cnt.update(self.cnts_tlds)
         else:
             _cnt.update(s.cnts)
             _cnt.update(s.cnts_rcode)
             _cnt.update(s.cnts_rrtype)
+            _cnt.update(s.cnts_tlds)
 
         # set counters
         c = {}
@@ -195,20 +217,37 @@ class Statistics:
             
         return c
 
-    def top_dnscode(self, n, stream=None, rcode=True):
+    def top_rrtypes(self, n, stream=None):
         """return top- hit/response|query"""
         top = {}
         s = self.streams.get(stream)
-        if rcode:
-            cnt = s.cnts_rcode if s is not None else self.cnts_rcode
-        else:
-            cnt = s.cnts_rrtype if s is not None else self.cnts_rrtype
+        cnt = s.cnts_rrtype if s is not None else self.cnts_rrtype
             
         for qr in [ "query", "response" ]:
             cnt_ = Counter(dict(filter(lambda x:x[0].startswith("%s" % qr), cnt.items())))
             top["hit/%s" % qr] = cnt_.most_common(n)
         return top
-
+        
+    def top_rcodes(self, n, stream=None):
+        """return top- hit/response|query"""
+        top = {}
+        s = self.streams.get(stream)
+        cnt = s.cnts_rcode if s is not None else self.cnts_rcode 
+        for qr in [ "query", "response" ]:
+            cnt_ = Counter(dict(filter(lambda x:x[0].startswith("%s" % qr), cnt.items())))
+            top["hit/%s" % qr] = cnt_.most_common(n)
+        return top
+        
+    def top_tlds(self, n, stream):
+        """return top tld"""
+        top = {}
+        s = self.streams.get(stream)
+        cnt = s.cnts_tlds if s is not None else self.cnts_tlds   
+        for qr in [ "query", "response" ]:
+            cnt_ = Counter(dict(filter(lambda x:x[0].startswith("%s" % qr), cnt.items())))
+            top["hit/%s" % qr] = cnt_.most_common(n)
+        return top
+        
     def top_clients(self, n, stream):
         """return top clients"""
         top = {}

@@ -37,6 +37,7 @@ setuptools.setup(
         "protobuf",
         "pyyaml",
         "aiohttp",
-        "geoip2"
+        "geoip2",
+        "tlds"
     ]
 )

@@ -406,6 +406,9 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 
 ### Tables
 
+- **tlds**: 
+  - **hit/query**: table of [n] tlds sorted by number of queries
+  - **hit/response**: table of [n] tlds sorted by number of answers
 - **domains**: 
   - **[rcode]/query**: table of [n] domains sorted by number of queries
   - **[rcode]/response**: table of [n] domains sorted by number of answers
