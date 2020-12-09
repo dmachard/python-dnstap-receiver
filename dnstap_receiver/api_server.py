@@ -69,7 +69,7 @@ class Handlers:
         p.append( "dnstap_responses_bytes_total %s" % counters["response/bytes"] )
         
         p.append( "# HELP dnstap_qps Number of queries per second received" )
-        p.append( "# TYPE dnstap_qps counter" )
+        p.append( "# TYPE dnstap_qps gauge" )
         p.append( "dnstap_qps %s" % counters["qps"] )
         
         p.append( "# HELP dnstap_domains Number of domains asked" )
@@ -155,7 +155,7 @@ class Handlers:
             p.append( "# TYPE dnstap_responses_bytes_total counter" )
         
             p.append( "# HELP dnstap_qps Number of queries per second for this dnstap identity" )
-            p.append( "# TYPE dnstap_qps counter" )
+            p.append( "# TYPE dnstap_qps gauge" )
             
             p.append( "# HELP dnstap_domains Number of domains asked for this dnstap identity" )
             p.append( "# TYPE dnstap_domains counter" )
