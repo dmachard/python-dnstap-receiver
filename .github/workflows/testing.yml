@@ -29,7 +29,7 @@ jobs:
         sudo netstat -anp | grep dnsdist
     - name: Run Python tests 
       run: |
-        sudo python3 -m pip install protobuf pyyaml aiohttp geoip2
+        sudo python3 -m pip install protobuf pyyaml aiohttp geoip2 tlds
         sudo python3 -m pip install --upgrade dnspython
         sudo python3 -m unittest tests.test_receiver_tcpsocket -v
         sudo python3 -m unittest tests.test_receiver_unixsocket -v
