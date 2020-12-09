@@ -121,7 +121,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
             del dm
             return
             
-    tap = { "identity": tap_ident, "query-name": UnknownValue.name, 
+    tap = { "identity": tap_ident, "qname": UnknownValue.name, "rrtype": UnknownValue.name, 
             "query-type": UnknownValue.name, "source-ip": UnknownValue.name}
     
     # decode type message
@@ -170,7 +170,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     
     # filtering by qname ?
     if cfg["filter"]["qname-regex"] is not None:
-        if re.match(cfg["filter"]["qname-regex"], tap["query-name"]) is None:
+        if re.match(cfg["filter"]["qname-regex"], tap["qname"]) is None:
             del dm; del tap;
             return
 
