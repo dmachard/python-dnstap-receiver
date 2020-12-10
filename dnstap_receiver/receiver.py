@@ -42,14 +42,17 @@ DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
 DNSTAP_FAMILY = dnstap_pb2._SOCKETFAMILY.values_by_number
 DNSTAP_PROTO = dnstap_pb2._SOCKETPROTOCOL.values_by_number  
 
+DFLT_LISTEN_IP = "0.0.0.0"
+DFLT_LISTEN_PORT = 6000
+
 # command line arguments definition
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", 
                     help="IP of the dnsptap server to receive dnstap payloads (default: %(default)r)",
-                    default="0.0.0.0")
+                    default=DFLT_LISTEN_IP)
 parser.add_argument("-p", type=int,
                     help="Port the dnstap receiver is listening on (default: %(default)r)",
-                    default=6000)               
+                    default=DFLT_LISTEN_PORT)               
 parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
@@ -310,10 +313,13 @@ def setup_config(args):
             sys.exit(1)
 
     # update default config with command line arguments
-    cfg["trace"]["verbose"] = args.v
-    cfg["input"]["unix-socket"]["path"] = args.u
-    cfg["input"]["tcp-socket"]["local-address"] = args.l
-    cfg["input"]["tcp-socket"]["local-port"] = args.p
+    cfg["trace"]["verbose"] = args.v    
+    if args.u is not None:
+        cfg["input"]["unix-socket"]["path"] = args.u
+    if args.l != DFLT_LISTEN_IP:
+        cfg["input"]["tcp-socket"]["local-address"] = args.l
+    if args.l != DFLT_LISTEN_PORT:
+        cfg["input"]["tcp-socket"]["local-port"] = args.p
 
     return cfg
     
