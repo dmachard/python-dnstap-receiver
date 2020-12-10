@@ -296,12 +296,6 @@ def setup_config(args):
     except yaml.parser.ParserError:
         print("invalid default yaml config file")
         sys.exit(1)
-    
-    # update default config with command line arguments
-    cfg["trace"]["verbose"] = args.v
-    cfg["input"]["unix-socket"]["path"] = args.u
-    cfg["input"]["tcp-socket"]["local-address"] = args.l
-    cfg["input"]["tcp-socket"]["local-port"] = args.p
 
     # overwrite config with external file ?    
     if args.c:
@@ -314,6 +308,13 @@ def setup_config(args):
         except yaml.parser.ParserError:
             print("external invalid yaml config file")
             sys.exit(1)
+
+    # update default config with command line arguments
+    cfg["trace"]["verbose"] = args.v
+    cfg["input"]["unix-socket"]["path"] = args.u
+    cfg["input"]["tcp-socket"]["local-address"] = args.l
+    cfg["input"]["tcp-socket"]["local-port"] = args.p
+
     return cfg
     
 def setup_logger(cfg):
