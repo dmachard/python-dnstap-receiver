@@ -184,7 +184,10 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     if geoip_reader is not None:
         try:
             response = geoip_reader.city(tap["source-ip"])
-            tap["country"] = response.country.name
+            if cfg["geoip"]["country-iso"]:
+                tap["country"] = response.country.iso_code
+            else:
+                tap["country"] = response.country.name
             if response.city.name is not None:
                 tap["city"] = response.city.name
             else:

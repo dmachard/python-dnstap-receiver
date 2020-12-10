@@ -373,6 +373,8 @@ geoip:
     enable: true
     # city database path in binary format
     city-database: /var/geoip/GeoLite2-City.mmdb
+    # represent country in iso mode
+    country-iso: false
 ```
 
 With the GeoIP support, the following new fields will be added:
