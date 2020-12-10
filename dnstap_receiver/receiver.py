@@ -145,15 +145,17 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     # handle query message
     # todo catching dns.message.ShortHeader exception
     # can occured with coredns if the full argument is missing
+    d1 = None
     if (dm.type % 2 ) == 1 :
         dnstap_parsed = from_wire(dm.query_message,
-                                  question_only=True)
+                                  question_only=True)                 
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
         tap["type"] = "query"
         
     # handle response message
+    d2 = None
     if (dm.type % 2 ) == 0 :
         dnstap_parsed = from_wire(dm.response_message,
                                   question_only=True)
@@ -161,12 +163,13 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
         tap["type"] = "response"
-        
+
     # common params
     if len(dnstap_parsed.question):
         tap["qname"] = dnstap_parsed.question[0].name.to_text()
         tap["rrtype"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
     tap["rcode"] = dns.rcode.to_text(dnstap_parsed.rcode())
+    tap["id"] = dnstap_parsed.id
     
     # filtering by qname ?
     if cfg["filter"]["qname-regex"] is not None:
