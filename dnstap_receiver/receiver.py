@@ -313,7 +313,8 @@ def setup_config(args):
             sys.exit(1)
 
     # update default config with command line arguments
-    cfg["trace"]["verbose"] = args.v    
+    if args.v:
+        cfg["trace"]["verbose"] = args.v    
     if args.u is not None:
         cfg["input"]["unix-socket"]["path"] = args.u
     if args.l != DFLT_LISTEN_IP:
