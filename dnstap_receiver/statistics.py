@@ -18,8 +18,9 @@ async def watcher(statistics):
         statistics.compute_qps()
     
 class StatsStream:
-    def __init__(self, name):
+    def __init__(self, name, stats):
         """constructor"""
+        self.stats = stats
         self.name = name
 
         self.bufq = defaultdict(Counter)
@@ -39,6 +40,10 @@ class StatsStream:
         qname = tap["qname"]; srcip = tap["source-ip"]; 
         qr = tap["type"]; rcode = tap["rcode"]; rrtype = tap["rrtype"]
         
+        # transform qname to lowercase ?
+        if self.stats.cfg["qname-lowercase"]:
+            qname = qname.lower()
+
         # count number of hit and bytes for each source ip
         self.bufi[srcip]["hit"] += 1
         self.bufi[srcip]["length"] += tap["length"]
@@ -103,8 +108,9 @@ class StatsStream:
         self.prev_qr = cur_qr
         
 class Statistics:
-    def __init__(self):
+    def __init__(self, cfg):
         """constructor"""
+        self.cfg = cfg
         self.streams = {}
         
         # Counter({'query/response': <int>, 'query|response/udp|tcp': <int>, 
@@ -123,7 +129,7 @@ class Statistics:
     def record(self, tap):
         """record dnstap message"""
         if tap["identity"] not in self.streams:
-            s = StatsStream(name=tap["identity"])
+            s = StatsStream(name=tap["identity"], stats=self)
             self.streams[tap["identity"]] = s
         self.streams[tap["identity"]].record(tap=tap)
 

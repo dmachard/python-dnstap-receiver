@@ -439,7 +439,7 @@ def start_receiver():
     clogger.debug("Start receiver...")
     loop = asyncio.get_event_loop()
     queue = asyncio.Queue()
-    stats = statistics.Statistics()
+    stats = statistics.Statistics(cfg=cfg["statistics"])
     loop.create_task(statistics.watcher(stats))
     
     # prepare outputs
