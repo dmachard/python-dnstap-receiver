@@ -43,6 +43,7 @@ in JSON, YAML or one line text format and more.
     * [NLnet Labs - nsd](#nsd)
     * [NLnet Labs - unbound](#unbound)
     * [CoreDNS](#coredns)
+* [Benchmark](#benchmark)
 * [About](#about)
 
 ## Installation
@@ -775,6 +776,31 @@ Then execute CoreDNS with your corefile
 
 ```bash
  ./coredns -conf corefile
+```
+
+# Benchmark
+
+## Limited lab
+
+Tested on a limited lab with the following processor: Intel Core i5-7200U @2,50GHz 
+- query per seconds: ~6000
+- domains: ~40000
+- clients: 1
+
+- cpu usage: ~30%
+- memory usage: ~60Mo
+- Network usage: ~5.7Mb
+
+Metrics are extracted every second:
+
+```bash
+watch -n 1 "time curl --user admin:changeme http://<ip_dnstap_receiver>:8080/metrics"
+```
+
+Dnsperf command used:
+
+```bash
+resperf -s 10.0.0.210 -d queryfile-example-current5 -m 6000 -c 10 -C 1 -v
 ```
 
 # About
