@@ -5,7 +5,7 @@ import sys
 clogger = logging.getLogger("dnstap_receiver.console")
 file_logger = logging.getLogger("dnstap_receiver.output.file")
 
-from dnstap_receiver import transform
+from dnstap_receiver.outputs import transform
 
 def checking_conf(cfg):
     """validate the config"""
