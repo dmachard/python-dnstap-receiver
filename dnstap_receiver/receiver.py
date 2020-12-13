@@ -58,7 +58,7 @@ parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
 
-async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
+async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, outputs_enabled):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
@@ -149,9 +149,10 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     stats.record(tap=tap)
         
     # append the dnstap message to the queue
-    queue.put_nowait(tap)
-
-async def cb_onconnect(reader, writer, cfg, queue, stats, geoip_reader):
+    if outputs_enabled: 
+        queue.put_nowait(tap)
+    
+async def cb_onconnect(reader, writer, cfg, queue, stats, geoip_reader, outputs_enabled):
     """callback when a connection is established"""
     # get peer name
     peername = writer.get_extra_info('peername')
@@ -203,7 +204,7 @@ async def cb_onconnect(reader, writer, cfg, queue, stats, geoip_reader):
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader))
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, outputs_enabled))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
@@ -298,33 +299,44 @@ def setup_outputs(cfg, queue, stats, loop):
     """setup outputs"""
     conf = cfg["output"]
 
+    outputs_enabled = False
     if conf["syslog"]["enable"]:
         if not output_syslog.checking_conf(cfg=conf["syslog"]): return
+        outputs_enabled = True
         loop.create_task(output_syslog.handle(conf["syslog"], queue, stats))    
 
     if conf["tcp-socket"]["enable"]:
         if not output_tcp.checking_conf(cfg=conf["tcp-socket"]): return
+        outputs_enabled = True
         loop.create_task(output_tcp.handle(conf["tcp-socket"], queue, stats))
                                                
     if conf["file"]["enable"]:
         if not output_file.checking_conf(cfg=conf["file"]): return
+        outputs_enabled = True
         loop.create_task(output_file.handle(conf["file"], queue, stats))
                                               
     if conf["stdout"]["enable"]:
         if not output_stdout.checking_conf(cfg=conf["stdout"]): return
+        outputs_enabled = True
         loop.create_task(output_stdout.handle(conf["stdout"], queue, stats))
 
     if conf["metrics"]["enable"]:
         if not output_metrics.checking_conf(cfg=conf["metrics"]): return
+        outputs_enabled = True
         loop.create_task(output_metrics.handle(conf["metrics"], queue, stats))
 
-def setup_inputs(args, cfg, queue, stats, loop, geoip_reader):
+    return outputs_enabled
+    
+def setup_inputs(args, cfg, queue, stats, loop, geoip_reader, outputs_enabled):
     """setup inputs"""
+    # define callback on new connection
+    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queue, stats, geoip_reader, outputs_enabled)
+    
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
         clogger.debug("Input handler: unix socket")
         clogger.debug("Input handler: listening on %s" % args.u)
-        socket_server = asyncio.start_unix_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats, geoip_reader),
+        socket_server = asyncio.start_unix_server(cb_lambda,
                                                   path=cfg["input"]["unix-socket"]["path"],
                                                   loop=loop)
     # default mode: asynchronous tcp socket
@@ -339,7 +351,7 @@ def setup_inputs(args, cfg, queue, stats, loop, geoip_reader):
             clogger.debug("Input handler - tls support enabled")
         clogger.debug("Input handler: listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
                                               cfg["input"]["tcp-socket"]["local-port"])), 
-        socket_server = asyncio.start_server(lambda r, w: cb_onconnect(r, w, cfg, queue, stats, geoip_reader),
+        socket_server = asyncio.start_server(cb_lambda,
                                              cfg["input"]["tcp-socket"]["local-address"],
                                              cfg["input"]["tcp-socket"]["local-port"],
                                              ssl=ssl_context,
@@ -392,10 +404,10 @@ def start_receiver():
     loop.create_task(statistics.watcher(stats))
     
     # prepare outputs
-    setup_outputs(cfg, queue, stats, loop)
+    outputs_enabled = setup_outputs(cfg, queue, stats, loop)
     
     # prepare inputs
-    setup_inputs(args, cfg, queue, stats, loop, geoip_reader)
+    setup_inputs(args, cfg, queue, stats, loop, geoip_reader, outputs_enabled)
 
     # start the rest api
     setup_api(cfg, queue, stats, loop)
