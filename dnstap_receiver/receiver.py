@@ -34,6 +34,7 @@ from dnstap_receiver.outputs import output_metrics
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
+from dnstap_receiver import dnspython_patch
 
 class UnknownValue:
     name = "-"
@@ -57,58 +58,6 @@ parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
 
-import dns.exception
-import dns.opcode
-import dns.flags
-
-# waiting fix with dnspython 2.1
-# will be removed in the future
-class _WireReader(dns.message._WireReader):
-    def read(self):
-        """issue fixed - waiting fix with dnspython 2.1"""
-        if self.parser.remaining() < 12:
-            raise dns.message.ShortHeader
-        (id, flags, qcount, ancount, aucount, adcount) = \
-            self.parser.get_struct('!HHHHHH')
-        factory = dns.message._message_factory_from_opcode(dns.opcode.from_flags(flags))
-        self.message = factory(id=id)
-        self.message.flags = flags
-        self.initialize_message(self.message)
-        self.one_rr_per_rrset = \
-            self.message._get_one_rr_per_rrset(self.one_rr_per_rrset)
-        self._get_question(dns.message.MessageSection.QUESTION, qcount)
-        
-        return self.message
-
-# waiting fix with dnspython 2.1
-# will be removed in the future
-def from_wire(wire, question_only=True):
-    """decode wire message - waiting fix with dnspython 2.1"""
-    raise_on_truncation=False
-    def initialize_message(message):
-        message.request_mac = b''
-        message.xfr = False
-        message.origin = None
-        message.tsig_ctx = None
-
-    reader = _WireReader(wire, initialize_message, question_only=question_only,
-                 one_rr_per_rrset=False, ignore_trailing=False,
-                 keyring=None, multi=False)
-    try:
-        m = reader.read()
-    except dns.exception.FormError:
-        if reader.message and (reader.message.flags & dns.flags.TC) and \
-           raise_on_truncation:
-            raise dns.message.Truncated(message=reader.message)
-        else:
-            raise
-    # Reading a truncated message might not have any errors, so we
-    # have to do this check here too.
-    if m.flags & dns.flags.TC and raise_on_truncation:
-        raise dns.message.Truncated(message=m)
-
-    return m
-    
 async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     """on dnstap"""
     # decode binary payload
@@ -150,7 +99,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     # can occured with coredns if the full argument is missing
     d1 = None
     if (dm.type % 2 ) == 1 :
-        dnstap_parsed = from_wire(dm.query_message,
+        dnstap_parsed = dnspython_patch.from_wire(dm.query_message,
                                   question_only=True)                 
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
@@ -160,7 +109,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader):
     # handle response message
     d2 = None
     if (dm.type % 2 ) == 0 :
-        dnstap_parsed = from_wire(dm.response_message,
+        dnstap_parsed = dnspython_patch.from_wire(dm.response_message,
                                   question_only=True)
         tap["length"] = len(dm.response_message)
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
