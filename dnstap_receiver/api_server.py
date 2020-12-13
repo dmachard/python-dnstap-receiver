@@ -48,7 +48,7 @@ class Handlers:
         auth = self.check_auth(request=request)
         if not auth:
             return web.Response(status=401)
-  
+
         filters = ["qps", "domains", "clients", "query/bytes", "response/bytes",
                    "query", "query/udp", "query/tcp", "query/inet", "query/inet6", 
                    "query/a", "query/aaaa", "query/svr",
@@ -57,7 +57,9 @@ class Handlers:
                    
         # global counters
         counters = self.stats.get_counters(stream=None, filters=filters)
-
+            
+        
+        
         p = []
         
         p.append( "# HELP dnstap_queries_bytes_total Total number of bytes for queries" )
@@ -236,7 +238,7 @@ class Handlers:
             p.append( "dnstap_responses_noerror{identity=\"%s\"} %s" % (s,sub_cntrs["response/noerror"]) )
             p.append( "dnstap_responses_nxdomain{identity=\"%s\"} %s" % (s,sub_cntrs["response/nxdomain"]) )
             p.append( "dnstap_responses_serverfail{identity=\"%s\"} %s" % (s,sub_cntrs["response/serverfail"]) )
-            
+
         return web.Response(text="\n".join(p), content_type='text/plan')
         
     async def handle_counters(self, request):

@@ -1,5 +1,7 @@
 
 from collections import Counter
+from collections import defaultdict
+
 import asyncio
 import re
 from tlds import tld_set
@@ -11,17 +13,18 @@ async def watcher(statistics):
         # sleep during one second
         await asyncio.sleep(1)
         
-        # compute qps every interval
+        # refresh counters and compute qps every interval
+        statistics.update_counters()
         statistics.compute_qps()
-     
+    
 class StatsStream:
     def __init__(self, name):
         """constructor"""
         self.name = name
 
-        self.bufq = {}
-        self.bufr = {}
-        self.bufi = {}
+        self.bufq = defaultdict(Counter)
+        self.bufr = defaultdict(Counter)
+        self.bufi = defaultdict(Counter)
 
         self.prev_qr = 0
         
@@ -37,47 +40,42 @@ class StatsStream:
         qr = tap["type"]; rcode = tap["rcode"]; rrtype = tap["rrtype"]
         
         # count number of hit and bytes for each source ip
-        if srcip not in self.bufi: self.bufi[srcip] = Counter()
-        for i in ["hit", "length"]:
-            self.bufi[srcip].update({i:tap.get(i, 1)})
+        self.bufi[srcip]["hit"] += 1
+        self.bufi[srcip]["length"] += tap["length"]
         self.cnts["clients"] = len(self.bufi)
         
         # count number of dnstap query or response.
-        self.cnts.update({qr:1})
+        self.cnts[qr] += 1
         
         # count number of dnstap according to the protocol and family
-        self.cnts.update({"%s/%s" % (qr,tap["protocol"].lower()):1})
-        self.cnts.update({"%s/%s" % (qr,tap["family"].lower()):1})
+        self.cnts["%s/%s" % (qr,tap["protocol"].lower())] += 1
+        self.cnts["%s/%s" % (qr,tap["family"].lower())] += 1
 
         # count total of bytes
-        self.cnts.update( {"%s/bytes" % qr: tap["length"]} )
+        self.cnts["%s/bytes" % qr] += tap["length"]
         
         # prepare the buffer according to the dnstap message
         buf = self.bufq if qr == "query" else self.bufr 
-        if qname not in buf: buf[qname] = Counter()
-
+        
         # count number of hit and byte for each qname
-        buf[qname].update({"hit": 1})
-        buf[qname].update({"length": tap["length"]})
+        buf[qname]["hit"] += 1
+        buf[qname]["length"] += tap["length"]
         
         # count number of rcode and rrtype for each qname
-        buf[qname].update({rcode.lower(): 1})
-        buf[qname].update({rrtype.lower(): 1})
+        buf[qname][rcode.lower()] += 1
+        buf[qname][rrtype.lower()] += 1
         
         # count number of rcode and rrtype for each qname
-        self.cnts_rcode.update({ "%s/%s" % (qr,rcode.lower()): 1})
-        self.cnts_rrtype.update({ "%s/%s" % (qr,rrtype.lower()): 1})
+        self.cnts_rcode["%s/%s" % (qr,rcode.lower())] += 1
+        self.cnts_rrtype["%s/%s" % (qr,rrtype.lower())] += 1
 
         # count number of unique domains
-        qnames = set(self.bufq)
-        qnames.update(set(self.bufr))
-        self.cnts["domains"] = len(qnames)
+        self.cnts["domains"] = len(buf)
 
         # count tld
-        for tld in tld_set:
-            if qname.endswith( ".%s." % tld): 
-                self.cnts_tlds.update( { "%s/%s" % (qr,tld): 1} )
-                break
+        tld_matched = list( filter(lambda x: x in tld_set, qname.rsplit(".", 2)) )
+        if len(tld_matched):
+            self.cnts_tlds["%s/%s" % (qr,tld_matched[-1])] += 1
             
     def reset(self):
         """reset the stream"""
@@ -128,10 +126,7 @@ class Statistics:
             s = StatsStream(name=tap["identity"])
             self.streams[tap["identity"]] = s
         self.streams[tap["identity"]].record(tap=tap)
-    
-        # update global counters
-        self.update_counters()
-        
+
     def update_counters(self):
         """create global counters"""
         # update global counters

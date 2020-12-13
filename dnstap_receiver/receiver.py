@@ -405,7 +405,7 @@ def setup_api(cfg, queue, stats, loop):
         api_svr = api_server.create_server(loop, cfg=cfg["web-api"], 
                                            stats=stats, cfg_stats=cfg["statistics"])
         loop.run_until_complete(api_svr)
-    
+
 def setup_geoip(cfg):
     if not cfg["enable"]: return None
     if cfg["city-database"] is None: return None
@@ -425,7 +425,7 @@ def start_receiver():
 
     # init config
     cfg = setup_config(args=args)
-            
+  
     # init logging
     setup_logger(cfg=cfg["trace"])
 
