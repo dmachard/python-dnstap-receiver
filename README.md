@@ -783,13 +783,6 @@ Then execute CoreDNS with your corefile
 ## Limited lab
 
 Tested on a limited lab with the following processor: Intel Core i5-7200U @2,50GHz 
-- query per seconds: ~6000
-- domains: ~40000
-- clients: 1
-
-- cpu usage: ~30%
-- memory usage: ~60Mo
-- Network usage: ~5.7Mb
 
 Metrics are extracted every second:
 
@@ -800,8 +793,18 @@ watch -n 1 "time curl --user admin:changeme http://<ip_dnstap_receiver>:8080/met
 Dnsperf command used:
 
 ```bash
-resperf -s 10.0.0.210 -d queryfile-example-current5 -m 6000 -c 10 -C 1 -v
+resperf -s <dns_ip_server> -d queryfile -m 6000 -c 10 -C 1 -v
 ```
+
+Result:
+
+| Query per seconds | ~6000 |
+| Domains | ~40000 |
+| Clients | 1 |
+| CPU usage | ~30% |
+| Memory usage | ~60Mo |
+| Network usage | ~5.7Mb |
+
 
 # About
 
