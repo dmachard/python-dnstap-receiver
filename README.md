@@ -798,6 +798,8 @@ resperf -s <dns_ip_server> -d queryfile -m 6000 -c 10 -C 1 -v
 
 Result:
 
+| Parameters| Values | 
+| ------------- | ------------- |
 | Query per seconds | ~6000 |
 | Domains | ~40000 |
 | Clients | 1 |
