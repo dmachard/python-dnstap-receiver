@@ -64,6 +64,9 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
     dnstap_decoder.ParseFromString(payload)
     dm = dnstap_decoder.message
     
+    if cfg["trace"]["dnstap"]:
+        clogger.debug("%s" % dm )
+    
     # filtering by dnstap identity ?
     tap_ident = dnstap_decoder.identity.decode()
     if not len(tap_ident):
@@ -97,7 +100,6 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
     # handle query message
     # todo catching dns.message.ShortHeader exception
     # can occured with coredns if the full argument is missing
-    d1 = None
     if (dm.type % 2 ) == 1 :
         dnstap_parsed = dnspython_patch.from_wire(dm.query_message,
                                   question_only=True)                 
@@ -107,7 +109,6 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
         tap["type"] = "query"
         
     # handle response message
-    d2 = None
     if (dm.type % 2 ) == 0 :
         dnstap_parsed = dnspython_patch.from_wire(dm.response_message,
                                   question_only=True)
