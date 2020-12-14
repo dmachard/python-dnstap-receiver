@@ -108,6 +108,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
         tap["type"] = "query"
+        latency = UnknownValue.name
         
     # handle response message
     if (dm.type % 2 ) == 0 :
@@ -118,6 +119,13 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
         tap["type"] = "response"
 
+        #compute latency 
+        d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
+        latency_float = d2-d1
+        latency = "%.3f" % latency_float
+    
+    tap["latency"] = latency
+        
     # common params
     if len(dnstap_parsed.question):
         tap["qname"] = dnstap_parsed.question[0].name.to_text()

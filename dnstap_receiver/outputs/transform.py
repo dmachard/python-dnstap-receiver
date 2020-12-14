@@ -16,6 +16,7 @@ def convert_dnstap(fmt, tapmsg):
         msg_list.append("%sb" % tapmsg["length"])
         msg_list.append("%s" % tapmsg["qname"])
         msg_list.append("%s" % tapmsg["rrtype"])
+        msg_list.append("%s" % tapmsg["latency"])
         
         # geoip activated ?
         if "country" in tapmsg:
