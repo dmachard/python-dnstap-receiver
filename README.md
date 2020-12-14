@@ -170,8 +170,8 @@ Output can be formatted in different way:
 Text format:
 
 ```
-2020-09-16T18:51:53.547352+00:00 centos RESOLVER_QUERY NOERROR - - INET UDP 43b ns2.google.com. A
-2020-09-16T18:51:53.591736+00:00 centos RESOLVER_RESPONSE NOERROR - - INET UDP 59b ns2.google.com. A
+2020-09-16T18:51:53.547352+00:00 centos RESOLVER_QUERY NOERROR - - INET UDP 43b ns2.google.com. A -
+2020-09-16T18:51:53.591736+00:00 centos RESOLVER_RESPONSE NOERROR - - INET UDP 59b ns2.google.com. A 0.048
 ```
 
 JSON format:
@@ -190,7 +190,8 @@ JSON format:
     "timestamp": "2020-09-16T18:51:53.591736+00:00",
     "rcode": "NOERROR",
     "id": 33422,
-    "flags": "RD"
+    "flags": "RD",
+    "latency": "-"
 }
 ```
 
@@ -209,6 +210,7 @@ timestamp: '2020-09-16T18:51:53.591736+00:00'
 protocol: UDP
 id: 33422
 flags: RD
+latency: '-'
 
 ```
 
