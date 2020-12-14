@@ -170,15 +170,15 @@ Output can be formatted in different way:
 Text format:
 
 ```
-2020-09-16T18:51:53.547352+00:00 lb1 RESOLVER_QUERY NOERROR - - INET UDP 43b ns2.google.com. A -
-2020-09-16T18:51:53.591736+00:00 lb2 RESOLVER_RESPONSE NOERROR - - INET UDP 59b ns2.google.com. A 0.048
+2020-09-16T18:51:53.547352+00:00 lb1 CLIENT_QUERY NOERROR - - INET UDP 43b ns2.google.com. A -
+2020-09-16T18:51:53.591736+00:00 lb2 CLIENT_RESPONSE NOERROR - - INET UDP 59b ns2.google.com. A 0.048
 ```
 
 JSON format:
 
 ```json
 {
-    "identity": "dev-centos8",
+    "identity": "lb1",
     "qname": "www.google.com.",
     "rrtype": "A",
     "source-ip": "192.168.1.114",
@@ -198,9 +198,10 @@ JSON format:
 YAML format:
 
 ```yaml
+identity: lb1
 rcode: NOERROR
 length: 49
-message: RESOLVER_QUERY
+message: CLIENT_QUERY
 family: INET
 qname: dns4.comlaude-dns.eu.
 rrtype: AAAA

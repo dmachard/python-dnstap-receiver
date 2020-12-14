@@ -58,7 +58,7 @@ parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
 
-async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, outputs_enabled):
+async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
@@ -160,10 +160,10 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
     stats.record(tap=tap)
         
     # append the dnstap message to the queue
-    if outputs_enabled: 
-        queue.put_nowait(tap)
+    for q in queues_list:
+        q.put_nowait(tap)
     
-async def cb_onconnect(reader, writer, cfg, queue, stats, geoip_reader, outputs_enabled):
+async def cb_onconnect(reader, writer, cfg, queues_list, stats, geoip_reader):
     """callback when a connection is established"""
     # get peer name
     peername = writer.get_extra_info('peername')
@@ -215,7 +215,7 @@ async def cb_onconnect(reader, writer, cfg, queue, stats, geoip_reader, outputs_
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, outputs_enabled))
+                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
@@ -306,42 +306,47 @@ def setup_logger(cfg):
     
     clogger.addHandler(lh)
     
-def setup_outputs(cfg, queue, stats, loop):
+def setup_outputs(cfg, stats, loop):
     """setup outputs"""
     conf = cfg["output"]
 
-    outputs_enabled = False
+    queues_list = []
     if conf["syslog"]["enable"]:
         if not output_syslog.checking_conf(cfg=conf["syslog"]): return
-        outputs_enabled = True
-        loop.create_task(output_syslog.handle(conf["syslog"], queue, stats))    
+        queue_syslog = asyncio.Queue()
+        queues_list.append(queue_syslog)
+        loop.create_task(output_syslog.handle(conf["syslog"], queue_syslog, stats))    
 
     if conf["tcp-socket"]["enable"]:
         if not output_tcp.checking_conf(cfg=conf["tcp-socket"]): return
-        outputs_enabled = True
-        loop.create_task(output_tcp.handle(conf["tcp-socket"], queue, stats))
+        queue_tcpsocket = asyncio.Queue()
+        queues_list.append(queue_tcpsocket)
+        loop.create_task(output_tcp.handle(conf["tcp-socket"], queue_tcpsocket, stats))
                                                
     if conf["file"]["enable"]:
         if not output_file.checking_conf(cfg=conf["file"]): return
-        outputs_enabled = True
-        loop.create_task(output_file.handle(conf["file"], queue, stats))
+        queue_file = asyncio.Queue()
+        queues_list.append(queue_file)
+        loop.create_task(output_file.handle(conf["file"], queue_file, stats))
                                               
     if conf["stdout"]["enable"]:
         if not output_stdout.checking_conf(cfg=conf["stdout"]): return
-        outputs_enabled = True
-        loop.create_task(output_stdout.handle(conf["stdout"], queue, stats))
+        queue_stdout = asyncio.Queue()
+        queues_list.append(queue_stdout)
+        loop.create_task(output_stdout.handle(conf["stdout"], queue_stdout, stats))
 
     if conf["metrics"]["enable"]:
         if not output_metrics.checking_conf(cfg=conf["metrics"]): return
-        outputs_enabled = True
-        loop.create_task(output_metrics.handle(conf["metrics"], queue, stats))
+        queue_metrics = asyncio.Queue()
+        queues_list.append(queue_metrics)
+        loop.create_task(output_metrics.handle(conf["metrics"], queue_metrics, stats))
 
-    return outputs_enabled
+    return queues_list
     
-def setup_inputs(args, cfg, queue, stats, loop, geoip_reader, outputs_enabled):
+def setup_inputs(args, cfg, queues_list, stats, loop, geoip_reader):
     """setup inputs"""
     # define callback on new connection
-    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queue, stats, geoip_reader, outputs_enabled)
+    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queues_list, stats, geoip_reader)
     
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
@@ -371,7 +376,7 @@ def setup_inputs(args, cfg, queue, stats, loop, geoip_reader, outputs_enabled):
     # run until complete
     loop.run_until_complete(socket_server)
     
-def setup_api(cfg, queue, stats, loop):
+def setup_api(cfg, stats, loop):
     """setup web api"""
     if cfg["web-api"]["enable"]:
         api_svr = api_server.create_server(loop, cfg=cfg["web-api"], 
@@ -395,13 +400,13 @@ def start_receiver():
     # Handle command-line arguments.
     args = parser.parse_args()
 
-    # init config
+    # setup config
     cfg = setup_config(args=args)
   
-    # init logging
+    # setup logging
     setup_logger(cfg=cfg["trace"])
 
-    # setup geoip is activated 
+    # setup geoip if enabled 
     geoip_reader = setup_geoip(cfg=cfg["geoip"])
     
     # add debug message if external config is used
@@ -410,18 +415,17 @@ def start_receiver():
     # start receiver and get event loop
     clogger.debug("Start receiver...")
     loop = asyncio.get_event_loop()
-    queue = asyncio.Queue()
     stats = statistics.Statistics(cfg=cfg["statistics"])
     loop.create_task(statistics.watcher(stats))
     
     # prepare outputs
-    outputs_enabled = setup_outputs(cfg, queue, stats, loop)
+    queues_list = setup_outputs(cfg, stats, loop)
     
     # prepare inputs
-    setup_inputs(args, cfg, queue, stats, loop, geoip_reader, outputs_enabled)
+    setup_inputs(args, cfg, queues_list, stats, loop, geoip_reader)
 
-    # start the rest api
-    setup_api(cfg, queue, stats, loop)
+    # start the http api
+    setup_api(cfg, stats, loop)
 
     # run event loop 
     try:
