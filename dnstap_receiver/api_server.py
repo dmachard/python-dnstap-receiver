@@ -13,7 +13,7 @@ class Handlers:
         self.basic_auth = basicauth
         self.cfg_stats = cfg_stats
         self.stats = stats
-        self.top = 10
+        self.top = cfg_stats["max-items"]
         
     def check_auth(self, request):
         """check api key value"""
@@ -246,7 +246,7 @@ class Handlers:
         if not auth:
             return web.Response(status=401)
 
-        n = request.query.get("n", self.top)
+        #n = request.query.get("n", self.top)
         s = request.query.get("stream", None)
         more_filters = request.query.get("more", [])
         if not isinstance(more_filters, list):
