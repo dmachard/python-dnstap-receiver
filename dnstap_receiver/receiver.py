@@ -65,8 +65,9 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
     dm = dnstap_decoder.message
     
     if cfg["trace"]["dnstap"]:
-        clogger.debug("%s" % dm )
-    
+        dns_pkt = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
+        clogger.debug("%s\n%s\n\n" % (dm,dns.message.from_wire(dns_pkt)) )
+
     # filtering by dnstap identity ?
     tap_ident = dnstap_decoder.identity.decode()
     if not len(tap_ident):
