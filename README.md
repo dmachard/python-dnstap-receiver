@@ -188,7 +188,9 @@ JSON format:
     "source-port": 42222,
     "length": 43,
     "timestamp": "2020-09-16T18:51:53.591736+00:00",
-    "rcode": "NOERROR"
+    "rcode": "NOERROR",
+    "id": 33422,
+    "flags": "RD"
 }
 ```
 
@@ -205,6 +207,8 @@ source-ip: '-'
 source-port: '-'
 timestamp: '2020-09-16T18:51:53.591736+00:00'
 protocol: UDP
+id: 33422
+flags: RD
 
 ```
 
