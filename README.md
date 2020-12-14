@@ -170,8 +170,8 @@ Output can be formatted in different way:
 Text format:
 
 ```
-2020-09-16T18:51:53.547352+00:00 centos RESOLVER_QUERY NOERROR - - INET UDP 43b ns2.google.com. A -
-2020-09-16T18:51:53.591736+00:00 centos RESOLVER_RESPONSE NOERROR - - INET UDP 59b ns2.google.com. A 0.048
+2020-09-16T18:51:53.547352+00:00 lb1 RESOLVER_QUERY NOERROR - - INET UDP 43b ns2.google.com. A -
+2020-09-16T18:51:53.591736+00:00 lb2 RESOLVER_RESPONSE NOERROR - - INET UDP 59b ns2.google.com. A 0.048
 ```
 
 JSON format:
@@ -283,8 +283,8 @@ output:
 Example of output on syslog server
 
 ```
-Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 INET UDP 173b www.netflix.fr. A
-Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 INET UDP 203b www.netflix.fr. AAAA
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51717 INET UDP 173b www.netflix.fr. A 0.040
+Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 INET UDP 203b www.netflix.fr. AAAA 0.060
 ```
 
 ### Metrics
