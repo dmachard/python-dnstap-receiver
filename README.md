@@ -600,6 +600,8 @@ Update the configuration file `/etc/dnsdist/dnsdist.conf` to activate the dnstap
 fsul = newFrameStreamUnixLogger("/var/run/dnsdist/dnstap.sock")
 addAction(AllRule(), DnstapLogAction("dnsdist", fsul))
 addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
+-- Cache Hits
+addCacheHitResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
 ```
 
 Execute the dnstap receiver with `dnsdist` user:
@@ -617,6 +619,8 @@ with tcp stream and execute the dnstap receiver in listening tcp socket mode:
 fsul = newFrameStreamTcpLogger("127.0.0.1:8888")
 addAction(AllRule(), DnstapLogAction("dnsdist", fsul))
 addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
+-- Cache Hits
+addCacheHitResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", fsul))
 ```
 
 ### nsd
