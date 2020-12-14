@@ -124,7 +124,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queue, stats, geoip_reader, 
         tap["rrtype"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
     tap["rcode"] = dns.rcode.to_text(dnstap_parsed.rcode())
     tap["id"] = dnstap_parsed.id
-    
+    tap["flags"] = dns.flags.to_text(dnstap_parsed.flags)
+
     # filtering by qname ?
     if cfg["filter"]["qname-regex"] is not None:
         if re.match(cfg["filter"]["qname-regex"], tap["qname"]) is None:
