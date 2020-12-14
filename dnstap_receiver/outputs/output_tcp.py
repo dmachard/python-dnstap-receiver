@@ -36,8 +36,8 @@ async def plaintext_tcpclient(output_cfg, queue):
         # convert dnstap message
         msg = transform.convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
             
-        # add delimiter
-        tcp_writer.write( b"%s%s" % (msg, output_cfg["delimiter"]) )
+        # write & add delimiter
+        tcp_writer.write(msg + output_cfg["delimiter"].encode())
         
         # connection lost ? exit and try to reconnect 
         if tcp_writer.transport._conn_lost:
