@@ -415,6 +415,12 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 - **query/[rrtype]**: number of queries per record resource type = = a, aaaa, cname,...
 - **query/bytes**: total number of bytes with queries
 - **response/bytes**: total number of bytes with answers
+- **response/latency0_1**: number of queries answered in less than 1ms
+- **response/latency1_10**: number of queries answered in 1-10 ms
+- **response/latency10_50**: number of queries answered in 10-50 ms
+- **response/latency50_100**: number of queries answered in 50-100 ms
+- **response/latency100_1000**: number of queries answered in 100-1000 ms
+- **response/latency_slow**: number of queries answered in more than 1 second
 
 ### Tables
 

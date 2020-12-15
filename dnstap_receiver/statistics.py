@@ -35,6 +35,8 @@ class StatsStream:
 
         self.cnts_tlds = Counter()
         
+        self.cnts_latency = Counter()
+        
     def record(self, tap):
         """record only response dnstap message"""
         qname = tap["qname"]; srcip = tap["source-ip"]; 
@@ -81,6 +83,20 @@ class StatsStream:
         tld_matched = list( filter(lambda x: x in tld_set, qname.rsplit(".", 2)) )
         if len(tld_matched):
             self.cnts_tlds["%s/%s" % (qr,tld_matched[-1])] += 1
+        
+        # latency
+        if tap["latency"] <= 0.001:
+            self.cnts_latency["%s/latency0_1" % qr ] += 1
+        if 0.001 < tap["latency"] <= 0.010 :
+            self.cnts_latency["%s/latency1_10" % qr ] += 1
+        if 0.010 < tap["latency"] <= 0.050 :
+            self.cnts_latency["%s/latency10_50" % qr ] += 1
+        if 0.050 < tap["latency"] <= 0.100 :
+            self.cnts_latency["%s/latency50_100" % qr ] += 1
+        if 0.100 < tap["latency"] <= 1.000 :
+            self.cnts_latency["%s/latency100_1000" % qr ] += 1    
+        if tap["latency"] > 1.000 :
+            self.cnts_latency["%s/latency_slow" % qr ] += 1    
             
     def reset(self):
         """reset the stream"""
@@ -94,6 +110,7 @@ class StatsStream:
         self.cnts_rrtype.clear()
         
         self.cnts_tlds.clear()
+        self.cnts_latency.clear()
         
         self.prev_qr = 0
 
@@ -123,6 +140,8 @@ class Statistics:
         
         # Counter({'query|response/<tlds>': <int>})
         self.cnts_tlds = Counter()
+        # Counter({'response/latency0_10': <int>})
+        self.cnts_latency = Counter()
         
         self.global_qps = Counter()
         
@@ -140,6 +159,7 @@ class Statistics:
         self.cnts_rcode.clear()
         self.cnts_rrtype.clear()
         self.cnts_tlds.clear()
+        self.cnts_latency.clear()
         
         qnames = set()
         ips = set()
@@ -154,6 +174,7 @@ class Statistics:
             self.cnts_rrtype.update(self.streams[s].cnts_rrtype)
   
             self.cnts_tlds.update(self.streams[s].cnts_tlds)
+            self.cnts_latency.update(self.streams[s].cnts_latency)
             
         self.cnts["clients"] = len(ips)
         self.cnts["domains"] = len(qnames)
@@ -171,6 +192,7 @@ class Statistics:
         self.global_qps.clear()
 
         self.cnts_tlds.clear()
+        self.cnts_latency.clear()
         
     def get_streams(self, stream=None):
         """return list of stream object"""
@@ -208,12 +230,14 @@ class Statistics:
             _cnt.update(self.cnts_rcode)
             _cnt.update(self.cnts_rrtype)
             _cnt.update(self.cnts_tlds)
+            _cnt.update(self.cnts_latency)
         else:
             _cnt.update(s.cnts)
             _cnt.update(s.cnts_rcode)
             _cnt.update(s.cnts_rrtype)
             _cnt.update(s.cnts_tlds)
-
+            _cnt.update(s.cnts_latency)
+            
         # set counters
         c = {}
         for f in filters:

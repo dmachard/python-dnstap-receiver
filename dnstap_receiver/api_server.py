@@ -53,7 +53,9 @@ class Handlers:
                    "query", "query/udp", "query/tcp", "query/inet", "query/inet6", 
                    "query/a", "query/aaaa", "query/svr",
                    "response", "response/udp", "response/tcp", "response/inet", "response/inet6", 
-                   "response/nxdomain", "response/noerror", "response/serverfail" ]
+                   "response/nxdomain", "response/noerror", "response/serverfail",
+                   "response/latency0_1", "response/latency1_10", "response/latency10_50",
+                   "response/latency50_100", "response/latency100_1000", "response/latency_slow"]
                    
         # global counters
         counters = self.stats.get_counters(stream=None, filters=filters)
@@ -145,7 +147,30 @@ class Handlers:
         p.append( "# HELP dnstap_responses_serverfail Number of SERVFAIL answers" )
         p.append( "# TYPE dnstap_responses_serverfail counter" )
         p.append( "dnstap_responses_serverfail %s" % counters["response/serverfail"] )
+
+        p.append( "# HELP dnstap_latency0_1 Number of queries answered in less than 1ms" )
+        p.append( "# TYPE dnstap_latency0_1 counter" )
+        p.append( "dnstap_latency0_1 %s" % counters["response/latency0_1"] )
         
+        p.append( "# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms" )
+        p.append( "# TYPE dnstap_latency1_10 counter" )
+        p.append( "dnstap_latency1_10 %s" % counters["response/latency1_10"] )
+        
+        p.append( "# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms" )
+        p.append( "# TYPE dnstap_latency10_50 counter" )
+        p.append( "dnstap_latency10_50 %s" % counters["response/latency10_50"] )
+        
+        p.append( "# HELP dnstap_latency50_100 Number of queries answered in 50-100 ms" )
+        p.append( "# TYPE dnstap_latency50_100 counter" )
+        p.append( "dnstap_latency50_100 %s" % counters["response/latency50_100"] )
+        
+        p.append( "# HELP dnstap_latency100_1000 Number of queries answered in 100-1000 ms" )
+        p.append( "# TYPE dnstap_latency100_1000 counter" )
+        p.append( "dnstap_latency100_1000 %s" % counters["response/latency100_1000"] )
+        
+        p.append( "# HELP dnstap_latency_slow Number of queries answered in more than 1 second" )
+        p.append( "# TYPE dnstap_latency_slow counter" )
+        p.append( "dnstap_latency_slow %s" % counters["response/latency_slow"] )
         
         for s in self.stats.get_nameslist():
             sub_cntrs = self.stats.get_counters(stream=s, filters=filters)
@@ -214,6 +239,25 @@ class Handlers:
             p.append( "# TYPE dnstap_responses_serverfail counter" )
             
         
+            p.append( "# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms for this dnstap identity" )
+            p.append( "# TYPE dnstap_latency1_10 counter" )
+            
+            p.append( "# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms for this dnstap identity" )
+            p.append( "# TYPE dnstap_latency1_10 counter" )
+        
+            p.append( "# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms for this dnstap identity" )
+            p.append( "# TYPE dnstap_latency10_50 counter" )
+        
+            p.append( "# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms for this dnstap identity" )
+            p.append( "# TYPE dnstap_latency10_50 counter" )
+        
+            p.append( "# HELP dnstap_latency100_1000 Number of queries answered in 100-1000 ms for this dnstap identity" )
+            p.append( "# TYPE dnstap_latency100_1000 counter" )
+            
+            p.append( "# HELP dnstap_latency_slow Number of queries answered in more than 1 second for this dnstap identity" )
+            p.append( "# TYPE dnstap_latency_slow counter" )
+
+
             p.append( "dnstap_queries_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["query/bytes"]) )
             p.append( "dnstap_responses_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["response/bytes"]) )
             
@@ -239,6 +283,13 @@ class Handlers:
             p.append( "dnstap_responses_nxdomain{identity=\"%s\"} %s" % (s,sub_cntrs["response/nxdomain"]) )
             p.append( "dnstap_responses_serverfail{identity=\"%s\"} %s" % (s,sub_cntrs["response/serverfail"]) )
 
+            p.append( "dnstap_latency0_1{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency0_1"]) )
+            p.append( "dnstap_latency1_10{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency1_10"]) )
+            p.append( "dnstap_latency10_50{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency10_50"]) )
+            p.append( "dnstap_latency50_100{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency50_100"]) )
+            p.append( "dnstap_latency100_1000{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency100_1000"]) )
+            p.append( "dnstap_latency_slow{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency_slow"]) )
+            
         return web.Response(text="\n".join(p), content_type='text/plan')
         
     async def handle_counters(self, request):
