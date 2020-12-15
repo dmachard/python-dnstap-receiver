@@ -25,6 +25,10 @@ clogger = logging.getLogger("dnstap_receiver.console")
 from dnstap_receiver.codecs import dnstap_pb2 
 from dnstap_receiver.codecs import fstrm 
 
+# import all inputs
+from dnstap_receiver.inputs import input_unixsocket
+from dnstap_receiver.inputs import input_tcpsocket
+
 # import all outputs
 from dnstap_receiver.outputs import output_stdout
 from dnstap_receiver.outputs import output_file
@@ -350,28 +354,11 @@ def setup_inputs(args, cfg, queues_list, stats, loop, geoip_reader):
     
     # asynchronous unix socket
     if cfg["input"]["unix-socket"]["path"] is not None:
-        clogger.debug("Input handler: unix socket")
-        clogger.debug("Input handler: listening on %s" % args.u)
-        socket_server = asyncio.start_unix_server(cb_lambda,
-                                                  path=cfg["input"]["unix-socket"]["path"],
-                                                  loop=loop)
+        socket_server = input_unixsocket.start_input(cfg=cfg["input"]["unix-socket"], cb_onconnect=cb_lambda, loop=loop)
+
     # default mode: asynchronous tcp socket
     else:
-        clogger.debug("Input handler: tcp socket")
-        
-        ssl_context = None
-        if cfg["input"]["tcp-socket"]["tls-support"]:
-            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            ssl_context.load_cert_chain(certfile=cfg["input"]["tcp-socket"]["tls-server-cert"], 
-                                        keyfile=cfg["input"]["tcp-socket"]["tls-server-key"])
-            clogger.debug("Input handler - tls support enabled")
-        clogger.debug("Input handler: listening on %s:%s" % (cfg["input"]["tcp-socket"]["local-address"],
-                                              cfg["input"]["tcp-socket"]["local-port"])), 
-        socket_server = asyncio.start_server(cb_lambda,
-                                             cfg["input"]["tcp-socket"]["local-address"],
-                                             cfg["input"]["tcp-socket"]["local-port"],
-                                             ssl=ssl_context,
-                                             loop=loop)
+        socket_server = input_tcpsocket.start_input(cfg=cfg["input"]["tcp-socket"], cb_onconnect=cb_lambda, loop=loop)
                                              
     # run until complete
     loop.run_until_complete(socket_server)
