@@ -53,7 +53,7 @@ class Handlers:
                    "query", "query/udp", "query/tcp", "query/inet", "query/inet6", 
                    "query/a", "query/aaaa", "query/svr",
                    "response", "response/udp", "response/tcp", "response/inet", "response/inet6", 
-                   "response/nxdomain", "response/noerror", "response/serverfail",
+                   "response/nxdomain", "response/noerror", "response/serverfail", "response/refused",
                    "response/latency0_1", "response/latency1_10", "response/latency10_50",
                    "response/latency50_100", "response/latency100_1000", "response/latency_slow"]
                    
@@ -140,7 +140,7 @@ class Handlers:
         p.append( "# TYPE dnstap_responses_noerror counter" )
         p.append( "dnstap_responses_noerror %s" % counters["response/noerror"] )
         
-        p.append( "# HELP dnstap_responses_nxdomain Number of NXDomain answers" )
+        p.append( "# HELP dnstap_responses_nxdomain Number of NXDOMAIN answers" )
         p.append( "# TYPE dnstap_responses_nxdomain counter" )
         p.append( "dnstap_responses_nxdomain %s" % counters["response/nxdomain"] )
         
@@ -148,6 +148,10 @@ class Handlers:
         p.append( "# TYPE dnstap_responses_serverfail counter" )
         p.append( "dnstap_responses_serverfail %s" % counters["response/serverfail"] )
 
+        p.append( "# HELP dnstap_responses_refused Number of REFUSED answers" )
+        p.append( "# TYPE dnstap_responses_refused counter" )
+        p.append( "dnstap_responses_refused %s" % counters["response/refused"] )
+        
         p.append( "# HELP dnstap_latency0_1 Number of queries answered in less than 1ms" )
         p.append( "# TYPE dnstap_latency0_1 counter" )
         p.append( "dnstap_latency0_1 %s" % counters["response/latency0_1"] )
@@ -238,6 +242,8 @@ class Handlers:
             p.append( "# HELP dnstap_responses_serverfail Number of SERVFAIL answers for this dnstap identity" )
             p.append( "# TYPE dnstap_responses_serverfail counter" )
             
+            p.append( "# HELP dnstap_responses_refused Number of REFUSED answers for this dnstap identity" )
+            p.append( "# TYPE dnstap_responses_refused counter" )
         
             p.append( "# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms for this dnstap identity" )
             p.append( "# TYPE dnstap_latency1_10 counter" )
@@ -282,7 +288,8 @@ class Handlers:
             p.append( "dnstap_responses_noerror{identity=\"%s\"} %s" % (s,sub_cntrs["response/noerror"]) )
             p.append( "dnstap_responses_nxdomain{identity=\"%s\"} %s" % (s,sub_cntrs["response/nxdomain"]) )
             p.append( "dnstap_responses_serverfail{identity=\"%s\"} %s" % (s,sub_cntrs["response/serverfail"]) )
-
+            p.append( "dnstap_responses_refused{identity=\"%s\"} %s" % (s,sub_cntrs["response/refused"]) )
+            
             p.append( "dnstap_latency0_1{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency0_1"]) )
             p.append( "dnstap_latency1_10{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency1_10"]) )
             p.append( "dnstap_latency10_50{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency10_50"]) )

@@ -84,7 +84,7 @@ docker pull dmachard/dnstap-receiver:latest
 Deploy the container
 
 ```bash
-docker run -d -p 6000:6000 --name=dnstap01 dmachard/dnstap-receiver
+docker run -d -p 6000:6000 -p 8080:8080 --name=dnstap01 dmachard/dnstap-receiver
 ```
 
 Follow containers logs 
