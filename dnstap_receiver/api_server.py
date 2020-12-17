@@ -53,7 +53,7 @@ class Handlers:
                    "query", "query/udp", "query/tcp", "query/inet", "query/inet6", 
                    "query/a", "query/aaaa", "query/svr",
                    "response", "response/udp", "response/tcp", "response/inet", "response/inet6", 
-                   "response/nxdomain", "response/noerror", "response/serverfail", "response/refused",
+                   "response/nxdomain", "response/noerror", "response/servfail", "response/refused",
                    "response/latency0_1", "response/latency1_10", "response/latency10_50",
                    "response/latency50_100", "response/latency100_1000", "response/latency_slow"]
                    
@@ -144,9 +144,9 @@ class Handlers:
         p.append( "# TYPE dnstap_responses_nxdomain counter" )
         p.append( "dnstap_responses_nxdomain %s" % counters["response/nxdomain"] )
         
-        p.append( "# HELP dnstap_responses_serverfail Number of SERVFAIL answers" )
-        p.append( "# TYPE dnstap_responses_serverfail counter" )
-        p.append( "dnstap_responses_serverfail %s" % counters["response/serverfail"] )
+        p.append( "# HELP dnstap_responses_servfail Number of SERVFAIL answers" )
+        p.append( "# TYPE dnstap_responses_servfail counter" )
+        p.append( "dnstap_responses_servfail %s" % counters["response/servfail"] )
 
         p.append( "# HELP dnstap_responses_refused Number of REFUSED answers" )
         p.append( "# TYPE dnstap_responses_refused counter" )
@@ -287,7 +287,7 @@ class Handlers:
             p.append( "dnstap_response_inet6{identity=\"%s\"} %s" % (s,sub_cntrs["response/inet6"]) )
             p.append( "dnstap_responses_noerror{identity=\"%s\"} %s" % (s,sub_cntrs["response/noerror"]) )
             p.append( "dnstap_responses_nxdomain{identity=\"%s\"} %s" % (s,sub_cntrs["response/nxdomain"]) )
-            p.append( "dnstap_responses_serverfail{identity=\"%s\"} %s" % (s,sub_cntrs["response/serverfail"]) )
+            p.append( "dnstap_responses_servfail{identity=\"%s\"} %s" % (s,sub_cntrs["response/servfail"]) )
             p.append( "dnstap_responses_refused{identity=\"%s\"} %s" % (s,sub_cntrs["response/refused"]) )
             
             p.append( "dnstap_latency0_1{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency0_1"]) )
