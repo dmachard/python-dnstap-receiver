@@ -271,7 +271,7 @@ def load_yaml(f):
 def setup_config(args):
     """load default config and update it with arguments if provided"""
     # Set the default configuration file
-    f = pkgutil.get_data(__package__, 'dashboard.conf')
+    f = pkgutil.get_data(__package__, 'dnstap.conf')
     cfg = load_yaml(f)
 
     # Overwrites then with the external file ?    
