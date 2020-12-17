@@ -8,6 +8,7 @@ import re
 import ssl
 import pkgutil
 import ipaddress
+import pathlib
 
 from datetime import datetime, timezone
 
@@ -254,31 +255,38 @@ def merge_cfg(u, o):
                 merge_cfg(u=v,o=o[k])
             else:
                 o[k] = v
-   
-def setup_config(args):
-    """load default config and update it with arguments if provided"""
-    # set default config
+
+def load_yaml(f):
+    """load yaml file"""
     try:
-        cfg =  yaml.safe_load(pkgutil.get_data(__package__, 'dnstap.conf')) 
+        cfg =  yaml.safe_load(f) 
     except FileNotFoundError:
         print("default config file not found")
         sys.exit(1)
     except yaml.parser.ParserError:
         print("invalid default yaml config file")
         sys.exit(1)
+    return cfg 
+    
+def setup_config(args):
+    """load default config and update it with arguments if provided"""
+    # Set the default configuration file
+    f = pkgutil.get_data(__package__, 'dashboard.conf')
+    cfg = load_yaml(f)
 
-    # overwrite config with external file ?    
+    # Overwrites then with the external file ?    
     if args.c:
-        try:
-            with open(args.c) as file:
-                merge_cfg(u=yaml.safe_load(file),o=cfg)
-        except FileNotFoundError:
-            print("external config file not found")
-            sys.exit(1)
-        except yaml.parser.ParserError:
-            print("external invalid yaml config file")
-            sys.exit(1)
+        cfg_ext = load_yaml(open(args.c, 'r'))
+        merge_cfg(u=cfg_ext,o=cfg)
 
+    # Or searches for a file named dnstap.conf in /etc/dnstap_receiver/       
+    else:
+        etc_conf = "/etc/dnstap_receiver/dnstap.conf"
+        f = pathlib.Path(etc_conf)
+        if f.exists():
+            cfg_etc = load_yaml(open(etc_conf, 'r'))
+            merge_cfg(u=cfg_etc,o=cfg)
+            
     # update default config with command line arguments
     if args.v:
         cfg["trace"]["verbose"] = args.v    

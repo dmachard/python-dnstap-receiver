@@ -320,7 +320,8 @@ Example of output
 
 ### External config file
 
-The `dnstap_receiver` binary can takes an external config file with the `-c` argument
+The `dnstap_receiver` binary can takes an external config file with the `-c` argument or searches for a config file named dnstap.conf in /etc/dnstap_receiver/.
+
 See [config file](/dnstap_receiver/dnstap.conf) example.
 
 ```
