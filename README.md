@@ -87,10 +87,10 @@ Deploy the container
 docker run -d -p 6000:6000 -p 8080:8080 --name=dnstap01 dmachard/dnstap-receiver
 ```
 
-Deploy the container with an external configuration file
+Add the following argument to your container if you want to provide your own [configuration](#external-config-file) file.
 
 ```bash
-docker run -d -p 6000:6000 -p 8080:8080 -v ${PWD}/dnstap.conf:/etc/dnstap_receiver/dnstap.conf --name=dnstap01 dmachard/dnstap-receiver
+-v ${PWD}/dnstap.conf:/etc/dnstap_receiver/dnstap.conf
 ```
 
 Follow containers logs 
@@ -270,7 +270,8 @@ output:
 Then execute the container with volume
 
 ```
-docker run -d -p 6000:6000 -p 8080:8080 -v ${PWD}/dnstap.conf:/etc/dnstap_receiver/dnstap.conf -v /var/dnstap:/home/dnstap/logs/ --name=dnstap01 dmachard/dnstap-receiver
+docker run -d -p 6000:6000 -p 8080:8080 -v ${PWD}/dnstap.conf:/etc/dnstap_receiver/dnstap.conf \
+-v /var/dnstap:/home/dnstap/logs/ --name=dnstap01 dmachard/dnstap-receiver
 ```
 
 
