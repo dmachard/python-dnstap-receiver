@@ -16,6 +16,7 @@ RUN true \
     && pip install --no-cache-dir dnspython protobuf pyyaml aiohttp geoip2 tlds\
     && apk del gcc musl-dev \
     && cd /home/dnstap \
+    && mkdir -p /home/dnstap/logs/ \
     && sed -i 's/local-address: 127.0.0.1/local-address: 0.0.0.0/g' ./dnstap_receiver/dnstap.conf \
     && chown -R dnstap:dnstap /home/dnstap \
     && true

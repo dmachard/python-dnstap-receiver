@@ -87,6 +87,12 @@ Deploy the container
 docker run -d -p 6000:6000 -p 8080:8080 --name=dnstap01 dmachard/dnstap-receiver
 ```
 
+Deploy the container with an external configuration file
+
+```bash
+docker run -d -p 6000:6000 -p 8080:8080 -v ${PWD}/dnstap.conf:/etc/dnstap_receiver/dnstap.conf --name=dnstap01 dmachard/dnstap-receiver
+```
+
 Follow containers logs 
 
 ```bash
@@ -234,6 +240,39 @@ Add the following configuration as external config to activate this output:
     # number of max log files
     file-count: 10
 ```
+
+If you are running the dnstap in a container, follow this procedure to save logs in your host instead of the container.
+
+First one, create the folder in the host:
+
+```
+mkdir /var/dnstap/
+chown 1000:1000 /var/dnstap/
+```
+
+Create the following configuration for your dnstap receiver
+
+```
+trace:
+    verbose: true
+output:
+  stdout:
+    enable: false
+  file:
+    enable: true
+    format: text
+    file: /home/dnstap/logs/dnstap.log
+    file-max-size: 10M
+    file-count: 10
+```
+
+
+Then execute the container with volume
+
+```
+docker run -d -p 6000:6000 -p 8080:8080 -v ${PWD}/dnstap.conf:/etc/dnstap_receiver/dnstap.conf -v /var/dnstap:/home/dnstap/logs/ --name=dnstap01 dmachard/dnstap-receiver
+```
+
 
 ### TCP socket
 
