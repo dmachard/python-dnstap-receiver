@@ -107,8 +107,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # todo catching dns.message.ShortHeader exception
     # can occured with coredns if the full argument is missing
     if (dm.type % 2 ) == 1 :
-        dnstap_parsed = dnspython_patch.from_wire(dm.query_message,
-                                  question_only=True)                 
+        dnstap_parsed = dnspython_patch.from_wire(dm.query_message, question_only=True)                 
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
@@ -117,8 +116,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         
     # handle response message
     if (dm.type % 2 ) == 0 :
-        dnstap_parsed = dnspython_patch.from_wire(dm.response_message,
-                                  question_only=True)
+        dnstap_parsed = dnspython_patch.from_wire(dm.response_message, question_only=True)
         tap["length"] = len(dm.response_message)
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()

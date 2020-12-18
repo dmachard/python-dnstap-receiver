@@ -20,7 +20,7 @@ in JSON, YAML or one line text format and more.
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
     * [File](#file)
-    * [TCP socket](#tcp-socket)
+    * [TCP socket](#tcp-socket-1)
     * [Syslog](#syslog)
     * [Metrics](#metrics)
 * [More options](#more-options)
