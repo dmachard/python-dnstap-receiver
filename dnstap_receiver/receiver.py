@@ -79,13 +79,16 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         tap_ident = UnknownValue.name
     if cfg["filter"]["dnstap-identities"] is not None:
         if re.match(cfg["filter"]["dnstap-identities"], dnstap_decoder.identity.decode()) is None:
-            del dm
             return
             
-    tap = { "identity": tap_ident, "qname": UnknownValue.name, "rrtype": UnknownValue.name, 
-            "query-type": UnknownValue.name, "source-ip": UnknownValue.name}
+    tap = { "identity": tap_ident, 
+            "qname": UnknownValue.name, 
+            "rrtype": UnknownValue.name, 
+            "query-type": UnknownValue.name, 
+            "source-ip": UnknownValue.name}
     
     # decode type message
+    tap["payload"] = payload
     tap["message"] = DNSTAP_TYPE.get(dm.type, UnknownValue).name
     tap["family"] = DNSTAP_FAMILY.get(dm.socket_family, UnknownValue).name
     tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, UnknownValue).name
@@ -139,7 +142,6 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # filtering by qname ?
     if cfg["filter"]["qname-regex"] is not None:
         if re.match(cfg["filter"]["qname-regex"], tap["qname"]) is None:
-            del dm; del tap;
             return
 
     # geoip support 

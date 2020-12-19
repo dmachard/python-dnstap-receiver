@@ -90,7 +90,7 @@ docker run -d -p 6000:6000 -p 8080:8080 --name=dnstap01 dmachard/dnstap-receiver
 Add the following argument to your container if you want to provide your own [configuration](#external-config-file) file.
 
 ```bash
--v ${PWD}/dnstap.conf:/etc/dnstap_receiver/dnstap.conf
+-v /home/dnstap.conf:/etc/dnstap_receiver/dnstap.conf
 ```
 
 Follow containers logs 
@@ -151,7 +151,7 @@ Outputs handler can be configured to forward messages in several modes.
 - [Stdout](#stdout)
 - [File](#file)
 - [Metrics](#metrics)
-- [TCP socket](#tcp-socket)
+- [TCP socket](#tcp-socket-1)
 - [Syslog](#syslog)
 
 ### Stdout
