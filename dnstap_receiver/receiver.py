@@ -7,7 +7,6 @@ import sys
 
 import ssl
 import pkgutil
-import ipaddress
 import pathlib
 
 import geoip2.database

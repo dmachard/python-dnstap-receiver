@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import ssl
+import ipaddress
 
 # import framestreams and dnstap protobuf decoder
 from dnstap_receiver.codecs import fstrm 
