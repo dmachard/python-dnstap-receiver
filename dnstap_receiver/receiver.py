@@ -1,7 +1,6 @@
 import argparse
 import logging
 import asyncio
-import socket
 import yaml
 import sys
 
@@ -41,6 +40,9 @@ parser.add_argument("-p", type=int,
 parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
+
+# get event loop
+loop = asyncio.get_event_loop()
 
 def merge_cfg(u, o):
     """merge config"""
@@ -115,8 +117,7 @@ def setup_logger(cfg):
 def setup_outputs(cfg, stats):
     """setup outputs"""
     conf = cfg["output"]
-    loop = asyncio.get_event_loop()
-    
+
     queues_list = []
     if conf["syslog"]["enable"]:
         if not output_syslog.checking_conf(cfg=conf["syslog"]): return
@@ -151,21 +152,15 @@ def setup_outputs(cfg, stats):
     return queues_list
     
 def setup_inputs(cfg, queues_list, stats, geoip_reader):
-    """setup inputs"""
-    loop = asyncio.get_event_loop()
-    
+    """setup inputs"""                         
     # asynchronous unix or tcp socket
-    socket_server = input_socket.start_input(cfg, queues_list, stats, geoip_reader)
-                                     
-    # run until complete
-    loop.run_until_complete(socket_server)
-    
-def setup_api(cfg, stats, loop):
+    loop.create_task(input_socket.start_input(cfg, queues_list, stats, geoip_reader))
+ 
+def setup_webserver(cfg, stats):
     """setup web api"""
-    if cfg["web-api"]["enable"]:
-        api_svr = api_server.create_server(loop, cfg=cfg["web-api"], 
-                                           stats=stats, cfg_stats=cfg["statistics"])
-        loop.run_until_complete(api_svr)
+    if not cfg["web-api"]["enable"]: return
+
+    loop.create_task(api_server.create_server(loop, cfg=cfg["web-api"], stats=stats, cfg_stats=cfg["statistics"]) )
 
 def setup_geoip(cfg):
     if not cfg["enable"]: return None
@@ -196,9 +191,8 @@ def start_receiver():
     # add debug message if external config is used
     if args.c: clogger.debug("External config file loaded")
     
-    # start receiver and get event loop
+    # start receiver
     clogger.debug("Start receiver...")
-    loop = asyncio.get_event_loop()
     stats = statistics.Statistics(cfg=cfg["statistics"])
     loop.create_task(statistics.watcher(stats))
     
@@ -209,7 +203,7 @@ def start_receiver():
     setup_inputs(cfg, queues_list, stats, geoip_reader)
 
     # start the http api
-    setup_api(cfg, stats, loop)
+    setup_webserver(cfg, stats)
 
     # run event loop 
     try:
