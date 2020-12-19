@@ -4,31 +4,19 @@ import asyncio
 import socket
 import yaml
 import sys
-import re
+
 import ssl
 import pkgutil
 import ipaddress
 import pathlib
 
-from datetime import datetime, timezone
-
 import geoip2.database
-
-# python3 -m pip dnspython
-import dns.rcode
-import dns.rdatatype
-import dns.message
 
 # create default logger for the dnstap receiver
 clogger = logging.getLogger("dnstap_receiver.console")
 
-# import framestreams and dnstap protobuf decoder
-from dnstap_receiver.codecs import dnstap_pb2 
-from dnstap_receiver.codecs import fstrm 
-
 # import all inputs
-from dnstap_receiver.inputs import input_unixsocket
-from dnstap_receiver.inputs import input_tcpsocket
+from dnstap_receiver.inputs import input_socket
 
 # import all outputs
 from dnstap_receiver.outputs import output_stdout
@@ -39,14 +27,6 @@ from dnstap_receiver.outputs import output_metrics
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
-from dnstap_receiver import dnspython_patch
-
-class UnknownValue:
-    name = "-"
-
-DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
-DNSTAP_FAMILY = dnstap_pb2._SOCKETFAMILY.values_by_number
-DNSTAP_PROTO = dnstap_pb2._SOCKETPROTOCOL.values_by_number  
 
 DFLT_LISTEN_IP = "0.0.0.0"
 DFLT_LISTEN_PORT = 6000
@@ -62,190 +42,6 @@ parser.add_argument("-p", type=int,
 parser.add_argument("-u", help="read dnstap payloads from unix socket")
 parser.add_argument('-v', action='store_true', help="verbose mode")   
 parser.add_argument("-c", help="external config file")   
-
-async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader):
-    """on dnstap"""
-    # decode binary payload
-    dnstap_decoder.ParseFromString(payload)
-    dm = dnstap_decoder.message
-    
-    if cfg["trace"]["dnstap"]:
-        dns_pkt = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
-        clogger.debug("%s\n%s\n\n" % (dm,dns.message.from_wire(dns_pkt)) )
-
-    # filtering by dnstap identity ?
-    tap_ident = dnstap_decoder.identity.decode()
-    if not len(tap_ident):
-        tap_ident = UnknownValue.name
-    if cfg["filter"]["dnstap-identities"] is not None:
-        if re.match(cfg["filter"]["dnstap-identities"], dnstap_decoder.identity.decode()) is None:
-            return
-            
-    tap = { "identity": tap_ident, 
-            "qname": UnknownValue.name, 
-            "rrtype": UnknownValue.name, 
-            "query-type": UnknownValue.name, 
-            "source-ip": UnknownValue.name}
-    
-    # decode type message
-    tap["payload"] = payload
-    tap["message"] = DNSTAP_TYPE.get(dm.type, UnknownValue).name
-    tap["family"] = DNSTAP_FAMILY.get(dm.socket_family, UnknownValue).name
-    tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, UnknownValue).name
-
-    # decode query address
-    qaddr = dm.query_address
-    if len(qaddr) and dm.socket_family == 1:
-        # condition for coredns, address is 16 bytes long so keept only 4 bytes
-        qaddr = qaddr[12:] if len(qaddr) == 16 else qaddr
-        # convert ip to string
-        tap["source-ip"] = socket.inet_ntoa(qaddr)
-    if len(qaddr) and dm.socket_family == 2:
-        tap["source-ip"] = socket.inet_ntop(socket.AF_INET6, qaddr)
-    tap["source-port"] = dm.query_port
-    if tap["source-port"] == 0:
-        tap["source-port"] = UnknownValue.name
-        
-    # handle query message
-    # todo catching dns.message.ShortHeader exception
-    # can occured with coredns if the full argument is missing
-    if (dm.type % 2 ) == 1 :
-        dnstap_parsed = dnspython_patch.from_wire(dm.query_message, question_only=True)                 
-        tap["length"] = len(dm.query_message)
-        d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
-        tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
-        tap["type"] = "query"
-        latency = 0.0
-        
-    # handle response message
-    if (dm.type % 2 ) == 0 :
-        dnstap_parsed = dnspython_patch.from_wire(dm.response_message, question_only=True)
-        tap["length"] = len(dm.response_message)
-        d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
-        tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
-        tap["type"] = "response"
-
-        # compute latency 
-        d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
-        latency = round(d2-d1,3)
-    
-    tap["latency"] = latency
-        
-    # common params
-    if len(dnstap_parsed.question):
-        tap["qname"] = dnstap_parsed.question[0].name.to_text()
-        tap["rrtype"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
-    tap["rcode"] = dns.rcode.to_text(dnstap_parsed.rcode())
-    tap["id"] = dnstap_parsed.id
-    tap["flags"] = dns.flags.to_text(dnstap_parsed.flags)
-
-    # filtering by qname ?
-    if cfg["filter"]["qname-regex"] is not None:
-        if re.match(cfg["filter"]["qname-regex"], tap["qname"]) is None:
-            return
-
-    # geoip support 
-    if geoip_reader is not None:
-        try:
-            response = geoip_reader.city(tap["source-ip"])
-            if cfg["geoip"]["country-iso"]:
-                tap["country"] = response.country.iso_code
-            else:
-                tap["country"] = response.country.name
-            if response.city.name is not None:
-                tap["city"] = response.city.name
-            else:
-                tap["city"] = UnknownValue.name
-        except Exception as e:
-            tap["country"] = UnknownValue.name
-            tap["city"] = UnknownValue.name
-            
-    # update metrics 
-    stats.record(tap=tap)
-        
-    # append the dnstap message to the queue
-    for q in queues_list:
-        q.put_nowait(tap)
-    
-async def cb_onconnect(reader, writer, cfg, queues_list, stats, geoip_reader):
-    """callback when a connection is established"""
-    # get peer name
-    peername = writer.get_extra_info('peername')
-    if not len(peername):
-        peername = "(unix-socket)"
-    clogger.debug(f"Input handler: new connection from {peername}")
-
-    # access control list check
-    if len(writer.get_extra_info('peername')):
-        acls_network = []
-        for a in cfg["input"]["tcp-socket"]["access-control-list"]:
-            acls_network.append(ipaddress.ip_network(a))
-            
-        acl_allow = False
-        for acl in acls_network:
-            if ipaddress.ip_address(peername[0]) in acl:
-                acl_allow = True
-        
-        if not acl_allow:
-            writer.close()
-            clogger.debug("Input handler: checking acl refused")
-            return
-        
-        clogger.debug("Input handler: checking acl allowed")
-        
-    # prepare frame streams decoder
-    fstrm_handler = fstrm.FstrmHandler()
-    loop = asyncio.get_event_loop()
-    dnstap_decoder = dnstap_pb2.Dnstap()
-
-    try: 
-        # syntax only works with python 3.8
-        # while data := await reader.read(fstrm_handler.pending_nb_bytes()) 
-        running = True
-        while running:
-            # read bytes
-            data = await reader.read(fstrm_handler.pending_nb_bytes()) 
-            if not len(data):
-                running = False
-                break
-                
-            # append data to the buffer
-            fstrm_handler.append(data=data)
-            
-            # process the buffer, check if we have received a complete frame ?
-            if fstrm_handler.process():
-                # Ok, the frame is complete so let's decode it
-                fs, payload  = fstrm_handler.decode()
-
-                # handle the DATA frame
-                if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader))
-                    
-                # handle the control frame READY
-                if fs == fstrm.FSTRM_CONTROL_READY:
-                    clogger.debug(f"Input handler: control ready received from {peername}")
-                    ctrl_accept = fstrm_handler.encode(fs=fstrm.FSTRM_CONTROL_ACCEPT)
-                    # respond with accept only if the content type is dnstap
-                    writer.write(ctrl_accept)
-                    await writer.drain()
-                    clogger.debug(f"Input handler: sending control accept to {peername}")
-                    
-                # handle the control frame READY
-                if fs == fstrm.FSTRM_CONTROL_START:
-                    clogger.debug(f"Input handler: control start received from {peername}")
-   
-                # handle the control frame STOP
-                if fs == fstrm.FSTRM_CONTROL_STOP:
-                    clogger.debug(f"Input handler: control stop received from {peername}")
-                    fstrm_handler.reset()           
-    except asyncio.CancelledError:
-        clogger.debug(f'Input handler: {peername} - closing connection.')
-        writer.close()
-        await writer.wait_closed()
-    except asyncio.IncompleteReadError:
-        clogger.debug(f'Input handler: {peername} - disconnected')
-    finally:
-        clogger.debug(f'Input handler: {peername} - closed')
 
 def merge_cfg(u, o):
     """merge config"""
@@ -317,10 +113,11 @@ def setup_logger(cfg):
     
     clogger.addHandler(lh)
     
-def setup_outputs(cfg, stats, loop):
+def setup_outputs(cfg, stats):
     """setup outputs"""
     conf = cfg["output"]
-
+    loop = asyncio.get_event_loop()
+    
     queues_list = []
     if conf["syslog"]["enable"]:
         if not output_syslog.checking_conf(cfg=conf["syslog"]): return
@@ -354,19 +151,13 @@ def setup_outputs(cfg, stats, loop):
 
     return queues_list
     
-def setup_inputs(args, cfg, queues_list, stats, loop, geoip_reader):
+def setup_inputs(cfg, queues_list, stats, geoip_reader):
     """setup inputs"""
-    # define callback on new connection
-    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queues_list, stats, geoip_reader)
+    loop = asyncio.get_event_loop()
     
-    # asynchronous unix socket
-    if cfg["input"]["unix-socket"]["path"] is not None:
-        socket_server = input_unixsocket.start_input(cfg=cfg["input"]["unix-socket"], cb_onconnect=cb_lambda, loop=loop)
-
-    # default mode: asynchronous tcp socket
-    else:
-        socket_server = input_tcpsocket.start_input(cfg=cfg["input"]["tcp-socket"], cb_onconnect=cb_lambda, loop=loop)
-                                             
+    # asynchronous unix or tcp socket
+    socket_server = input_socket.start_input(cfg, queues_list, stats, geoip_reader)
+                                     
     # run until complete
     loop.run_until_complete(socket_server)
     
@@ -413,10 +204,10 @@ def start_receiver():
     loop.create_task(statistics.watcher(stats))
     
     # prepare outputs
-    queues_list = setup_outputs(cfg, stats, loop)
+    queues_list = setup_outputs(cfg, stats)
     
     # prepare inputs
-    setup_inputs(args, cfg, queues_list, stats, loop, geoip_reader)
+    setup_inputs(cfg, queues_list, stats, geoip_reader)
 
     # start the http api
     setup_api(cfg, stats, loop)
