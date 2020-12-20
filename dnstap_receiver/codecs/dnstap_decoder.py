@@ -87,8 +87,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
 
         # compute latency 
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
-        latency = round(d2-d1,3)
-    
+        latency = round(d2-d1,3) if d1 > 0 else 0.0
+
     tap["latency"] = latency
         
     # common params
