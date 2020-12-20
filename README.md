@@ -590,6 +590,14 @@ Execute the dnstap receiver with `named` user:
 su - named -s /bin/bash -c "dnstap_receiver -u "/var/run/named/dnstap.sock""
 ```
 
+#### TCP stream
+
+Not supported on Bind! You can apply the following workaround with the `socat` command.
+
+```
+while true; do socat unix-listen:/var/run/dnsdist/dnstap.sock tcp4-connect:<ip_dnstap_receiver>:<port_dnstap_receiver>,forever,interval=10, fork; sleep 1; done
+```
+
 ### pdns-recursor
 
 ![pdns-recursor 4.3.4](https://img.shields.io/badge/4.3.4-tested-green) ![pdns-recursor 4.4.0](https://img.shields.io/badge/4.4.0-tested-green)
