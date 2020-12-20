@@ -725,7 +725,7 @@ su - nsd -s /bin/bash -c "dnstap_receiver -u "/var/run/nsd/dnstap.sock""
 
 ### unbound
 
-![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green) ![unbound 1.112.0](https://img.shields.io/badge/1.12.0-tested-green)
+![unbound 1.11.0](https://img.shields.io/badge/1.11.0-tested-green) ![unbound 1.12.0](https://img.shields.io/badge/1.12.0-tested-green) ![unbound 1.13.0](https://img.shields.io/badge/1.13.0-tested-green)
 
 Dnstap messages supported:
  - CLIENT_QUERY
