@@ -7,6 +7,7 @@ import sys
 import ssl
 import pkgutil
 import pathlib
+import cachetools
 
 import geoip2.database
 
@@ -151,10 +152,10 @@ def setup_outputs(cfg, stats):
 
     return queues_list
     
-def setup_inputs(cfg, queues_list, stats, geoip_reader):
+def setup_inputs(cfg, queues_list, stats, geoip_reader, cache):
     """setup inputs"""                         
     # asynchronous unix or tcp socket
-    loop.create_task(input_socket.start_input(cfg, queues_list, stats, geoip_reader))
+    loop.create_task(input_socket.start_input(cfg, queues_list, stats, geoip_reader, cache))
  
 def setup_webserver(cfg, stats):
     """setup web api"""
@@ -200,7 +201,8 @@ def start_receiver():
     queues_list = setup_outputs(cfg, stats)
     
     # prepare inputs
-    setup_inputs(cfg, queues_list, stats, geoip_reader)
+    cache = cachetools.TTLCache(maxsize=1000000, ttl=60)
+    setup_inputs(cfg, queues_list, stats, geoip_reader, cache)
 
     # start the http api
     setup_webserver(cfg, stats)

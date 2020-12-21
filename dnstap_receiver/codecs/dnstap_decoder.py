@@ -2,6 +2,7 @@
 import re
 import logging
 import socket
+import hashlib
 
 from datetime import datetime, timezone
 
@@ -23,7 +24,7 @@ DNSTAP_PROTO = dnstap_pb2._SOCKETPROTOCOL.values_by_number
 class UnknownValue:
     name = "-"
 
-async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader):
+async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader, cache):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
@@ -45,7 +46,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
             "qname": UnknownValue.name, 
             "rrtype": UnknownValue.name, 
             "query-type": UnknownValue.name, 
-            "source-ip": UnknownValue.name}
+            "source-ip": UnknownValue.name,
+            "latency": UnknownValue.name}
     
     # decode type message
     tap["payload"] = payload
@@ -75,8 +77,13 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
         tap["type"] = "query"
-        latency = UnknownValue.name
-
+        
+        # hash query and put in cache the arrival time
+        if len(dm.query_address) and dm.query_port > 0:
+            hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dnstap_parsed.id)
+            qhash = hashlib.sha1(hash_payload.encode()).hexdigest()
+            cache[qhash] = d1
+            
     # handle response message
     if (dm.type % 2 ) == 0 :
         dnstap_parsed = dnspython_patch.from_wire(dm.response_message, question_only=True)
@@ -85,12 +92,12 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
         tap["type"] = "response"
 
-        # compute latency 
-        d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
-        latency = round(d2-d1,3) if d1 > 0 else UnknownValue.name
+        # compute hash of the query and latency
+        if len(dm.query_address) and dm.query_port > 0:
+            hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dnstap_parsed.id)
+            qhash = hashlib.sha1(hash_payload.encode()).hexdigest()
+            if qhash in cache: tap["latency"] = round(d2-cache[qhash],3)
 
-    tap["latency"] = latency
-        
     # common params
     if len(dnstap_parsed.question):
         tap["qname"] = dnstap_parsed.question[0].name.to_text()

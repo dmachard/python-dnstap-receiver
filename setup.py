@@ -38,6 +38,7 @@ setuptools.setup(
         "pyyaml",
         "aiohttp",
         "geoip2",
-        "tlds"
+        "tlds",
+        "cachetools"
     ]
 )

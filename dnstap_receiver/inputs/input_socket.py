@@ -10,7 +10,7 @@ from dnstap_receiver.codecs import dnstap_decoder
 
 clogger = logging.getLogger("dnstap_receiver.console")
     
-async def cb_onconnect(reader, writer, cfg, queues_list, stats, geoip_reader):
+async def cb_onconnect(reader, writer, cfg, queues_list, stats, geoip_reader, cache):
     """callback when a connection is established"""
     # get peer name
     peername = writer.get_extra_info('peername')
@@ -62,7 +62,7 @@ async def cb_onconnect(reader, writer, cfg, queues_list, stats, geoip_reader):
 
                 # handle the DATA frame
                 if fs == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(dnstap_decoder.cb_ondnstap(dnstap_protobuf, payload, cfg, queues_list, stats, geoip_reader))
+                    loop.create_task(dnstap_decoder.cb_ondnstap(dnstap_protobuf, payload, cfg, queues_list, stats, geoip_reader, cache))
                     
                 # handle the control frame READY
                 if fs == fstrm.FSTRM_CONTROL_READY:
@@ -115,9 +115,9 @@ def start_unixsocket(cfg, cb_onconnect):
                                                   
     return server
     
-def start_input(cfg, queues_list, stats, geoip_reader):
+def start_input(cfg, queues_list, stats, geoip_reader, cache):
     # define callback on new connection
-    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queues_list, stats, geoip_reader)
+    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queues_list, stats, geoip_reader, cache)
     
     if cfg["input"]["unix-socket"]["path"] is not None:
         return start_unixsocket(cfg=cfg["input"]["unix-socket"], cb_onconnect=cb_lambda)
