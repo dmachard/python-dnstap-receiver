@@ -85,18 +85,19 @@ class StatsStream:
             self.cnts_tlds["%s/%s" % (qr,tld_matched[-1])] += 1
         
         # latency
-        if tap["latency"] <= 0.001:
-            self.cnts_latency["%s/latency0_1" % qr ] += 1
-        if 0.001 < tap["latency"] <= 0.010 :
-            self.cnts_latency["%s/latency1_10" % qr ] += 1
-        if 0.010 < tap["latency"] <= 0.050 :
-            self.cnts_latency["%s/latency10_50" % qr ] += 1
-        if 0.050 < tap["latency"] <= 0.100 :
-            self.cnts_latency["%s/latency50_100" % qr ] += 1
-        if 0.100 < tap["latency"] <= 1.000 :
-            self.cnts_latency["%s/latency100_1000" % qr ] += 1    
-        if tap["latency"] > 1.000 :
-            self.cnts_latency["%s/latency_slow" % qr ] += 1    
+        if isinstance(tap["latency"], float):
+            if tap["latency"] <= 0.001:
+                self.cnts_latency["%s/latency0_1" % qr ] += 1
+            if 0.001 < tap["latency"] <= 0.010 :
+                self.cnts_latency["%s/latency1_10" % qr ] += 1
+            if 0.010 < tap["latency"] <= 0.050 :
+                self.cnts_latency["%s/latency10_50" % qr ] += 1
+            if 0.050 < tap["latency"] <= 0.100 :
+                self.cnts_latency["%s/latency50_100" % qr ] += 1
+            if 0.100 < tap["latency"] <= 1.000 :
+                self.cnts_latency["%s/latency100_1000" % qr ] += 1    
+            if tap["latency"] > 1.000 :
+                self.cnts_latency["%s/latency_slow" % qr ] += 1    
             
     def reset(self):
         """reset the stream"""

@@ -75,8 +75,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
         tap["type"] = "query"
-        latency = 0.0
-        
+        latency = UnknownValue.name
+
     # handle response message
     if (dm.type % 2 ) == 0 :
         dnstap_parsed = dnspython_patch.from_wire(dm.response_message, question_only=True)
@@ -87,7 +87,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
 
         # compute latency 
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
-        latency = round(d2-d1,3) if d1 > 0 else 0.0
+        latency = round(d2-d1,3) if d1 > 0 else UnknownValue.name
 
     tap["latency"] = latency
         
