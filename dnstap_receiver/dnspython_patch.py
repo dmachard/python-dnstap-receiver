@@ -2,6 +2,7 @@
 import dns.exception
 import dns.opcode
 import dns.flags
+import dns.message
 
 # waiting fix with dnspython 2.1
 # will be removed in the future
