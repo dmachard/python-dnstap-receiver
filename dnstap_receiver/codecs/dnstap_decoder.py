@@ -3,6 +3,7 @@ import re
 import logging
 import socket
 import hashlib
+import struct
 
 from datetime import datetime, timezone
 
@@ -11,7 +12,6 @@ import dns.rcode
 import dns.rdatatype
 import dns.message
 
-from dnstap_receiver import dnspython_patch
 from dnstap_receiver.codecs import dnstap_pb2 
 
 # create default logger for the dnstap receiver
@@ -21,9 +21,38 @@ DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
 DNSTAP_FAMILY = dnstap_pb2._SOCKETFAMILY.values_by_number
 DNSTAP_PROTO = dnstap_pb2._SOCKETPROTOCOL.values_by_number  
 
+DNS_LEN = 12
+
 class UnknownValue:
     name = "-"
 
+unpack_dns = struct.Struct("!6H").unpack
+
+def decode_question(data):
+    buf = data
+    qname = []
+
+    while len(buf):
+        length = buf[0]
+        if length == 0x00:
+            break
+        label = buf[1:length+1]
+        qname.append(buf[1:length+1])
+        buf = buf[length+1:]
+
+    q = struct.unpack('!HH', buf[1:5])    
+    qtype = q[0]
+    qclass = q[1]
+    return (b".".join(qname)+ b".", qtype) 
+
+def decode_dns(data):
+    dns_hdr = unpack_dns(data[:DNS_LEN])
+    dns_id = dns_hdr[0]
+    dns_rcode = dns_hdr[1] & 15
+    dns_qdcount = dns_hdr[2]
+    
+    return (dns_id, dns_rcode, dns_qdcount)
+    
 async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader, cache):
     """on dnstap"""
     # decode binary payload
@@ -68,11 +97,11 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     if tap["source-port"] == 0:
         tap["source-port"] = UnknownValue.name
         
-    # handle query message
-    # todo catching dns.message.ShortHeader exception
-    # can occured with coredns if the full argument is missing
-    if (dm.type % 2 ) == 1 :
-        dnstap_parsed = dnspython_patch.from_wire(dm.query_message, question_only=True)                 
+    # decode dns message
+    dns_payload = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
+    dns_id, dns_rcode, dns_qdcount = decode_dns(dns_payload)
+    
+    if (dm.type % 2 ) == 1 :               
         tap["length"] = len(dm.query_message)
         d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
@@ -80,13 +109,13 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         
         # hash query and put in cache the arrival time
         if len(dm.query_address) and dm.query_port > 0:
-            hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dnstap_parsed.id)
+            hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dns_id)
             qhash = hashlib.sha1(hash_payload.encode()).hexdigest()
             cache[qhash] = d1
             
     # handle response message
+    
     if (dm.type % 2 ) == 0 :
-        dnstap_parsed = dnspython_patch.from_wire(dm.response_message, question_only=True)
         tap["length"] = len(dm.response_message)
         d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
         tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
@@ -94,17 +123,18 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
 
         # compute hash of the query and latency
         if len(dm.query_address) and dm.query_port > 0:
-            hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dnstap_parsed.id)
+            hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dns_id)
             qhash = hashlib.sha1(hash_payload.encode()).hexdigest()
             if qhash in cache: tap["latency"] = round(d2-cache[qhash],3)
 
     # common params
-    if len(dnstap_parsed.question):
-        tap["qname"] = dnstap_parsed.question[0].name.to_text()
-        tap["rrtype"] = dns.rdatatype.to_text(dnstap_parsed.question[0].rdtype)
-    tap["rcode"] = dns.rcode.to_text(dnstap_parsed.rcode())
-    tap["id"] = dnstap_parsed.id
-    #tap["flags"] = dns.flags.to_text(dnstap_parsed.flags)
+    if dns_qdcount:
+        qname, qtype = decode_question(dns_payload[DNS_LEN:])
+        tap["qname"] = qname.decode()
+        tap["rrtype"] = dns.rdatatype.to_text(qtype)
+        
+    tap["rcode"] = dns.rcode.to_text(dns_rcode)
+    tap["id"] = dns_id
 
     # filtering by qname ?
     if cfg["filter"]["qname-regex"] is not None:
