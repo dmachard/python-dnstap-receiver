@@ -866,10 +866,10 @@ Result:
 
 | Parameters| Values | 
 | ------------- | ------------- |
-| Query per seconds | ~8500 |
+| Query per seconds | ~9000 |
 | Domains | ~40000 |
 | Clients | 1 |
-| CPU usage | ~25% |
+| CPU usage | ~28% |
 | Memory usage | ~60Mo |
 | Network usage | ~5.7Mb |
 
