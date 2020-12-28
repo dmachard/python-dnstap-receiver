@@ -853,13 +853,14 @@ Tested on a limited lab with the following processor: Intel Core i5-7200U @2,50G
 Metrics are extracted every second:
 
 ```bash
-watch -n 1 "time curl --user admin:changeme http://<ip_dnstap_receiver>:8080/metrics"
+watch -n 1 "time curl --user admin:changeme http://[ip_dnstap_receiver]:8080/metrics"
 ```
 
 Dnsperf command used:
 
 ```bash
-resperf -s <dns_ip_server> -d queryfile -m 6000 -c 10 -C 1 -v
+docker pull ns1labs/flame
+docker run ns1labs/flame [ip_dns_server]
 ```
 
 Result:
