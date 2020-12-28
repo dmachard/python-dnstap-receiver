@@ -867,7 +867,7 @@ Result:
 
 | Parameters| Values | 
 | ------------- | ------------- |
-| Query per seconds | ~10000 |
+| Query per seconds | ~11000 |
 | Domains | ~40000 |
 | Clients | 1 |
 | CPU usage | ~30% |

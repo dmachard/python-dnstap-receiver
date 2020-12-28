@@ -16,7 +16,9 @@ async def watcher(statistics):
         # refresh counters and compute qps every interval
         statistics.update_counters()
         statistics.compute_qps()
-    
+        statistics.compute_rps()
+        statistics.compute_pps()
+        
 class StatsStream:
     def __init__(self, name, stats):
         """constructor"""
@@ -28,6 +30,7 @@ class StatsStream:
         self.bufi = defaultdict(Counter)
 
         self.prev_qr = 0
+        self.prev_rp = 0
         
         self.cnts = Counter()
         self.cnts_rcode = Counter()
@@ -114,7 +117,8 @@ class StatsStream:
         self.cnts_latency.clear()
         
         self.prev_qr = 0
-
+        self.prev_rp = 0
+        
     def compute_qps(self):
         """compute qps query/qps and response/qps"""
         cur_qr = self.cnts.get("query", 0)
@@ -124,6 +128,19 @@ class StatsStream:
         if qps < 0: qps = 0
         self.cnts["qps"]  = qps
         self.prev_qr = cur_qr
+        
+    def compute_rps(self):
+        """compute response per second"""
+        cur_rp = self.cnts.get("response", 0)
+        if cur_rp == 0: return
+
+        rps = cur_rp - self.prev_rp
+        if rps < 0: rps = 0
+        self.cnts["rps"]  = rps
+        self.prev_rp = cur_rp
+        
+    def compute_pps(self):
+        self.cnts["pps"]  = self.cnts["qps"] + self.cnts["rps"]
         
 class Statistics:
     def __init__(self, cfg):
@@ -145,6 +162,8 @@ class Statistics:
         self.cnts_latency = Counter()
         
         self.global_qps = Counter()
+        self.global_rps = Counter()
+        self.global_pps = Counter()
         
     def record(self, tap):
         """record dnstap message"""
@@ -191,7 +210,9 @@ class Statistics:
         self.cnts_rcode.clear()
         self.cnts_rrtype.clear()
         self.global_qps.clear()
-
+        self.global_rps.clear()
+        self.global_pps.clear()
+        
         self.cnts_tlds.clear()
         self.cnts_latency.clear()
         
@@ -220,6 +241,25 @@ class Statistics:
         
         self.cnts["qps"] = self.global_qps["qps"]
       
+    def compute_rps(self):
+        """create some global counters"""
+        self.global_rps.clear()
+        
+        for s in self.get_streams():
+            s.compute_rps()
+            self.global_rps.update({"rps": s.cnts["rps"]})
+        
+        self.cnts["rps"] = self.global_rps["rps"]
+        
+    def compute_pps(self):
+        self.global_pps.clear()
+        
+        for s in self.get_streams():
+            s.compute_pps()
+            self.global_pps.update({"pps": s.cnts["qps"] + s.cnts["rps"]})
+        
+        self.cnts["pps"] = self.global_pps["pps"]
+        
     def get_counters(self, stream=None, filters=[]):
         """return all counters"""
         # get computed counters according to the stream

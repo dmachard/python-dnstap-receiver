@@ -49,10 +49,10 @@ class Handlers:
         if not auth:
             return web.Response(status=401)
 
-        filters = ["qps", "domains", "clients", "query/bytes", "response/bytes",
-                   "query", "query/udp", "query/tcp", "query/inet", "query/inet6", 
+        filters = ["pps", "domains", "clients", "query/bytes", "response/bytes",
+                   "qps", "query", "query/udp", "query/tcp", "query/inet", "query/inet6", 
                    "query/a", "query/aaaa", "query/svr",
-                   "response", "response/udp", "response/tcp", "response/inet", "response/inet6", 
+                   "rps", "response", "response/udp", "response/tcp", "response/inet", "response/inet6", 
                    "response/nxdomain", "response/noerror", "response/servfail", "response/refused",
                    "response/latency0_1", "response/latency1_10", "response/latency10_50",
                    "response/latency50_100", "response/latency100_1000", "response/latency_slow"]
@@ -72,9 +72,17 @@ class Handlers:
         p.append( "# TYPE dnstap_responses_bytes_total counter" )
         p.append( "dnstap_responses_bytes_total %s" % counters["response/bytes"] )
         
+        p.append( "# HELP dnstap_pps Number of packets per second received" )
+        p.append( "# TYPE dnstap_pps gauge" )
+        p.append( "dnstap_pps %s" % counters["pps"] )
+        
         p.append( "# HELP dnstap_qps Number of queries per second received" )
         p.append( "# TYPE dnstap_qps gauge" )
         p.append( "dnstap_qps %s" % counters["qps"] )
+        
+        p.append( "# HELP dnstap_rps Number of responses per second received" )
+        p.append( "# TYPE dnstap_rps gauge" )
+        p.append( "dnstap_rps %s" % counters["rps"] )
         
         p.append( "# HELP dnstap_domains Number of domains asked" )
         p.append( "# TYPE dnstap_domains counter" )
@@ -185,8 +193,14 @@ class Handlers:
             p.append( "# HELP dnstap_responses_bytes_total Total number of bytes for responses of this dnstap identity" )
             p.append( "# TYPE dnstap_responses_bytes_total counter" )
         
+            p.append( "# HELP dnstap_pps Number of packets per second for this dnstap identity" )
+            p.append( "# TYPE dnstap_pps gauge" )
+            
             p.append( "# HELP dnstap_qps Number of queries per second for this dnstap identity" )
             p.append( "# TYPE dnstap_qps gauge" )
+            
+            p.append( "# HELP dnstap_rps Number of responses per second for this dnstap identity" )
+            p.append( "# TYPE dnstap_rps gauge" )
             
             p.append( "# HELP dnstap_domains Number of domains asked for this dnstap identity" )
             p.append( "# TYPE dnstap_domains counter" )
@@ -267,7 +281,9 @@ class Handlers:
             p.append( "dnstap_queries_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["query/bytes"]) )
             p.append( "dnstap_responses_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["response/bytes"]) )
             
+            p.append( "dnstap_pps{identity=\"%s\"} %s" % (s,sub_cntrs["pps"]) )
             p.append( "dnstap_qps{identity=\"%s\"} %s" % (s,sub_cntrs["qps"]) )
+            p.append( "dnstap_rps{identity=\"%s\"} %s" % (s,sub_cntrs["rps"]) )
             p.append( "dnstap_domains{identity=\"%s\"} %s" % (s,sub_cntrs["domains"]) )
             p.append( "dnstap_clients{identity=\"%s\"} %s" % (s,sub_cntrs["clients"]) )
             
