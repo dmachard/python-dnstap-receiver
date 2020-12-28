@@ -13,7 +13,7 @@ RUN true \
     && apk update \
     && apk add gcc musl-dev \
     && adduser -D dnstap \
-    && pip install --no-cache-dir dnspython protobuf pyyaml aiohttp geoip2 tlds cachetools\
+    && pip install --no-cache-dir protobuf pyyaml aiohttp geoip2 tlds cachetools\
     && apk del gcc musl-dev \
     && cd /home/dnstap \
     && mkdir -p /home/dnstap/logs/ \
