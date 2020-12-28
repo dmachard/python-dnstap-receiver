@@ -7,12 +7,11 @@ import struct
 
 from datetime import datetime, timezone
 
-# python3 -m pip dnspython
-import dns.rcode
-import dns.rdatatype
-import dns.message
-
 from dnstap_receiver.codecs import dnstap_pb2 
+
+import dnstap_receiver.dns.rdatatype as dns_rdatatypes
+import dnstap_receiver.dns.rcode as dns_rcodes
+import dnstap_receiver.dns.parser as dns_parser
 
 # create default logger for the dnstap receiver
 clogger = logging.getLogger("dnstap_receiver.console")
@@ -21,47 +20,14 @@ DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
 DNSTAP_FAMILY = dnstap_pb2._SOCKETFAMILY.values_by_number
 DNSTAP_PROTO = dnstap_pb2._SOCKETPROTOCOL.values_by_number  
 
-DNS_LEN = 12
-
 class UnknownValue:
     name = "-"
 
-unpack_dns = struct.Struct("!6H").unpack
-
-def decode_question(data):
-    buf = data
-    qname = []
-
-    while len(buf):
-        length = buf[0]
-        if length == 0x00:
-            break
-        label = buf[1:length+1]
-        qname.append(buf[1:length+1])
-        buf = buf[length+1:]
-
-    q = struct.unpack('!HH', buf[1:5])    
-    qtype = q[0]
-    qclass = q[1]
-    return (b".".join(qname)+ b".", qtype) 
-
-def decode_dns(data):
-    dns_hdr = unpack_dns(data[:DNS_LEN])
-    dns_id = dns_hdr[0]
-    dns_rcode = dns_hdr[1] & 15
-    dns_qdcount = dns_hdr[2]
-    
-    return (dns_id, dns_rcode, dns_qdcount)
-    
 async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_reader, cache):
     """on dnstap"""
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
     dm = dnstap_decoder.message
-    
-    if cfg["trace"]["dnstap"]:
-        dns_pkt = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
-        clogger.debug("%s\n%s\n\n" % (dm,dns.message.from_wire(dns_pkt)) )
 
     # filtering by dnstap identity ?
     tap_ident = dnstap_decoder.identity.decode()
@@ -99,7 +65,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         
     # decode dns message
     dns_payload = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
-    dns_id, dns_rcode, dns_qdcount = decode_dns(dns_payload)
+    dns_id, dns_rcode, dns_qdcount = dns_parser.decode_dns(dns_payload)
     
     if (dm.type % 2 ) == 1 :               
         tap["length"] = len(dm.query_message)
@@ -129,11 +95,11 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
 
     # common params
     if dns_qdcount:
-        qname, qtype = decode_question(dns_payload[DNS_LEN:])
+        qname, qtype = dns_parser.decode_question(dns_payload)
         tap["qname"] = qname.decode()
-        tap["rrtype"] = dns.rdatatype.to_text(qtype)
+        tap["rrtype"] = dns_rdatatypes.RDATATYPES[qtype]
         
-    tap["rcode"] = dns.rcode.to_text(dns_rcode)
+    tap["rcode"] = dns_rcodes.RCODES[dns_rcode]
     tap["id"] = dns_id
 
     # filtering by qname ?
