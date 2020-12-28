@@ -856,7 +856,7 @@ Metrics are extracted every second:
 watch -n 1 "time curl --user admin:changeme http://[ip_dnstap_receiver]:8080/metrics"
 ```
 
-Dnsperf command used:
+Dns generator used:
 
 ```bash
 docker pull ns1labs/flame
