@@ -100,7 +100,7 @@ def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache):
     cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, cfg_input, queues_list, stats, geoip_reader, cache)
     
     ssl_context = None
-    if cfg["tcp-socket"]["tls-support"]:
+    if cfg_input["tls-support"]:
         ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_context.load_cert_chain(certfile=cfg_input["tls-server-cert"], keyfile=cfg_input["tls-server-key"])
         clogger.debug("Input handler - tls support enabled")
