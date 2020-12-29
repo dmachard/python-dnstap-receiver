@@ -17,7 +17,7 @@ in JSON, YAML or one line text format and more.
 * [Inputs handler](#inputs-handler)
     * [TCP socket](#tcp-socket)
     * [Unix socket](#unix-socket)
-    * [Raw socket (sniffer)](#raw-socket)
+    * [Raw socket (sniffer)](#raw-socket-sniffer)
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
     * [File](#file)
@@ -105,7 +105,7 @@ docker logs dnstap01 -f
 Severals inputs handler are supported to read incoming dnstap messages:
 - [TCP socket](#tcp-socket)
 - [Unix socket](#unix-socket)
-- [Sniffer](#sniffer)
+- [Raw socket (sniffer)](#raw-socket-sniffer)
 
 ### TCP socket
 
