@@ -6,7 +6,7 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dnstap_receiver)
 
 This Python module acts as a [dnstap](https://dnstap.info/) streams receiver for DNS servers.
-Input streams can be a unix socket or multiple remote dns servers.
+Input streams can be a unix, tcp or raw socket.
 The output is printed directly on stdout or sent to remote tcp address 
 in JSON, YAML or one line text format and more. 
 
