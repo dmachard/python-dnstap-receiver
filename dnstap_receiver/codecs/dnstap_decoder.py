@@ -5,8 +5,6 @@ import socket
 import hashlib
 import struct
 
-from datetime import datetime, timezone
-
 from dnstap_receiver.codecs import dnstap_pb2 
 
 import dnstap_receiver.dns.rdatatype as dns_rdatatypes
@@ -69,29 +67,26 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     
     if (dm.type % 2 ) == 1 :               
         tap["length"] = len(dm.query_message)
-        d1 = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
-        tap["timestamp"] = datetime.fromtimestamp(d1, tz=timezone.utc).isoformat()
+        tap["timestamp"] = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
         tap["type"] = "query"
         
         # hash query and put in cache the arrival time
         if len(dm.query_address) and dm.query_port > 0:
             hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dns_id)
             qhash = hashlib.sha1(hash_payload.encode()).hexdigest()
-            cache[qhash] = d1
+            cache[qhash] = tap["timestamp"]
             
     # handle response message
-    
     if (dm.type % 2 ) == 0 :
         tap["length"] = len(dm.response_message)
-        d2 = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
-        tap["timestamp"] = datetime.fromtimestamp(d2, tz=timezone.utc).isoformat()
+        tap["timestamp"] = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
         tap["type"] = "response"
 
         # compute hash of the query and latency
         if len(dm.query_address) and dm.query_port > 0:
             hash_payload = "%s+%s+%s" % (dm.query_address, str(dm.query_port), dns_id)
             qhash = hashlib.sha1(hash_payload.encode()).hexdigest()
-            if qhash in cache: tap["latency"] = round(d2-cache[qhash],3)
+            if qhash in cache: tap["latency"] = round(tap["timestamp"]-cache[qhash],3)
 
     # common params
     if dns_qdcount:
