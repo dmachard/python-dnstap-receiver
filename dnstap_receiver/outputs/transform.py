@@ -5,9 +5,11 @@ from datetime import datetime, timezone
 
 def convert_dnstap(fmt, tapmsg):
     """convert dnstap message"""
+    tapmsg["datetime"] = datetime.fromtimestamp(tapmsg["timestamp"], tz=timezone.utc).isoformat()
+  
     if fmt == "text":
         msg_list = []
-        msg_list.append("%s" % datetime.fromtimestamp(tapmsg["timestamp"], tz=timezone.utc).isoformat())
+        msg_list.append("%s" % tapmsg["datetime"])
         msg_list.append("%s" % tapmsg["identity"])
         msg_list.append("%s" % tapmsg["message"])
         msg_list.append("%s" % tapmsg["rcode"]) 

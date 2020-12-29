@@ -21,7 +21,7 @@ in JSON, YAML or one line text format and more.
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
     * [File](#file)
-    * [TCP socket](#tcp-socket-1)
+    * [TCP](#tcp)
     * [Syslog](#syslog)
     * [Metrics](#metrics)
 * [More options](#more-options)
@@ -179,7 +179,7 @@ Outputs handler can be configured to forward messages in several modes.
 - [Stdout](#stdout)
 - [File](#file)
 - [Metrics](#metrics)
-- [TCP socket](#tcp-socket-1)
+- [TCP](#tcp)
 - [Syslog](#syslog)
 
 ### Stdout
@@ -303,7 +303,7 @@ docker run -d -p 6000:6000 -p 8080:8080 -v ${PWD}/dnstap.conf:/etc/dnstap_receiv
 ```
 
 
-### TCP socket
+### TCP
 
 This output enables to forward dnstap message to a remote tcp collector.
 Add the following configuration as external config to activate this output:
@@ -908,7 +908,7 @@ Result:
 | | |
 | ------------- | ------------- |
 | Author | Denis Machard <d.machard@gmail.com> |
-| PyPI | https://pypi.org/project/dnstap_receiver/ |
+| PyPI | https://pypi.org/project/dnstap-receiver/ |
 | Github | https://github.com/dmachard/dnstap-receiver |
 | DockerHub | https://hub.docker.com/r/dmachard/dnstap-receiver |
 | | |

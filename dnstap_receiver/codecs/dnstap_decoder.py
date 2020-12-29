@@ -27,47 +27,76 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     dnstap_decoder.ParseFromString(payload)
     dm = dnstap_decoder.message
 
-    # filtering by dnstap identity ?
-    tap_ident = dnstap_decoder.identity.decode()
-    if not len(tap_ident):
-        tap_ident = UnknownValue.name
-    if cfg["filter"]["dnstap-identities"] is not None:
-        if re.match(cfg["filter"]["dnstap-identities"], dnstap_decoder.identity.decode()) is None:
-            return
-            
-    tap = { "identity": tap_ident, 
+    tap = { "identity": UnknownValue.name, 
             "qname": UnknownValue.name, 
             "rrtype": UnknownValue.name, 
-            "query-type": UnknownValue.name, 
-            "query-ip": UnknownValue.name,
+            "query-ip": UnknownValue.name, "query-port": UnknownValue.name,
+            "response-ip": UnknownValue.name, "response-port": UnknownValue.name,
             "latency": UnknownValue.name}
+            
+    # type: CLIENT_QUERY
+    # socket_family: INET
+    # socket_protocol: UDP
+    # query_address: "\n\000\000\002"
+    # response_address: "\n\000\000\322"
+    # query_port: 33019
+    # response_port: 53
+    # query_time_sec: 1609271575
+    # query_time_nsec: 779179701
+    # query_message: "\2300\001 \000\001\000\000\000\000\000\001\003www\006google\003com\000\000\034\000
+    # \001\000\000)\020\000\000\000\000\000\000\014\000\n\000\010U\222\\\270\340\330jg"
+
+    # type: CLIENT_RESPONSE
+    # socket_family: INET
+    # socket_protocol: UDP
+    # query_address: "\n\000\000\002"
+    # response_address: "\n\000\000\322"
+    # query_port: 33019
+    # response_port: 53
+    # query_time_sec: 1609271575
+    # query_time_nsec: 779179701
+    # response_time_sec: 1609271575
+    # response_time_nsec: 831279572
+    # response_message: "\2300\201\200\000\001\000\001\000\000\000\001\003www\006google\003com\000\000\034
+    # \000\001\300\014\000\034\000\001\000\000\000\236\000\020*\000\024P@\007\010\006\000\000\000\000\000\000 \004\000\000)\004\320\000\000\000\000\000\000"
     
+    # filtering by dnstap identity ?
+    if len(dnstap_decoder.identity): tap["identity"] = dnstap_decoder.identity.decode()
+    if cfg["filter"]["dnstap-identities"] is not None:
+        if re.match(cfg["filter"]["dnstap-identities"], tap["identity"]) is None:
+            return
+
     # decode type message
-    tap["payload"] = payload
-    tap["message"] = DNSTAP_TYPE.get(dm.type, UnknownValue).name
-    tap["family"] = DNSTAP_FAMILY.get(dm.socket_family, UnknownValue).name
-    tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, UnknownValue).name
+    tap["message"] = DNSTAP_TYPE.get(dm.type, UnknownValue.name).name
+    tap["family"] = DNSTAP_FAMILY.get(dm.socket_family, UnknownValue.name).name
+    tap["protocol"] = DNSTAP_PROTO.get(dm.socket_protocol, UnknownValue.name).name
 
     # decode query address
     qaddr = dm.query_address
     if len(qaddr) and dm.socket_family == 1:
-        # condition for coredns, address is 16 bytes long so keept only 4 bytes
-        qaddr = qaddr[12:] if len(qaddr) == 16 else qaddr
-        # convert ip to string
-        tap["query-ip"] = socket.inet_ntoa(qaddr)
-    if len(qaddr) and dm.socket_family == 2:
-        tap["query-ip"] = socket.inet_ntop(socket.AF_INET6, qaddr)
-    tap["query-port"] = dm.query_port
-    if tap["query-port"] == 0:
-        tap["query-port"] = UnknownValue.name
-        
+        qaddr = qaddr[12:] if len(qaddr) == 16 else qaddr # condition for coredns, address is 16 bytes long so keept only 4 bytes
+        tap["query-ip"] = socket.inet_ntop(socket.AF_INET, qaddr) # socket.inet_ntoa(qaddr)
+    if len(qaddr) and dm.socket_family == 2: tap["query-ip"] = socket.inet_ntop(socket.AF_INET6, qaddr)
+    if dm.query_port > 0: tap["query-port"] = dm.query_port
+
+    # decode response address
+    raddr = dm.response_address
+    if len(raddr) and dm.socket_family == 1:
+        raddr = raddr[12:] if len(raddr) == 16 else raddr # condition for coredns, address is 16 bytes long so keept only 4 bytes
+        tap["response-ip"] = socket.inet_ntop(socket.AF_INET, raddr) # socket.inet_ntoa(qaddr)
+    if len(raddr) and dm.socket_family == 2: tap["response-ip"] = socket.inet_ntop(socket.AF_INET6, raddr)
+    if dm.response_port > 0: tap["response-port"] = dm.response_port
+    
     # decode dns message
     dns_payload = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
+    tap["payload"] = dns_payload
     dns_id, dns_rcode, dns_qdcount = dns_parser.decode_dns(dns_payload)
     
     if (dm.type % 2 ) == 1 :               
         tap["length"] = len(dm.query_message)
-        tap["timestamp"] = dm.query_time_sec +  (round(dm.query_time_nsec ) / 1000000000)
+        tap["timestamp"] = dm.query_time_sec + round(dm.query_time_nsec )*1e-9
+        tap["time_sec"] = dm.query_time_sec
+        tap["time_nsec"] = dm.query_time_nsec
         tap["type"] = "query"
         
         # hash query and put in cache the arrival time
@@ -79,7 +108,9 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # handle response message
     if (dm.type % 2 ) == 0 :
         tap["length"] = len(dm.response_message)
-        tap["timestamp"] = dm.response_time_sec + (round(dm.response_time_nsec ) / 1000000000) 
+        tap["timestamp"] = dm.response_time_sec + round(dm.response_time_nsec )*1e-9
+        tap["time_sec"] = dm.response_time_sec
+        tap["time_nsec"] = dm.response_time_nsec        
         tap["type"] = "response"
 
         # compute hash of the query and latency
