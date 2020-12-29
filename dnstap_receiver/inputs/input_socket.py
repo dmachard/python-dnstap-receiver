@@ -94,7 +94,7 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
 def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache):
     clogger.debug("Input handler: tcp socket")
     loop = asyncio.get_event_loop()
-    cfg_input = cfg["tcp-socket"]
+    cfg_input = cfg["input"]["tcp-socket"]
     
     # define callback on new connection
     cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, cfg_input, queues_list, stats, geoip_reader, cache)
@@ -112,7 +112,7 @@ def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache):
     
 def start_unixsocket(cfg, queues_list, stats, geoip_reader, cache):
     clogger.debug("Input handler: unix socket")
-    cfg_input = cfg["unix-socket"]
+    cfg_input = cfg["input"]["unix-socket"]
     
     loop = asyncio.get_event_loop()
     

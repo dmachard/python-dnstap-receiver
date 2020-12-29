@@ -160,17 +160,17 @@ def setup_inputs(cfg, queues_outputs, stats, geoip_reader, running):
     
     # asynchronous unix 
     if cfg_input["unix-socket"]["enable"]:
-        loop.create_task(input_socket.start_unixsocket(cfg_input, queues_outputs, stats, geoip_reader, cache)) 
+        loop.create_task(input_socket.start_unixsocket(cfg, queues_outputs, stats, geoip_reader, cache)) 
         
     # sniffer
     elif cfg_input["sniffer"]["enable"]:
         queue_sniffer = asyncio.Queue()
         loop.create_task(input_sniffer.watch_buffer(cfg_input["sniffer"], queue_sniffer, queues_outputs, stats, cache))
-        loop.run_in_executor(None, input_sniffer.start_input, cfg["input"]["sniffer"], queue_sniffer, running)
+        loop.run_in_executor(None, input_sniffer.start_input, cfg_input["sniffer"], queue_sniffer, running)
     
     # default one tcp socket
     else:
-        loop.create_task(input_socket.start_tcpsocket(cfg_input, queues_outputs, stats, geoip_reader, cache))
+        loop.create_task(input_socket.start_tcpsocket(cfg, queues_outputs, stats, geoip_reader, cache))
 
 def setup_webserver(cfg, stats):
     """setup web api"""
