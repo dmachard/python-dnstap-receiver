@@ -39,7 +39,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
             "qname": UnknownValue.name, 
             "rrtype": UnknownValue.name, 
             "query-type": UnknownValue.name, 
-            "source-ip": UnknownValue.name,
+            "query-ip": UnknownValue.name,
             "latency": UnknownValue.name}
     
     # decode type message
@@ -54,12 +54,12 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         # condition for coredns, address is 16 bytes long so keept only 4 bytes
         qaddr = qaddr[12:] if len(qaddr) == 16 else qaddr
         # convert ip to string
-        tap["source-ip"] = socket.inet_ntoa(qaddr)
+        tap["query-ip"] = socket.inet_ntoa(qaddr)
     if len(qaddr) and dm.socket_family == 2:
-        tap["source-ip"] = socket.inet_ntop(socket.AF_INET6, qaddr)
-    tap["source-port"] = dm.query_port
-    if tap["source-port"] == 0:
-        tap["source-port"] = UnknownValue.name
+        tap["query-ip"] = socket.inet_ntop(socket.AF_INET6, qaddr)
+    tap["query-port"] = dm.query_port
+    if tap["query-port"] == 0:
+        tap["query-port"] = UnknownValue.name
         
     # decode dns message
     dns_payload = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
@@ -105,7 +105,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # geoip support 
     if geoip_reader is not None:
         try:
-            response = geoip_reader.city(tap["source-ip"])
+            response = geoip_reader.city(tap["query-ip"])
             if cfg["geoip"]["country-iso"]:
                 tap["country"] = response.country.iso_code
             else:

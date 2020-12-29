@@ -187,11 +187,11 @@ JSON format:
     "identity": "lb1",
     "qname": "www.google.com.",
     "rrtype": "A",
-    "source-ip": "192.168.1.114",
+    "query-ip": "192.168.1.114",
     "message": "CLIENT_QUERY",
     "family": "INET",
     "protocol": "UDP",
-    "source-port": 42222,
+    "query-port": 42222,
     "length": 43,
     "timestamp": "2020-09-16T18:51:53.591736+00:00",
     "rcode": "NOERROR",
@@ -211,8 +211,8 @@ message: CLIENT_QUERY
 family: INET
 qname: dns4.comlaude-dns.eu.
 rrtype: AAAA
-source-ip: '-'
-source-port: '-'
+query-ip: '-'
+query-port: '-'
 timestamp: '2020-09-16T18:51:53.591736+00:00'
 protocol: UDP
 id: 33422

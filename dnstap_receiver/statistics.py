@@ -42,14 +42,14 @@ class StatsStream:
         
     def record(self, tap):
         """record only response dnstap message"""
-        qname = tap["qname"]; srcip = tap["source-ip"]; 
+        qname = tap["qname"]; srcip = tap["query-ip"]; 
         qr = tap["type"]; rcode = tap["rcode"]; rrtype = tap["rrtype"]
         
         # transform qname to lowercase ?
         if self.stats.cfg["qname-lowercase"]:
             qname = qname.lower()
 
-        # count number of hit and bytes for each source ip
+        # count number of hit and bytes for each query ip
         self.bufi[srcip]["hit"] += 1
         self.bufi[srcip]["length"] += tap["length"]
         self.cnts["clients"] = len(self.bufi)
