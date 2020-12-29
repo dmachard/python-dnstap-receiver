@@ -17,6 +17,7 @@ in JSON, YAML or one line text format and more.
 * [Inputs handler](#inputs-handler)
     * [TCP socket](#tcp-socket)
     * [Unix socket](#unix-socket)
+    * [Sniffer](#sniffer)
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
     * [File](#file)
@@ -104,6 +105,7 @@ docker logs dnstap01 -f
 Severals inputs handler are supported to read incoming dnstap messages:
 - [TCP socket](#tcp-socket)
 - [Unix socket](#unix-socket)
+- [Sniffer](#sniffer)
 
 ### TCP socket
 
@@ -144,6 +146,32 @@ Configure the path of the socket with the `-u` argument.
 ```
 ./dnstap_receiver -u /var/run/dnstap.sock
 ```
+
+### Sniffer
+
+This input enable to sniff a network interface.
+Configure this input as below, you need to provide the name of your interface and associated ip.
+
+```yaml
+input:
+  # sniff dns messages from network interface 
+  sniffer:
+    # enable or disable
+    enable: true
+    # interface name to sniff
+    eth-name: ens18
+    # ip interface to sniff
+    eth-ip: [ 10.0.0.2 ]
+    # dnstap identity
+    dnstap-identity: sniffer
+    # sniff on the list of dns port
+    dns-port: [ 53 ]
+    # record incoming dns client queries
+    record-client-query: true
+    # record outgoing dns client responses
+    record-client-response: true
+```
+
 
 ## Outputs handler
 

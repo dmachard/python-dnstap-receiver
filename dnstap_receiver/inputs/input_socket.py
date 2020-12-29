@@ -90,9 +90,12 @@ async def cb_onconnect(reader, writer, cfg, queues_list, stats, geoip_reader, ca
     finally:
         clogger.debug(f'Input handler: {peername} - closed')
 
-def start_tcpsocket(cfg, cb_onconnect):
+def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache):
     clogger.debug("Input handler: tcp socket")
     loop = asyncio.get_event_loop()
+    
+    # define callback on new connection
+    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queues_list, stats, geoip_reader, cache)
     
     ssl_context = None
     if cfg["tls-support"]:
@@ -101,25 +104,19 @@ def start_tcpsocket(cfg, cb_onconnect):
         clogger.debug("Input handler - tls support enabled")
         
     clogger.debug("Input handler: listening on %s:%s" % (cfg["local-address"],cfg["local-port"])), 
-    server = asyncio.start_server(cb_onconnect, cfg["local-address"],cfg["local-port"],
+    server = asyncio.start_server(cb_lambda, cfg["local-address"],cfg["local-port"],
                                   ssl=ssl_context, loop=loop)
     return server
     
-def start_unixsocket(cfg, cb_onconnect):
+def start_unixsocket(cfg, queues_list, stats, geoip_reader, cache):
     clogger.debug("Input handler: unix socket")
-    clogger.debug("Input handler: listening on %s" % cfg["path"])
+    
     loop = asyncio.get_event_loop()
     
-    # asynchronous unix socket
-    server = asyncio.start_unix_server(cb_onconnect, path=cfg["path"], loop=loop)
-                                                  
-    return server
-    
-def start_input(cfg, queues_list, stats, geoip_reader, cache):
     # define callback on new connection
     cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, queues_list, stats, geoip_reader, cache)
     
-    if cfg["input"]["unix-socket"]["path"] is not None:
-        return start_unixsocket(cfg=cfg["input"]["unix-socket"], cb_onconnect=cb_lambda)
-    else:
-        return start_tcpsocket(cfg=cfg["input"]["tcp-socket"], cb_onconnect=cb_lambda) 
+    # asynchronous unix socket
+    server = asyncio.start_unix_server(cb_lambda, path=cfg["path"], loop=loop)
+                                                  
+    return server

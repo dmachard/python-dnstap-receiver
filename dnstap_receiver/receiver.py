@@ -16,6 +16,7 @@ clogger = logging.getLogger("dnstap_receiver.console")
 
 # import all inputs
 from dnstap_receiver.inputs import input_socket
+from dnstap_receiver.inputs import input_sniffer
 
 # import all outputs
 from dnstap_receiver.outputs import output_stdout
@@ -152,11 +153,25 @@ def setup_outputs(cfg, stats):
 
     return queues_list
     
-def setup_inputs(cfg, queues_list, stats, geoip_reader, cache):
-    """setup inputs"""                         
-    # asynchronous unix or tcp socket
-    loop.create_task(input_socket.start_input(cfg, queues_list, stats, geoip_reader, cache))
- 
+def setup_inputs(cfg, queues_outputs, stats, geoip_reader, running):
+    """setup inputs"""
+    conf = cfg["input"]
+    cache = cachetools.TTLCache(maxsize=1000000, ttl=60)
+    
+    # asynchronous unix 
+    if conf["unix-socket"]["enable"]:
+        loop.create_task(input_socket.start_unixsocket(conf["unix-socket"], queues_outputs, stats, geoip_reader, cache)) 
+        
+    # sniffer
+    elif conf["sniffer"]["enable"]:
+        queue_sniffer = asyncio.Queue()
+        loop.create_task(input_sniffer.watch_buffer(conf["sniffer"], queue_sniffer, queues_outputs, stats, cache))
+        loop.run_in_executor(None, input_sniffer.start_input, conf["sniffer"], queue_sniffer, running)
+    
+    # default one tcp socket
+    else:
+        loop.create_task(input_socket.start_tcpsocket(conf["tcp-socket"], queues_outputs, stats, geoip_reader, cache))
+
 def setup_webserver(cfg, stats):
     """setup web api"""
     if not cfg["web-api"]["enable"]: return
@@ -198,11 +213,11 @@ def start_receiver():
     loop.create_task(statistics.watcher(stats))
     
     # prepare outputs
-    queues_list = setup_outputs(cfg, stats)
+    queues_outputs = setup_outputs(cfg, stats)
     
     # prepare inputs
-    cache = cachetools.TTLCache(maxsize=1000000, ttl=60)
-    setup_inputs(cfg, queues_list, stats, geoip_reader, cache)
+    running = ["running"]
+    setup_inputs(cfg, queues_outputs, stats, geoip_reader, running)
 
     # start the http api
     setup_webserver(cfg, stats)
@@ -211,7 +226,8 @@ def start_receiver():
     try:
        loop.run_forever()
     except KeyboardInterrupt:
-        pass
+        clogger.debug("exiting, please wait..")
+        running.clear()
 
     # close geoip
     if geoip_reader is not None: geoip_reader.close()
