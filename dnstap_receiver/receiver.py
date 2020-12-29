@@ -90,6 +90,7 @@ def setup_config(args):
     if args.v:
         cfg["trace"]["verbose"] = args.v    
     if args.u is not None:
+        cfg["input"]["unix-socket"]["enable"] = True
         cfg["input"]["unix-socket"]["path"] = args.u
     if args.l != DFLT_LISTEN_IP:
         cfg["input"]["tcp-socket"]["local-address"] = args.l
