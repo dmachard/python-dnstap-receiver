@@ -120,6 +120,7 @@ def start_unixsocket(cfg, queues_list, stats, geoip_reader, cache):
     cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, cfg_input, queues_list, stats, geoip_reader, cache)
     
     # asynchronous unix socket
+    clogger.debug("Input handler: listening on %s" % cfg_input["path"])
     server = asyncio.start_unix_server(cb_lambda, path=cfg_input["path"], loop=loop)
                                                   
     return server

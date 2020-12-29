@@ -17,7 +17,7 @@ in JSON, YAML or one line text format and more.
 * [Inputs handler](#inputs-handler)
     * [TCP socket](#tcp-socket)
     * [Unix socket](#unix-socket)
-    * [Sniffer](#sniffer)
+    * [Raw socket (sniffer)](#raw-socket)
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
     * [File](#file)
@@ -147,7 +147,7 @@ Configure the path of the socket with the `-u` argument.
 ./dnstap_receiver -u /var/run/dnstap.sock
 ```
 
-### Sniffer
+### Raw socket (sniffer)
 
 This input enable to sniff a network interface.
 Configure this input as below, you need to provide the name of your interface and associated ip.
