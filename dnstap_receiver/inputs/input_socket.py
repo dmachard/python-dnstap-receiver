@@ -19,22 +19,23 @@ async def cb_onconnect(reader, writer, cfg, queues_list, stats, geoip_reader, ca
     clogger.debug(f"Input handler: new connection from {peername}")
 
     # access control list check
-    if len(writer.get_extra_info('peername')):
-        acls_network = []
-        for a in cfg["input"]["tcp-socket"]["access-control-list"]:
-            acls_network.append(ipaddress.ip_network(a))
+    if "access-control-list" in cfg:
+        if len(writer.get_extra_info('peername')):
+            acls_network = []
+            for a in cfg["access-control-list"]:
+                acls_network.append(ipaddress.ip_network(a))
+                
+            acl_allow = False
+            for acl in acls_network:
+                if ipaddress.ip_address(peername[0]) in acl:
+                    acl_allow = True
             
-        acl_allow = False
-        for acl in acls_network:
-            if ipaddress.ip_address(peername[0]) in acl:
-                acl_allow = True
-        
-        if not acl_allow:
-            writer.close()
-            clogger.debug("Input handler: checking acl refused")
-            return
-        
-        clogger.debug("Input handler: checking acl allowed")
+            if not acl_allow:
+                writer.close()
+                clogger.debug("Input handler: checking acl refused")
+                return
+            
+            clogger.debug("Input handler: checking acl allowed")
         
     # prepare frame streams decoder
     fstrm_handler = fstrm.FstrmHandler()
