@@ -67,7 +67,7 @@ async def handle(output_cfg, queue, metrics):
             else:
                 clogger.error('Output handler: connection to server is closed.')
                 
-            clogger.debug("'Output handler: retry to connect every 5s")
+            clogger.debug("'Output handler: retry to connect every %ss" % output_cfg["retry"])
             await asyncio.sleep(output_cfg["retry"])
     
     # syslog udp
