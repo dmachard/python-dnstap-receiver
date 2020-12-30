@@ -3,10 +3,10 @@ import logging
 
 # https://farsightsec.github.io/fstrm/
 
-# Frame Streams Control Frame Format
+# Frame Streams Control Frame Format - Data frame length equals 00 00 00 00
 
 # |------------------------------------|----------------------|
-# | Data frame length                  | 4 bytes              |
+# | Data frame length                  | 4 bytes              |  
 # |------------------------------------|----------------------|
 # | Control frame length               | 4 bytes              |
 # |------------------------------------|----------------------|
@@ -16,7 +16,7 @@ import logging
 # |------------------------------------|----------------------|
 # | Control frame content type length  | 4 bytes (optional)   |
 # |------------------------------------|----------------------|
-# | Payload                            | xx bytes             |     
+# | Content type payload               | xx bytes             |     
 # |------------------------------------|----------------------|
 
 # Frame Streams Data Frame Format
@@ -34,8 +34,17 @@ FSTRM_CONTROL_STOP = 3
 FSTRM_CONTROL_READY = 4
 FSTRM_CONTROL_FINISH = 5
 
+FSTRM_FRAME_TYPES = {
+    FSTRM_DATA_FRAME,
+    FSTRM_CONTROL_ACCEPT,
+    FSTRM_CONTROL_START, 
+    FSTRM_CONTROL_STOP,
+    FSTRM_CONTROL_READY,
+    FSTRM_CONTROL_FINISH
+}
+
 FSTRM_CONTROL_FIELD_CONTENT_TYPE = 1
-CONTENT_TYPE_DNSTAP = "protobuf:dnstap.Dnstap"
+# CONTENT_TYPE_DNSTAP = "protobuf:dnstap.Dnstap"
 
 class FstrmHandler(object):
     """frame stream decoder/encoder"""
@@ -119,38 +128,44 @@ class FstrmHandler(object):
         self.cf_length = None
         
         # data frame ?
-        if not is_cf:
-            return (FSTRM_DATA_FRAME, frame)
+        if not is_cf: return (FSTRM_DATA_FRAME, [], frame)
             
         # decode control frame
-        (ctrl_type,) = struct.unpack("!I", frame[:4])
+        (ctrl,) = struct.unpack("!I", frame[:4])
         frame = frame[4:]
         
-        if ctrl_type == FSTRM_CONTROL_READY:
-            (cf_ctype, cf_clength, ) = struct.unpack("!II", frame[:8])
+        ct = []
+        while len(frame) > 8:
+            (cf_ctype, cf_clength,) = struct.unpack("!II", frame[:8])
             frame = frame[8:]
             
             if cf_ctype != FSTRM_CONTROL_FIELD_CONTENT_TYPE:
                 raise Exception("control ready - content type invalid")
             if cf_clength > len(frame):
                 raise Exception("control ready - content length invalid")
-            
-            cf_payload = frame[:cf_clength].decode()
-            if cf_payload != CONTENT_TYPE_DNSTAP:
-                raise Exception("control ready - dnstap protobuf expected")
                 
-        return (ctrl_type, frame)
+            ct.append(frame[:cf_clength]) 
+            frame = frame[cf_clength:]
 
-    def encode(self, fs):
+        return (ctrl, ct, frame)
+
+    def encode(self, ctrl, ct=[], payload=b""):
         """encode"""
-        if fs == FSTRM_CONTROL_ACCEPT:
-            frame = struct.pack('!IIIII', 0, 
-                                len(CONTENT_TYPE_DNSTAP)+12,
-                                FSTRM_CONTROL_ACCEPT,
-                                FSTRM_CONTROL_FIELD_CONTENT_TYPE,
-                                len(CONTENT_TYPE_DNSTAP))
-            frame += CONTENT_TYPE_DNSTAP.encode()                   
-        else:
-            raise Exception("encode frame not yet supported: %s" % fs)
-        
+            
+        if ctrl not in FSTRM_FRAME_TYPES:
+            raise Exception("frame not supported: %s" % ctrl)
+           
+        # data frame ?
+        if ctrl == FSTRM_DATA_FRAME:
+            frame = struct.pack('!I', len(payload))
+            frame += payload
+            return frame
+ 
+        # control frame ?
+        length = 4 + 8*len(ct) + len(b"".join(ct))
+        frame = struct.pack('!III', 0, length, ctrl)
+        for c in ct:
+            frame += struct.pack('!II', FSTRM_CONTROL_FIELD_CONTENT_TYPE, len(c))
+            frame += c   
+
         return frame

@@ -38,6 +38,7 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
             clogger.debug("Input handler: checking acl allowed")
         
     # prepare frame streams decoder
+    content_type = b"protobuf:dnstap.Dnstap"
     fstrm_handler = fstrm.FstrmHandler()
     loop = asyncio.get_event_loop()
     dnstap_protobuf = dnstap_pb2.Dnstap()
@@ -59,27 +60,31 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
             # process the buffer, check if we have received a complete frame ?
             if fstrm_handler.process():
                 # Ok, the frame is complete so let's decode it
-                fs, payload  = fstrm_handler.decode()
+                ctrl, ct, payload  = fstrm_handler.decode()
 
                 # handle the DATA frame
-                if fs == fstrm.FSTRM_DATA_FRAME:
+                if ctrl == fstrm.FSTRM_DATA_FRAME:
                     loop.create_task(dnstap_decoder.cb_ondnstap(dnstap_protobuf, payload, cfg, queues_list, stats, geoip_reader, cache))
                     
                 # handle the control frame READY
-                if fs == fstrm.FSTRM_CONTROL_READY:
+                if ctrl == fstrm.FSTRM_CONTROL_READY:
                     clogger.debug(f"Input handler: control ready received from {peername}")
-                    ctrl_accept = fstrm_handler.encode(fs=fstrm.FSTRM_CONTROL_ACCEPT)
+                    if content_type not in ct:
+                        raise Exception("content type error: %s" % ct)
+                        
+                    # todo, checking content type
+                    ctrl_accept = fstrm_handler.encode(ctrl=fstrm.FSTRM_CONTROL_ACCEPT, ct=[content_type])
                     # respond with accept only if the content type is dnstap
                     writer.write(ctrl_accept)
                     await writer.drain()
                     clogger.debug(f"Input handler: sending control accept to {peername}")
                     
                 # handle the control frame READY
-                if fs == fstrm.FSTRM_CONTROL_START:
+                if ctrl == fstrm.FSTRM_CONTROL_START:
                     clogger.debug(f"Input handler: control start received from {peername}")
    
                 # handle the control frame STOP
-                if fs == fstrm.FSTRM_CONTROL_STOP:
+                if ctrl == fstrm.FSTRM_CONTROL_STOP:
                     clogger.debug(f"Input handler: control stop received from {peername}")
                     fstrm_handler.reset()           
     except asyncio.CancelledError:
