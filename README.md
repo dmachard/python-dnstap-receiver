@@ -24,6 +24,7 @@ in JSON, YAML or one line text format and more.
     * [TCP](#tcp)
     * [Syslog](#syslog)
     * [Metrics](#metrics)
+    * [Dnstap](#dnstap)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -181,6 +182,7 @@ Outputs handler can be configured to forward messages in several modes.
 - [Metrics](#metrics)
 - [TCP](#tcp)
 - [Syslog](#syslog)
+- [Dnstap](#dnstap)
 
 ### Stdout
 
@@ -360,7 +362,7 @@ Sep 22 12:43:01 bind CLIENT_RESPONSE NOERROR 192.168.1.100 51718 INET UDP 203b w
 
 This output enables to generate metrics in one line and print-it to stdout. Add the following configuration as external config to activate this output:
 
-```
+```yaml
 output:
   metrics:
     # enable or disable
@@ -382,6 +384,25 @@ Example of output
 ```
 2020-10-13 05:19:35,522 18 QUERIES, 3.6 QPS, 1 CLIENTS, 18 INET, 0 INET6, 
 18 UDP, 0 TCP, 17 DOMAINS
+```
+
+### Dnstap
+
+This output enables to send dnstap messages to a remote dnstap receiver. Add the following configuration as external config to activate this output:
+
+```yaml
+  # forward to another remote dnstap receiver
+  dnstap:
+    # enable or disable
+    enable: true
+    # retry interval in seconds to connect
+    retry: 1
+    # remote ipv4 or ipv6 address of the remote dnstap receiver
+    remote-address: 10.0.0.51
+    # remote port of the remote dnstap receiver
+    remote-port: 6000
+    # dnstap identity
+    dnstap-identity: dnstap-receiver
 ```
 
 ## More options

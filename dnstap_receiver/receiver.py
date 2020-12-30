@@ -24,6 +24,7 @@ from dnstap_receiver.outputs import output_file
 from dnstap_receiver.outputs import output_syslog
 from dnstap_receiver.outputs import output_tcp
 from dnstap_receiver.outputs import output_metrics
+from dnstap_receiver.outputs import output_dnstap
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
@@ -152,6 +153,12 @@ def setup_outputs(cfg, stats):
         queues_list.append(queue_metrics)
         loop.create_task(output_metrics.handle(conf["metrics"], queue_metrics, stats))
 
+    if conf["dnstap"]["enable"]:
+        if not output_dnstap.checking_conf(cfg=conf["dnstap"]): return
+        queue_dnstap = asyncio.Queue()
+        queues_list.append(queue_dnstap)
+        loop.create_task(output_dnstap.handle(conf["dnstap"], queue_dnstap, stats))
+        
     return queues_list
     
 def setup_inputs(cfg, queues_outputs, stats, geoip_reader, running):
@@ -177,8 +184,11 @@ def setup_webserver(cfg, stats):
     """setup web api"""
     if not cfg["web-api"]["enable"]: return
 
-    loop.create_task(api_server.create_server(loop, cfg=cfg["web-api"], stats=stats, cfg_stats=cfg["statistics"]) )
-
+    svr = api_server.create_server(loop, cfg=cfg["web-api"], stats=stats, cfg_stats=cfg["statistics"])
+    if svr is None: return
+        
+    loop.create_task( svr)
+    
 def setup_geoip(cfg):
     if not cfg["enable"]: return None
     if cfg["city-database"] is None: return None
@@ -222,7 +232,7 @@ def start_receiver():
 
     # start the http api
     setup_webserver(cfg, stats)
-
+        
     # run event loop 
     try:
        loop.run_forever()

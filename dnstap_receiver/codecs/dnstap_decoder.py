@@ -26,13 +26,6 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # decode binary payload
     dnstap_decoder.ParseFromString(payload)
     dm = dnstap_decoder.message
-
-    tap = { "identity": UnknownValue.name, 
-            "qname": UnknownValue.name, 
-            "rrtype": UnknownValue.name, 
-            "query-ip": UnknownValue.name, "query-port": UnknownValue.name,
-            "response-ip": UnknownValue.name, "response-port": UnknownValue.name,
-            "latency": UnknownValue.name}
             
     # type: CLIENT_QUERY
     # socket_family: INET
@@ -60,6 +53,13 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # response_message: "\2300\201\200\000\001\000\001\000\000\000\001\003www\006google\003com\000\000\034
     # \000\001\300\014\000\034\000\001\000\000\000\236\000\020*\000\024P@\007\010\006\000\000\000\000\000\000 \004\000\000)\004\320\000\000\000\000\000\000"
     
+    tap = { "identity": UnknownValue.name, 
+            "qname": UnknownValue.name, 
+            "rrtype": UnknownValue.name, 
+            "query-ip": UnknownValue.name, "query-port": UnknownValue.name,
+            "response-ip": UnknownValue.name, "response-port": UnknownValue.name,
+            "latency": UnknownValue.name}
+
     # filtering by dnstap identity ?
     if len(dnstap_decoder.identity): tap["identity"] = dnstap_decoder.identity.decode()
     if cfg["filter"]["dnstap-identities"] is not None:
@@ -95,8 +95,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     if (dm.type % 2 ) == 1 :               
         tap["length"] = len(dm.query_message)
         tap["timestamp"] = dm.query_time_sec + round(dm.query_time_nsec )*1e-9
-        tap["time_sec"] = dm.query_time_sec
-        tap["time_nsec"] = dm.query_time_nsec
+        tap["time-sec"] = dm.query_time_sec
+        tap["time-nsec"] = dm.query_time_nsec
         tap["type"] = "query"
         
         # hash query and put in cache the arrival time
@@ -109,8 +109,8 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     if (dm.type % 2 ) == 0 :
         tap["length"] = len(dm.response_message)
         tap["timestamp"] = dm.response_time_sec + round(dm.response_time_nsec )*1e-9
-        tap["time_sec"] = dm.response_time_sec
-        tap["time_nsec"] = dm.response_time_nsec        
+        tap["time-sec"] = dm.response_time_sec
+        tap["time-nsec"] = dm.response_time_nsec        
         tap["type"] = "response"
 
         # compute hash of the query and latency

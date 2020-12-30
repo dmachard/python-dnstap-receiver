@@ -144,6 +144,7 @@ async def watch_buffer(cfg, q, queues_list, stats, cache):
         # ignore the packet if the dns payload if too small
         if len(dns_payload) < DNS_LEN:  continue
  
+        tap["payload"] = dns_payload
         # begin to decode the dns payload
         tap["id"] = int.from_bytes(dns_payload[0:2], "big")
         tap["type"] = "response" if int.from_bytes(dns_payload[2:4], "big") >> 15 else "query"
@@ -153,10 +154,14 @@ async def watch_buffer(cfg, q, queues_list, stats, cache):
             tap["message"] = "CLIENT_QUERY"
             tap["query-ip"] = tap["src-ip"]
             tap["query-port"] = tap["src-port"]
+            tap["response-ip"] = tap["dst-ip"]
+            tap["response-port"] = tap["dst-port"]
         elif cfg["record-client-response"] and tap["type"] == "response" and (tap["src-ip"] in cfg["eth-ip"]):
             tap["message"] = "CLIENT_RESPONSE"
             tap["query-ip"] = tap["dst-ip"]
             tap["query-port"] = tap["dst-port"]
+            tap["response-ip"] = tap["src-ip"]
+            tap["response-port"] = tap["src-port"]
         else:
             continue
 

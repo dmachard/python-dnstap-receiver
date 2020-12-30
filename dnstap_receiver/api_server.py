@@ -381,7 +381,12 @@ async def create_server(loop, cfg, stats, cfg_stats):
 
     # create the server
     listen_address = (cfg["local-address"], cfg["local-port"])
-    srv = await loop.create_server(app.make_handler(access_log=None), *listen_address)
-    clogger.debug("Api rest: listening on %s:%s" % listen_address )
+    try:
+        srv = await loop.create_server(app.make_handler(access_log=None), *listen_address)
+    except OSError as e:
+        clogger.error( "http api: %s" % e)
+        return None
+        
+    clogger.debug("Webserver: listening on %s:%s" % listen_address )
     
     return srv

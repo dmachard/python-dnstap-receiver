@@ -17,9 +17,9 @@ def decode_question(data):
         qname.append(buf[1:length+1])
         buf = buf[length+1:]
 
-    q = struct.unpack('!HH', buf[1:5])    
-    qtype = q[0]
-    qclass = q[1]
+    qtype, qclass  = struct.unpack('!HH', buf[1:5])    
+    # qtype = q[0]
+    # qclass = q[1]
     return (b".".join(qname)+ b".", qtype) 
 
 def decode_dns(data):
