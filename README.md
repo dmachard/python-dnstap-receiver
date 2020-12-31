@@ -15,10 +15,10 @@ in JSON, YAML or one line text format and more.
     * [PyPI](#pypi)
     * [Docker Hub](#docker-hub)
 * [Inputs handler](#inputs-handler)
-    * [TCP socket](#tcp-socket)
+    * [TCP socket (server)](#tcp-socket-server)
+    * [TCP socket (client)](#tcp-socket-client)
     * [Unix socket](#unix-socket)
     * [Raw socket (sniffer)](#raw-socket-sniffer)
-    * [TCP client](#tcp-client)
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
     * [File](#file)
@@ -105,12 +105,12 @@ docker logs dnstap01 -f
 ## Inputs handler
 
 Severals inputs handler are supported to read incoming dnstap messages:
-- [TCP socket](#tcp-socket)
+- [TCP socket (server)](#tcp-socket-server)
+- [TCP socket (client)](#tcp-socket-client)
 - [Unix socket](#unix-socket)
 - [Raw socket (sniffer)](#raw-socket-sniffer)
-- [TCP client](#tcp-client)
 
-### TCP socket
+### TCP socket (server)
 
 The TCP socket input enable to receive dnstap messages from multiple dns servers.
 This is the default input if you execute the binary without arguments.
@@ -139,6 +139,27 @@ Then execute the dnstap receiver with the configuration file:
 
 ```
 ./dnstap_receiver -c /etc/dnstap-receiver/dnstap.conf
+```
+
+### TCP socket (client)
+
+The TCP socket input enable to receive dnstap messages from remote dns servers.
+The communication is initiated by the dnstap receiver.
+
+Configure this input as below
+
+```yaml
+input:
+  # tcp client
+  tcp-client:
+    # enable or disable
+    enable: true
+    # retry interval in seconds to connect
+    retry: 1
+    # remote dns server address
+    remote-address: 10.0.0.2
+    # remote dns server port
+    remote-port: 6000
 ```
 
 ### Unix socket
@@ -173,27 +194,6 @@ input:
     record-client-query: true
     # record outgoing dns client responses
     record-client-response: true
-```
-
-### TCP client
-
-The TCP socket input enable to receive dnstap messages from remote dns servers.
-The communication is initiated by the dnstap receiver.
-
-Configure this input as below
-
-```yaml
-input:
-  # tcp client
-  tcp-client:
-    # enable or disable
-    enable: true
-    # retry interval in seconds to connect
-    retry: 1
-    # remote dns server address
-    remote-address: 10.0.0.2
-    # remote dns server port
-    remote-port: 6000
 ```
 
 ## Outputs handler
