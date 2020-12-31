@@ -18,6 +18,7 @@ in JSON, YAML or one line text format and more.
     * [TCP socket](#tcp-socket)
     * [Unix socket](#unix-socket)
     * [Raw socket (sniffer)](#raw-socket-sniffer)
+    * [TCP client](#tcp-client)
 * [Outputs handler](#outputs-handler)
     * [Stdout](#stdout)
     * [File](#file)
@@ -107,6 +108,7 @@ Severals inputs handler are supported to read incoming dnstap messages:
 - [TCP socket](#tcp-socket)
 - [Unix socket](#unix-socket)
 - [Raw socket (sniffer)](#raw-socket-sniffer)
+- [TCP client](#tcp-client)
 
 ### TCP socket
 
@@ -173,6 +175,26 @@ input:
     record-client-response: true
 ```
 
+### TCP client
+
+The TCP socket input enable to receive dnstap messages from remote dns servers.
+The communication is initiated by the dnstap receiver.
+
+Configure this input as below
+
+```yaml
+input:
+  # tcp client
+  tcp-client:
+    # enable or disable
+    enable: true
+    # retry interval in seconds to connect
+    retry: 1
+    # remote dns server address
+    remote-address: 10.0.0.2
+    # remote dns server port
+    remote-port: 6000
+```
 
 ## Outputs handler
 

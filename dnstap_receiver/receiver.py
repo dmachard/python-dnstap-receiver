@@ -17,6 +17,7 @@ clogger = logging.getLogger("dnstap_receiver.console")
 # import all inputs
 from dnstap_receiver.inputs import input_socket
 from dnstap_receiver.inputs import input_sniffer
+from dnstap_receiver.inputs import input_tcpclient
 
 # import all outputs
 from dnstap_receiver.outputs import output_stdout
@@ -176,6 +177,10 @@ def setup_inputs(cfg, queues_outputs, stats, geoip_reader, running):
         loop.create_task(input_sniffer.watch_buffer(cfg_input["sniffer"], queue_sniffer, queues_outputs, stats, cache))
         loop.run_in_executor(None, input_sniffer.start_input, cfg_input["sniffer"], queue_sniffer, running)
     
+    # tcp client input
+    elif cfg_input["tcp-client"]["enable"]:
+        loop.create_task(input_socket.start_tcpclient(cfg, queues_outputs, stats, geoip_reader, cache))
+        
     # default one tcp socket
     else:
         loop.create_task(input_socket.start_tcpsocket(cfg, queues_outputs, stats, geoip_reader, cache))
