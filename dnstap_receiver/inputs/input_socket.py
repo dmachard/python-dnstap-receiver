@@ -4,9 +4,9 @@ import ssl
 import ipaddress
 
 # import framestreams and dnstap protobuf decoder
-from dnstap_receiver.codecs import fstrm 
-from dnstap_receiver.codecs import dnstap_pb2 
-from dnstap_receiver.codecs import dnstap_decoder 
+from dnstap_receiver.dnstap import fstrm 
+from dnstap_receiver.dnstap import dnstap_pb2 
+from dnstap_receiver.dnstap import dnstap_decoder 
 
 clogger = logging.getLogger("dnstap_receiver.console")
     

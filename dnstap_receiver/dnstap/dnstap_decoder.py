@@ -5,7 +5,7 @@ import socket
 import hashlib
 import struct
 
-from dnstap_receiver.codecs import dnstap_pb2 
+from dnstap_receiver.dnstap import dnstap_pb2 
 
 import dnstap_receiver.dns.rdatatype as dns_rdatatypes
 import dnstap_receiver.dns.rcode as dns_rcodes

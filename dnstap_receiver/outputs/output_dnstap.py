@@ -4,8 +4,8 @@ import socket
 
 clogger = logging.getLogger("dnstap_receiver.console")
 
-from dnstap_receiver.codecs import fstrm 
-from dnstap_receiver.codecs import dnstap_pb2 
+from dnstap_receiver.dnstap import fstrm 
+from dnstap_receiver.dnstap import dnstap_pb2 
 from dnstap_receiver.outputs import transform
 
 def checking_conf(cfg):
