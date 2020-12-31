@@ -87,7 +87,7 @@ async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
     finally:
         clogger.debug(f'Input handler: {peername} - closed')
         
-def start_tcpclient(cfg, queues_list, stats, geoip_reader, cache):
+async def start_tcpclient(cfg, queues_list, stats, geoip_reader, cache):
     """start input tcp client"""
     server_address = (cfg_input["remote-address"], cfg_input["remote-port"])
     loop = asyncio.get_event_loop()
