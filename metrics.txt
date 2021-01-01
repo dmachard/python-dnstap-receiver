@@ -1,0 +1,180 @@
+# HELP dnstap_queries_bytes_total Total number of bytes for queries
+# TYPE dnstap_queries_bytes_total counter
+dnstap_queries_bytes_total 55703
+# HELP dnstap_responses_bytes_total Total number of bytes for responses
+# TYPE dnstap_responses_bytes_total counter
+dnstap_responses_bytes_total 285508
+# HELP dnstap_pps Number of packets per second received
+# TYPE dnstap_pps gauge
+dnstap_pps 0
+# HELP dnstap_qps Number of queries per second received
+# TYPE dnstap_qps gauge
+dnstap_qps 0
+# HELP dnstap_rps Number of responses per second received
+# TYPE dnstap_rps gauge
+dnstap_rps 0
+# HELP dnstap_domains Number of domains asked
+# TYPE dnstap_domains counter
+dnstap_domains 112
+# HELP dnstap_clients Number of clients asked
+# TYPE dnstap_clients counter
+dnstap_clients 8
+# HELP dnstap_queries Number of queries received
+# TYPE dnstap_queries counter
+dnstap_queries 1402
+# HELP dnstap_queries_udp Number of UDP queries received
+# TYPE dnstap_queries_udp counter
+dnstap_queries_udp 1402
+# HELP dnstap_queries_tcp Number of TCP queries received
+# TYPE dnstap_queries_tcp counter
+dnstap_queries_tcp 0
+# HELP dnstap_queries_inet Number of IPv4 queries received
+# TYPE dnstap_queries_inet counter
+dnstap_queries_inet 1402
+# HELP dnstap_queries_inet6 Number of IPv6 queries received
+# TYPE dnstap_queries_inet6 counter
+dnstap_queries_inet6 0
+# HELP dnstap_queries_a Number of A queries received
+# TYPE dnstap_queries_a counter
+dnstap_queries_a 808
+# HELP dnstap_queries_aaaa Number of AAAA queries received
+# TYPE dnstap_queries_aaaa counter
+dnstap_queries_aaaa 592
+# HELP dnstap_queries_svr Number of SVR queries received
+# TYPE dnstap_queries_svr counter
+dnstap_queries_svr 0
+# HELP dnstap_responses Number of responses received
+# TYPE dnstap_responses counter
+dnstap_responses 1414
+# HELP dnstap_response_udp Number of UDP responses received
+# TYPE dnstap_response_udp counter
+dnstap_response_udp 1414
+# HELP dnstap_responses_tcp Number of TCP responses received
+# TYPE dnstap_response_tcp counter
+dnstap_response_tcp 0
+# HELP dnstap_response_inet Number of IPv4 responses received
+# TYPE dnstap_response_inet counter
+dnstap_response_inet 1414
+# HELP dnstap_response_inet6 Number of IPv6 responses received
+# TYPE dnstap_response_inet6 counter
+dnstap_response_inet6 0
+# HELP dnstap_responses_noerror Number of NOERROR answers
+# TYPE dnstap_responses_noerror counter
+dnstap_responses_noerror 1342
+# HELP dnstap_responses_nxdomain Number of NXDOMAIN answers
+# TYPE dnstap_responses_nxdomain counter
+dnstap_responses_nxdomain 72
+# HELP dnstap_responses_servfail Number of SERVFAIL answers
+# TYPE dnstap_responses_servfail counter
+dnstap_responses_servfail 0
+# HELP dnstap_responses_refused Number of REFUSED answers
+# TYPE dnstap_responses_refused counter
+dnstap_responses_refused 0
+# HELP dnstap_latency0_1 Number of queries answered in less than 1ms
+# TYPE dnstap_latency0_1 counter
+dnstap_latency0_1 380
+# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms
+# TYPE dnstap_latency1_10 counter
+dnstap_latency1_10 37
+# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms
+# TYPE dnstap_latency10_50 counter
+dnstap_latency10_50 592
+# HELP dnstap_latency50_100 Number of queries answered in 50-100 ms
+# TYPE dnstap_latency50_100 counter
+dnstap_latency50_100 334
+# HELP dnstap_latency100_1000 Number of queries answered in 100-1000 ms
+# TYPE dnstap_latency100_1000 counter
+dnstap_latency100_1000 71
+# HELP dnstap_latency_slow Number of queries answered in more than 1 second
+# TYPE dnstap_latency_slow counter
+dnstap_latency_slow 0
+# HELP dnstap_queries_bytes_total Total number of bytes for queries of this dnstap identity
+# TYPE dnstap_queries_bytes_total counter
+# HELP dnstap_responses_bytes_total Total number of bytes for responses of this dnstap identity
+# TYPE dnstap_responses_bytes_total counter
+# HELP dnstap_pps Number of packets per second for this dnstap identity
+# TYPE dnstap_pps gauge
+# HELP dnstap_qps Number of queries per second for this dnstap identity
+# TYPE dnstap_qps gauge
+# HELP dnstap_rps Number of responses per second for this dnstap identity
+# TYPE dnstap_rps gauge
+# HELP dnstap_domains Number of domains asked for this dnstap identity
+# TYPE dnstap_domains counter
+# HELP dnstap_clients Number of clients asked for this dnstap identity
+# TYPE dnstap_clients counter
+# HELP dnstap_queries Number of queries received for this dnstap identity
+# TYPE dnstap_queries counter
+# HELP dnstap_queries_udp Number of UDP queries received for this dnstap identity
+# TYPE dnstap_queries_udp counter
+# HELP dnstap_queries_tcp Number of TCP queries received for this dnstap identity
+# TYPE dnstap_queries_tcp counter
+# HELP dnstap_queries_inet Number of IPv4 queries received for this dnstap identity
+# TYPE dnstap_queries_inet counter
+# HELP dnstap_queries_inet6 Number of IPv6 queries received for this dnstap identity
+# TYPE dnstap_queries_inet6 counter
+# HELP dnstap_queries_a Number of A queries received for this dnstap identity
+# TYPE dnstap_queries_a counter
+# HELP dnstap_queries_aaaa Number of AAAA queries received for this dnstap identity
+# TYPE dnstap_queries_aaaa counter
+# HELP dnstap_queries_svr Number of SVR queries received for this dnstap identity
+# TYPE dnstap_queries_svr counter
+# HELP dnstap_responses Number of responses received for this dnstap identity
+# TYPE dnstap_responses counter
+# HELP dnstap_response_udp Number of UDP responses received for this dnstap identity
+# TYPE dnstap_response_udp counter
+# HELP dnstap_responses_tcp Number of TCP responses received for this dnstap identity
+# TYPE dnstap_response_tcp counter
+# HELP dnstap_response_inet Number of IPv4 responses received for this dnstap identity
+# TYPE dnstap_response_inet counter
+# HELP dnstap_response_inet6 Number of IPv6 responses received for this dnstap identity
+# TYPE dnstap_response_inet6 counter
+# HELP dnstap_responses_noerror Number of NOERROR answers for this dnstap identity
+# TYPE dnstap_responses_noerror counter
+# HELP dnstap_responses_nxdomain Number of NXDomain answers for this dnstap identity
+# TYPE dnstap_responses_nxdomain counter
+# HELP dnstap_responses_serverfail Number of SERVFAIL answers for this dnstap identity
+# TYPE dnstap_responses_serverfail counter
+# HELP dnstap_responses_refused Number of REFUSED answers for this dnstap identity
+# TYPE dnstap_responses_refused counter
+# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms for this dnstap identity
+# TYPE dnstap_latency1_10 counter
+# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms for this dnstap identity
+# TYPE dnstap_latency1_10 counter
+# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms for this dnstap identity
+# TYPE dnstap_latency10_50 counter
+# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms for this dnstap identity
+# TYPE dnstap_latency10_50 counter
+# HELP dnstap_latency100_1000 Number of queries answered in 100-1000 ms for this dnstap identity
+# TYPE dnstap_latency100_1000 counter
+# HELP dnstap_latency_slow Number of queries answered in more than 1 second for this dnstap identity
+# TYPE dnstap_latency_slow counter
+dnstap_queries_bytes_total{identity="unbound"} 16707
+dnstap_responses_bytes_total{identity="unbound"} 37747
+dnstap_pps{identity="unbound"} 0
+dnstap_qps{identity="unbound"} 0
+dnstap_rps{identity="unbound"} 0
+dnstap_domains{identity="unbound"} 67
+dnstap_clients{identity="unbound"} 4
+dnstap_queries{identity="unbound"} 416
+dnstap_queries_udp{identity="unbound"} 416
+dnstap_queries_tcp{identity="unbound"} 0
+dnstap_queries_inet{identity="unbound"} 416
+dnstap_queries_inet6{identity="unbound"} 0
+dnstap_queries_a{identity="unbound"} 249
+dnstap_queries_aaaa{identity="unbound"} 165
+dnstap_queries_svr{identity="unbound"} 0
+dnstap_responses{identity="unbound"} 428
+dnstap_response_udp{identity="unbound"} 428
+dnstap_response_tcp{identity="unbound"} 0
+dnstap_response_inet{identity="unbound"} 428
+dnstap_response_inet6{identity="unbound"} 0
+dnstap_responses_noerror{identity="unbound"} 410
+dnstap_responses_nxdomain{identity="unbound"} 18
+dnstap_responses_servfail{identity="unbound"} 0
+dnstap_responses_refused{identity="unbound"} 0
+dnstap_latency0_1{identity="unbound"} 205
+dnstap_latency1_10{identity="unbound"} 37
+dnstap_latency10_50{identity="unbound"} 141
+dnstap_latency50_100{identity="unbound"} 37
+dnstap_latency100_1000{identity="unbound"} 8
+dnstap_latency_slow{identity="unbound"} 0

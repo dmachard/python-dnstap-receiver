@@ -556,6 +556,7 @@ Some statistics are computed [on the fly](/dnstap_receiver/statistics.py) and st
 
 Metrics in [Prometheus](https://prometheus.io/) format with global counters and specific by dnstap stream.
 
+See [metrics file](/metrics.txt) example.
 ```
 # HELP dnstap_queries Number of queries received
 # TYPE dnstap_queries counter
