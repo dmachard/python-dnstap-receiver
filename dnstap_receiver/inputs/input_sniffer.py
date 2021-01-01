@@ -148,20 +148,56 @@ async def watch_buffer(cfg, q, queues_list, stats, cache):
         # begin to decode the dns payload
         tap["id"] = int.from_bytes(dns_payload[0:2], "big")
         tap["type"] = "response" if int.from_bytes(dns_payload[2:4], "big") >> 15 else "query"
+        
+        tap["opcode"] = (int.from_bytes(dns_payload[2:4], "big") & 0x7800) >> 11
+        tap["aa"] = (int.from_bytes(dns_payload[2:4], "big") & 0x0400) != 0 # authoritative answer
+        tap["rd"] = (int.from_bytes(dns_payload[2:4], "big") & 0x100) != 0 # recursion desired
+        tap["ra"] = (int.from_bytes(dns_payload[2:4], "big") & 0x80) != 0 # recursion available
+        tap["tc"] = (int.from_bytes(dns_payload[2:4], "big") & 0x200) != 0 # truncated answer
 
         # find the type of dnstap message ?
-        if cfg["record-client-query"] and tap["type"] == "query" and (tap["dst-ip"] in cfg["eth-ip"]):
+        if cfg["client-query-support"] and tap["type"] == "query" and (tap["dst-ip"] in cfg["eth-ip"]):
             tap["message"] = "CLIENT_QUERY"
             tap["query-ip"] = tap["src-ip"]
             tap["query-port"] = tap["src-port"]
             tap["response-ip"] = tap["dst-ip"]
             tap["response-port"] = tap["dst-port"]
-        elif cfg["record-client-response"] and tap["type"] == "response" and (tap["src-ip"] in cfg["eth-ip"]):
+            
+        elif cfg["client-response-support"] and tap["type"] == "response" and (tap["src-ip"] in cfg["eth-ip"]):
             tap["message"] = "CLIENT_RESPONSE"
             tap["query-ip"] = tap["dst-ip"]
             tap["query-port"] = tap["dst-port"]
             tap["response-ip"] = tap["src-ip"]
             tap["response-port"] = tap["src-port"]
+            
+        elif cfg["resolver-query-support"] and tap["type"] == "query" and not tap["rd"] and (tap["src-ip"] in cfg["eth-ip"]):
+            tap["message"] = "RESOLVER_QUERY"
+            tap["query-ip"] = tap["src-ip"]
+            tap["query-port"] = tap["src-port"]
+            tap["response-ip"] = tap["dst-ip"]
+            tap["response-port"] = tap["dst-port"]
+            
+        elif cfg["resolver-response-support"] and tap["type"] == "response" and tap["aa"] and (tap["dst-ip"] in cfg["eth-ip"]):
+            tap["message"] = "RESOLVER_RESPONSE"
+            tap["query-ip"] = tap["dst-ip"]
+            tap["query-port"] = tap["dst-port"]
+            tap["response-ip"] = tap["src-ip"]
+            tap["response-port"] = tap["src-port"]
+
+        elif cfg["forwarder-query-support"] and tap["type"] == "query" and tap["rd"] and (tap["src-ip"] in cfg["eth-ip"]):
+            tap["message"] = "FORWARDER_QUERY"
+            tap["query-ip"] = tap["src-ip"]
+            tap["query-port"] = tap["src-port"]
+            tap["response-ip"] = tap["dst-ip"]
+            tap["response-port"] = tap["dst-port"]
+            
+        elif cfg["forwarder-response-support"] and tap["type"] == "response" and tap["rd"] and (tap["dst-ip"] in cfg["eth-ip"]):
+            tap["message"] = "FORWARDER_RESPONSE"
+            tap["query-ip"] = tap["dst-ip"]
+            tap["query-port"] = tap["dst-port"]
+            tap["response-ip"] = tap["src-ip"]
+            tap["response-port"] = tap["src-port"]
+            
         else:
             continue
 
