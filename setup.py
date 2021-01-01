@@ -38,6 +38,7 @@ setuptools.setup(
         "aiohttp",
         "geoip2",
         "tlds",
-        "cachetools"
+        "cachetools",
+        "fstrm"
     ]
 )

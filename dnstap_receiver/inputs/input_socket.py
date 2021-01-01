@@ -2,9 +2,9 @@ import asyncio
 import logging
 import ssl
 import ipaddress
+import fstrm
 
-# import framestreams and dnstap protobuf decoder
-from dnstap_receiver.dnstap import fstrm 
+# import framestreams and dnstap protobuf decoder 
 from dnstap_receiver.dnstap import dnstap_pb2 
 from dnstap_receiver.dnstap import dnstap_decoder 
 
@@ -39,7 +39,7 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
         
     # prepare frame streams decoder
     content_type = b"protobuf:dnstap.Dnstap"
-    fstrm_handler = fstrm.FstrmHandler()
+    fstrm_handler = fstrm.FstrmCodec()
     loop = asyncio.get_event_loop()
     dnstap_protobuf = dnstap_pb2.Dnstap()
 

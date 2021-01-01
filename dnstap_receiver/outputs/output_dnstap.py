@@ -1,12 +1,12 @@
 import asyncio
 import logging
 import socket
+import fstrm
 
-clogger = logging.getLogger("dnstap_receiver.console")
-
-from dnstap_receiver.dnstap import fstrm 
 from dnstap_receiver.dnstap import dnstap_pb2 
 from dnstap_receiver.outputs import transform
+
+clogger = logging.getLogger("dnstap_receiver.console")
 
 def checking_conf(cfg):
     """validate the config"""
@@ -31,7 +31,7 @@ async def dnstap_client(output_cfg, queue):
     clogger.debug("Output handler: connected")
     
     content_type = b"protobuf:dnstap.Dnstap"
-    fstrm_handler = fstrm.FstrmHandler()
+    fstrm_handler = fstrm.FstrmCodec()
     dnstap = dnstap_pb2.Dnstap()
     
     # framestream - do handshake 

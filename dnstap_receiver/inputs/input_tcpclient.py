@@ -1,7 +1,7 @@
 import asyncio
 import logging
+import fstrm
 
-from dnstap_receiver.dnstap import fstrm 
 from dnstap_receiver.dnstap import dnstap_pb2 
 from dnstap_receiver.dnstap import dnstap_decoder 
 
@@ -30,7 +30,7 @@ async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
     clogger.debug("Input handler: connected")
     
     content_type = b"protobuf:dnstap.Dnstap"
-    fstrm_handler = fstrm.FstrmHandler()
+    fstrm_handler = fstrm.FstrmCodec()
     dnstap = dnstap_pb2.Dnstap()
  
                     
