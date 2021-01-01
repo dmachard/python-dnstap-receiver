@@ -569,9 +569,9 @@ dnstap_responses_noerror 0
 # HELP dnstap_responses_nxdomain Number of NXDomain answers
 # TYPE dnstap_responses_nxdomain counter
 dnstap_responses_nxdomain 0
-# HELP dnstap_responses_serverfail Number of SERVFAIL  answers
-# TYPE dnstap_responses_serverfail counter
-dnstap_responses_serverfail 0
+# HELP dnstap_responses_servfail Number of SERVFAIL  answers
+# TYPE dnstap_responses_servfail counter
+dnstap_responses_servfail 0
 ...
 ```
 
