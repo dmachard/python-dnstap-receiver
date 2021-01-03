@@ -2,8 +2,8 @@ import asyncio
 import logging
 import socket
 import fstrm
+import dnstap_pb
 
-from dnstap_receiver.dnstap import dnstap_pb2 
 from dnstap_receiver.outputs import transform
 
 clogger = logging.getLogger("dnstap_receiver.console")
@@ -32,7 +32,7 @@ async def dnstap_client(output_cfg, queue):
     
     content_type = b"protobuf:dnstap.Dnstap"
     fstrm_handler = fstrm.FstrmCodec()
-    dnstap = dnstap_pb2.Dnstap()
+    dnstap = dnstap_pb.Dnstap()
     
     # framestream - do handshake 
     ctrl_ready = fstrm_handler.encode(ctrl=fstrm.FSTRM_CONTROL_READY, ct=[content_type])
@@ -65,9 +65,9 @@ async def dnstap_client(output_cfg, queue):
         dnstap.version = b"-"
         dnstap.identity = output_cfg["dnstap-identity"].encode()
         
-        dnstap.message.type = dnstap_pb2._MESSAGE_TYPE.values_by_name[tap["message"]].number
-        dnstap.message.socket_protocol = dnstap_pb2._SOCKETPROTOCOL.values_by_name[tap["protocol"]].number
-        dnstap.message.socket_family = dnstap_pb2._SOCKETFAMILY.values_by_name[tap["family"]].number
+        dnstap.message.type = dnstap_pb.dnstap_pb2._MESSAGE_TYPE.values_by_name[tap["message"]].number
+        dnstap.message.socket_protocol = dnstap_pb.dnstap_pb2._SOCKETPROTOCOL.values_by_name[tap["protocol"]].number
+        dnstap.message.socket_family = dnstap_pb.dnstap_pb2._SOCKETFAMILY.values_by_name[tap["family"]].number
 
         if tap["type"] == "query":
             dnstap.message.query_message = tap["payload"]

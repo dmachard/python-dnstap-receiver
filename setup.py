@@ -33,7 +33,7 @@ setuptools.setup(
     ],
     entry_points={'console_scripts': ['dnstap_receiver = dnstap_receiver.receiver:start_receiver']},
     install_requires=[
-        "protobuf",
+        "dnstap_pb",
         "pyyaml",
         "aiohttp",
         "geoip2",

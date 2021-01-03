@@ -1,7 +1,0 @@
-
-# more informations on dnstap http://dnstap.info/
-
-# wget https://raw.githubusercontent.com/dnstap/dnstap.pb/master/dnstap.proto
-# wget https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip
-# python3 -m pip install protobuf
-# bin/protoc --python_out=. dnstap.proto

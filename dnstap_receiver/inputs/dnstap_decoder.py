@@ -4,8 +4,7 @@ import logging
 import socket
 import hashlib
 import struct
-
-from dnstap_receiver.dnstap import dnstap_pb2 
+import dnstap_pb
 
 import dnstap_receiver.dns.rdatatype as dns_rdatatypes
 import dnstap_receiver.dns.rcode as dns_rcodes
@@ -14,9 +13,9 @@ import dnstap_receiver.dns.parser as dns_parser
 # create default logger for the dnstap receiver
 clogger = logging.getLogger("dnstap_receiver.console")
 
-DNSTAP_TYPE = dnstap_pb2._MESSAGE_TYPE.values_by_number
-DNSTAP_FAMILY = dnstap_pb2._SOCKETFAMILY.values_by_number
-DNSTAP_PROTO = dnstap_pb2._SOCKETPROTOCOL.values_by_number  
+DNSTAP_TYPE = dnstap_pb.dnstap_pb2._MESSAGE_TYPE.values_by_number
+DNSTAP_FAMILY = dnstap_pb.dnstap_pb2._SOCKETFAMILY.values_by_number
+DNSTAP_PROTO = dnstap_pb.dnstap_pb2._SOCKETPROTOCOL.values_by_number  
 
 class UnknownValue:
     name = "-"

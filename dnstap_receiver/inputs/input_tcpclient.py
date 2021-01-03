@@ -1,9 +1,9 @@
 import asyncio
 import logging
 import fstrm
+import dnstap_pb
 
-from dnstap_receiver.dnstap import dnstap_pb2 
-from dnstap_receiver.dnstap import dnstap_decoder 
+from dnstap_receiver.inputs import dnstap_decoder 
 
 clogger = logging.getLogger("dnstap_receiver.console")
 
@@ -31,7 +31,7 @@ async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
     
     content_type = b"protobuf:dnstap.Dnstap"
     fstrm_handler = fstrm.FstrmCodec()
-    dnstap = dnstap_pb2.Dnstap()
+    dnstap = dnstap_pb.Dnstap()
  
                     
     try: 

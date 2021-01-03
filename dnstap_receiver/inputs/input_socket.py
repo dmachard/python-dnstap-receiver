@@ -3,13 +3,13 @@ import logging
 import ssl
 import ipaddress
 import fstrm
+import dnstap_pb
 
-# import framestreams and dnstap protobuf decoder 
-from dnstap_receiver.dnstap import dnstap_pb2 
-from dnstap_receiver.dnstap import dnstap_decoder 
+from dnstap_receiver.inputs import dnstap_decoder 
 
 clogger = logging.getLogger("dnstap_receiver.console")
-    
+
+
 async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip_reader, cache):
     """callback when a connection is established"""
     # get peer name
@@ -41,7 +41,7 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
     content_type = b"protobuf:dnstap.Dnstap"
     fstrm_handler = fstrm.FstrmCodec()
     loop = asyncio.get_event_loop()
-    dnstap_protobuf = dnstap_pb2.Dnstap()
+    dnstap_protobuf = dnstap_pb.Dnstap()
 
     try: 
         # syntax only works with python 3.8
