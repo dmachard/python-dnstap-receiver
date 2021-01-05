@@ -86,7 +86,15 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
                 # handle the control frame STOP
                 if ctrl == fstrm.FSTRM_CONTROL_STOP:
                     clogger.debug(f"Input handler: control stop received from {peername}")
-                    fstrm_handler.reset()     
+                    fstrm_handler.reset()
+                    
+                    # send finish control
+                    ctrl_finish = fstrm_handler.encode(ctrl=fstrm.FSTRM_CONTROL_FINISH)
+                    writer.write(ctrl_finish)
+                    await writer.drain()
+                    
+                    clogger.debug(f"Input handler: sending control finish to {peername}")
+                    
     except ConnectionError as e:
         clogger.error(f'Input handler: {peername} - %s' % e)
     except asyncio.CancelledError:
