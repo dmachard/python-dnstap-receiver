@@ -64,7 +64,7 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
 
                 # handle the DATA frame
                 if ctrl == fstrm.FSTRM_DATA_FRAME:
-                    loop.create_task(dnstap_decoder.cb_ondnstap(dnstap_protobuf, payload, cfg, queues_list, stats, geoip_reader, cache))
+                    await dnstap_decoder.cb_ondnstap(dnstap_protobuf, payload, cfg, queues_list, stats, geoip_reader, cache)
                     
                 # handle the control frame READY
                 if ctrl == fstrm.FSTRM_CONTROL_READY:
