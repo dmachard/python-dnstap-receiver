@@ -624,7 +624,7 @@ This dnstap receiver has been tested with success with the following dns servers
 
 ### bind
 
-![pdns-recursor 9.11.22](https://img.shields.io/badge/9.11.22-tested-green)
+![pdns-recursor 9.11.22](https://img.shields.io/badge/9.11.22-tested-green) ![pdns-recursor 9.16.10](https://img.shields.io/badge/9.16.10-tested-green)
 
 Dnstap messages supported:
  - RESOLVER_QUERY
@@ -636,7 +636,7 @@ Dnstap messages supported:
 
 #### Build with dnstap support
 
-Download latest source and build-it with dnstap support:
+Since 9.16 version, the dnstap feature is enabled before that you need to download latest source and build-it with dnstap support:
 
 ```bash
 ./configure --enable-dnstap
@@ -662,6 +662,8 @@ Execute the dnstap receiver with `named` user:
 su - named -s /bin/bash -c "dnstap_receiver -u "/var/run/named/dnstap.sock""
 ```
 
+If you have some troubles take a look to [selinux](https://gitlab.isc.org/isc-projects/bind9/-/issues/2356#note_185516)
+ 
 #### TCP stream
 
 Not supported on Bind! You can apply the following workaround with the `socat` command.
