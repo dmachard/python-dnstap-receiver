@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 def convert_dnstap(fmt, tapmsg):
     """convert dnstap message"""
     tapmsg["datetime"] = datetime.fromtimestamp(tapmsg["timestamp"], tz=timezone.utc).isoformat()
-  
+
     if fmt == "text":
         msg_list = []
         msg_list.append("%s" % tapmsg["datetime"])
@@ -32,10 +32,16 @@ def convert_dnstap(fmt, tapmsg):
         return msg.encode()
         
     elif fmt == "json":
+        # delete some unneeded keys
+        del tapmsg["payload"]; del tapmsg["time-sec"]; del tapmsg["time-nsec"];
+        
         msg = json.dumps(tapmsg)
         return msg.encode()
         
     elif fmt == "yaml":
+        # delete some unneeded keys
+        del tapmsg["payload"]; del tapmsg["time-sec"]; del tapmsg["time-nsec"];
+        
         msg = yaml.dump(tapmsg)
         return msg.encode()
         
