@@ -59,9 +59,7 @@ class Handlers:
                    
         # global counters
         counters = self.stats.get_counters(stream=None, filters=filters)
-            
-        
-        
+  
         p = []
         
         p.append( "# HELP dnstap_queries_bytes_total Total number of bytes for queries" )
@@ -72,126 +70,126 @@ class Handlers:
         p.append( "# TYPE dnstap_responses_bytes_total counter" )
         p.append( "dnstap_responses_bytes_total %s" % counters["response/bytes"] )
         
-        p.append( "# HELP dnstap_pps Number of packets per second received" )
-        p.append( "# TYPE dnstap_pps gauge" )
+        p.append( "# HELP dnstap_pps_total Number of packets per second received" )
+        p.append( "# TYPE dnstap_pps_total gauge" )
         p.append( "dnstap_pps %s" % counters["pps"] )
         
-        p.append( "# HELP dnstap_qps Number of queries per second received" )
-        p.append( "# TYPE dnstap_qps gauge" )
+        p.append( "# HELP dnstap_qps_total Number of queries per second received" )
+        p.append( "# TYPE dnstap_qps_total gauge" )
         p.append( "dnstap_qps %s" % counters["qps"] )
         
-        p.append( "# HELP dnstap_rps Number of responses per second received" )
-        p.append( "# TYPE dnstap_rps gauge" )
+        p.append( "# HELP dnstap_rps_total Number of responses per second received" )
+        p.append( "# TYPE dnstap_rps_total gauge" )
         p.append( "dnstap_rps %s" % counters["rps"] )
         
-        p.append( "# HELP dnstap_domains Number of domains asked" )
-        p.append( "# TYPE dnstap_domains counter" )
+        p.append( "# HELP dnstap_domains_total Number of domains asked" )
+        p.append( "# TYPE dnstap_domains_total counter" )
         p.append( "dnstap_domains %s" % counters["domains"] )
         
-        p.append( "# HELP dnstap_clients Number of clients asked" )
-        p.append( "# TYPE dnstap_clients counter" )
+        p.append( "# HELP dnstap_clients_total Number of clients asked" )
+        p.append( "# TYPE dnstap_clients_total counter" )
         p.append( "dnstap_clients %s" % counters["clients"] )
         
-        p.append( "# HELP dnstap_queries Number of queries received" )
-        p.append( "# TYPE dnstap_queries counter" )
+        p.append( "# HELP dnstap_queries_total Number of queries received" )
+        p.append( "# TYPE dnstap_queries_total counter" )
         p.append( "dnstap_queries %s" % counters["query"] )
         
-        p.append( "# HELP dnstap_queries_udp Number of UDP queries received" )
-        p.append( "# TYPE dnstap_queries_udp counter" )
+        p.append( "# HELP dnstap_queries_udp_total Number of UDP queries received" )
+        p.append( "# TYPE dnstap_queries_udp_total counter" )
         p.append( "dnstap_queries_udp %s" % counters["query/udp"] )
         
-        p.append( "# HELP dnstap_queries_tcp Number of TCP queries received" )
-        p.append( "# TYPE dnstap_queries_tcp counter" )
+        p.append( "# HELP dnstap_queries_tcp_total Number of TCP queries received" )
+        p.append( "# TYPE dnstap_queries_tcp_total counter" )
         p.append( "dnstap_queries_tcp %s" % counters["query/tcp"] )
         
-        p.append( "# HELP dnstap_queries_inet Number of IPv4 queries received" )
-        p.append( "# TYPE dnstap_queries_inet counter" )
+        p.append( "# HELP dnstap_queries_inet_total Number of IPv4 queries received" )
+        p.append( "# TYPE dnstap_queries_inet_total counter" )
         p.append( "dnstap_queries_inet %s" % counters["query/inet"] )
         
-        p.append( "# HELP dnstap_queries_inet6 Number of IPv6 queries received" )
-        p.append( "# TYPE dnstap_queries_inet6 counter" )
+        p.append( "# HELP dnstap_queries_inet6_total Number of IPv6 queries received" )
+        p.append( "# TYPE dnstap_queries_inet6_total counter" )
         p.append( "dnstap_queries_inet6 %s" % counters["query/inet6"] )
         
-        p.append( "# HELP dnstap_queries_a Number of A queries received" )
-        p.append( "# TYPE dnstap_queries_a counter" )
+        p.append( "# HELP dnstap_queries_a_total Number of A queries received" )
+        p.append( "# TYPE dnstap_queries_a_total counter" )
         p.append( "dnstap_queries_a %s" % counters["query/a"] )
         
-        p.append( "# HELP dnstap_queries_aaaa Number of AAAA queries received" )
-        p.append( "# TYPE dnstap_queries_aaaa counter" )
+        p.append( "# HELP dnstap_queries_aaaa_total Number of AAAA queries received" )
+        p.append( "# TYPE dnstap_queries_aaaa_total counter" )
         p.append( "dnstap_queries_aaaa %s" % counters["query/aaaa"] )
         
-        p.append( "# HELP dnstap_queries_svr Number of SVR queries received" )
-        p.append( "# TYPE dnstap_queries_svr counter" )
+        p.append( "# HELP dnstap_queries_svr_total Number of SVR queries received" )
+        p.append( "# TYPE dnstap_queries_svr_total counter" )
         p.append( "dnstap_queries_svr %s" % counters["query/svr"] )
         
-        p.append( "# HELP dnstap_responses Number of responses received" )
-        p.append( "# TYPE dnstap_responses counter" )
+        p.append( "# HELP dnstap_responses_total Number of responses received" )
+        p.append( "# TYPE dnstap_responses_total counter" )
         p.append( "dnstap_responses %s" % counters["response"] )
         
-        p.append( "# HELP dnstap_response_udp Number of UDP responses received" )
-        p.append( "# TYPE dnstap_response_udp counter" )
+        p.append( "# HELP dnstap_response_udp_total Number of UDP responses received" )
+        p.append( "# TYPE dnstap_response_udp_total counter" )
         p.append( "dnstap_response_udp %s" % counters["response/udp"] )
         
-        p.append( "# HELP dnstap_responses_tcp Number of TCP responses received" )
-        p.append( "# TYPE dnstap_response_tcp counter" )
+        p.append( "# HELP dnstap_responses_tcp_total Number of TCP responses received" )
+        p.append( "# TYPE dnstap_response_tcp_total counter" )
         p.append( "dnstap_response_tcp %s" % counters["response/tcp"] )
         
-        p.append( "# HELP dnstap_response_inet Number of IPv4 responses received" )
-        p.append( "# TYPE dnstap_response_inet counter" )
+        p.append( "# HELP dnstap_response_inet_total Number of IPv4 responses received" )
+        p.append( "# TYPE dnstap_response_inet_total counter" )
         p.append( "dnstap_response_inet %s" % counters["response/inet"] )
         
-        p.append( "# HELP dnstap_response_inet6 Number of IPv6 responses received" )
-        p.append( "# TYPE dnstap_response_inet6 counter" )
+        p.append( "# HELP dnstap_response_inet6_total Number of IPv6 responses received" )
+        p.append( "# TYPE dnstap_response_inet6_total counter" )
         p.append( "dnstap_response_inet6 %s" % counters["response/inet6"] )
         
-        p.append( "# HELP dnstap_responses_noerror Number of NOERROR answers" )
-        p.append( "# TYPE dnstap_responses_noerror counter" )
+        p.append( "# HELP dnstap_responses_noerror_total Number of NOERROR answers" )
+        p.append( "# TYPE dnstap_responses_noerror_total counter" )
         p.append( "dnstap_responses_noerror %s" % counters["response/noerror"] )
         
-        p.append( "# HELP dnstap_responses_nxdomain Number of NXDOMAIN answers" )
-        p.append( "# TYPE dnstap_responses_nxdomain counter" )
+        p.append( "# HELP dnstap_responses_nxdomain_total Number of NXDOMAIN answers" )
+        p.append( "# TYPE dnstap_responses_nxdomain_total counter" )
         p.append( "dnstap_responses_nxdomain %s" % counters["response/nxdomain"] )
         
-        p.append( "# HELP dnstap_responses_servfail Number of SERVFAIL answers" )
-        p.append( "# TYPE dnstap_responses_servfail counter" )
+        p.append( "# HELP dnstap_responses_servfail_total Number of SERVFAIL answers" )
+        p.append( "# TYPE dnstap_responses_servfail_total counter" )
         p.append( "dnstap_responses_servfail %s" % counters["response/servfail"] )
 
-        p.append( "# HELP dnstap_responses_refused Number of REFUSED answers" )
-        p.append( "# TYPE dnstap_responses_refused counter" )
+        p.append( "# HELP dnstap_responses_refused_total Number of REFUSED answers" )
+        p.append( "# TYPE dnstap_responses_refused_total counter" )
         p.append( "dnstap_responses_refused %s" % counters["response/refused"] )
         
-        p.append( "# HELP dnstap_latency0_1 Number of queries answered in less than 1ms" )
-        p.append( "# TYPE dnstap_latency0_1 counter" )
+        p.append( "# HELP dnstap_latency0_1_total Number of queries answered in less than 1ms" )
+        p.append( "# TYPE dnstap_latency0_1_total counter" )
         p.append( "dnstap_latency0_1 %s" % counters["response/latency0_1"] )
         
-        p.append( "# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms" )
-        p.append( "# TYPE dnstap_latency1_10 counter" )
+        p.append( "# HELP dnstap_latency1_10_total Number of queries answered in 1-10 ms" )
+        p.append( "# TYPE dnstap_latency1_10_total counter" )
         p.append( "dnstap_latency1_10 %s" % counters["response/latency1_10"] )
         
-        p.append( "# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms" )
-        p.append( "# TYPE dnstap_latency10_50 counter" )
+        p.append( "# HELP dnstap_latency10_50_total Number of queries answered in 10-50 ms" )
+        p.append( "# TYPE dnstap_latency10_50_total counter" )
         p.append( "dnstap_latency10_50 %s" % counters["response/latency10_50"] )
         
-        p.append( "# HELP dnstap_latency50_100 Number of queries answered in 50-100 ms" )
-        p.append( "# TYPE dnstap_latency50_100 counter" )
+        p.append( "# HELP dnstap_latency50_100_total Number of queries answered in 50-100 ms" )
+        p.append( "# TYPE dnstap_latency50_100_total counter" )
         p.append( "dnstap_latency50_100 %s" % counters["response/latency50_100"] )
         
-        p.append( "# HELP dnstap_latency100_1000 Number of queries answered in 100-1000 ms" )
-        p.append( "# TYPE dnstap_latency100_1000 counter" )
+        p.append( "# HELP dnstap_latency100_1000_total Number of queries answered in 100-1000 ms" )
+        p.append( "# TYPE dnstap_latency100_1000_total counter" )
         p.append( "dnstap_latency100_1000 %s" % counters["response/latency100_1000"] )
         
-        p.append( "# HELP dnstap_latency_slow Number of queries answered in more than 1 second" )
-        p.append( "# TYPE dnstap_latency_slow counter" )
+        p.append( "# HELP dnstap_latency_slow_total Number of queries answered in more than 1 second" )
+        p.append( "# TYPE dnstap_latency_slow_total counter" )
         p.append( "dnstap_latency_slow %s" % counters["response/latency_slow"] )
         
         for s in self.stats.get_nameslist():
             sub_cntrs = self.stats.get_counters(stream=s, filters=filters)
             
-            p.append( "# HELP dnstap_queries_bytes_total Total number of bytes for queries of this dnstap identity" )
-            p.append( "# TYPE dnstap_queries_bytes_total counter" )
+            p.append( "# HELP dnstap_queries_bytes Total number of bytes for queries of this dnstap identity" )
+            p.append( "# TYPE dnstap_queries_bytes counter" )
         
-            p.append( "# HELP dnstap_responses_bytes_total Total number of bytes for responses of this dnstap identity" )
-            p.append( "# TYPE dnstap_responses_bytes_total counter" )
+            p.append( "# HELP dnstap_responses_bytes Total number of bytes for responses of this dnstap identity" )
+            p.append( "# TYPE dnstap_responses_bytes counter" )
         
             p.append( "# HELP dnstap_pps Number of packets per second for this dnstap identity" )
             p.append( "# TYPE dnstap_pps gauge" )
@@ -278,8 +276,8 @@ class Handlers:
             p.append( "# TYPE dnstap_latency_slow counter" )
 
 
-            p.append( "dnstap_queries_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["query/bytes"]) )
-            p.append( "dnstap_responses_bytes_total{identity=\"%s\"} %s" % (s,sub_cntrs["response/bytes"]) )
+            p.append( "dnstap_queries_bytes{identity=\"%s\"} %s" % (s,sub_cntrs["query/bytes"]) )
+            p.append( "dnstap_responses_bytes{identity=\"%s\"} %s" % (s,sub_cntrs["response/bytes"]) )
             
             p.append( "dnstap_pps{identity=\"%s\"} %s" % (s,sub_cntrs["pps"]) )
             p.append( "dnstap_qps{identity=\"%s\"} %s" % (s,sub_cntrs["qps"]) )
