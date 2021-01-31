@@ -311,7 +311,7 @@ class Handlers:
             p.append( "dnstap_latency100_1000{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency100_1000"]) )
             p.append( "dnstap_latency_slow{identity=\"%s\"} %s" % (s,sub_cntrs["response/latency_slow"]) )
             
-        return web.Response(text="\n".join(p), content_type='text/plan')
+        return web.Response(text="\n".join(p), content_type='text/plain')
         
     async def handle_counters(self, request):
         auth = self.check_auth(request=request)
