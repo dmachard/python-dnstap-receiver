@@ -4,90 +4,90 @@ dnstap_queries_bytes_total 55703
 # HELP dnstap_responses_bytes_total Total number of bytes for responses
 # TYPE dnstap_responses_bytes_total counter
 dnstap_responses_bytes_total 285508
-# HELP dnstap_pps Number of packets per second received
-# TYPE dnstap_pps gauge
-dnstap_pps 0
-# HELP dnstap_qps Number of queries per second received
-# TYPE dnstap_qps gauge
-dnstap_qps 0
-# HELP dnstap_rps Number of responses per second received
-# TYPE dnstap_rps gauge
-dnstap_rps 0
-# HELP dnstap_domains Number of domains asked
-# TYPE dnstap_domains counter
-dnstap_domains 112
-# HELP dnstap_clients Number of clients asked
-# TYPE dnstap_clients counter
-dnstap_clients 8
-# HELP dnstap_queries Number of queries received
-# TYPE dnstap_queries counter
-dnstap_queries 1402
-# HELP dnstap_queries_udp Number of UDP queries received
-# TYPE dnstap_queries_udp counter
-dnstap_queries_udp 1402
-# HELP dnstap_queries_tcp Number of TCP queries received
-# TYPE dnstap_queries_tcp counter
-dnstap_queries_tcp 0
-# HELP dnstap_queries_inet Number of IPv4 queries received
-# TYPE dnstap_queries_inet counter
-dnstap_queries_inet 1402
-# HELP dnstap_queries_inet6 Number of IPv6 queries received
-# TYPE dnstap_queries_inet6 counter
-dnstap_queries_inet6 0
-# HELP dnstap_queries_a Number of A queries received
-# TYPE dnstap_queries_a counter
-dnstap_queries_a 808
-# HELP dnstap_queries_aaaa Number of AAAA queries received
-# TYPE dnstap_queries_aaaa counter
-dnstap_queries_aaaa 592
-# HELP dnstap_queries_svr Number of SVR queries received
-# TYPE dnstap_queries_svr counter
-dnstap_queries_svr 0
-# HELP dnstap_responses Number of responses received
-# TYPE dnstap_responses counter
-dnstap_responses 1414
-# HELP dnstap_response_udp Number of UDP responses received
-# TYPE dnstap_response_udp counter
-dnstap_response_udp 1414
-# HELP dnstap_responses_tcp Number of TCP responses received
-# TYPE dnstap_response_tcp counter
-dnstap_response_tcp 0
-# HELP dnstap_response_inet Number of IPv4 responses received
-# TYPE dnstap_response_inet counter
-dnstap_response_inet 1414
-# HELP dnstap_response_inet6 Number of IPv6 responses received
-# TYPE dnstap_response_inet6 counter
-dnstap_response_inet6 0
-# HELP dnstap_responses_noerror Number of NOERROR answers
-# TYPE dnstap_responses_noerror counter
-dnstap_responses_noerror 1342
-# HELP dnstap_responses_nxdomain Number of NXDOMAIN answers
-# TYPE dnstap_responses_nxdomain counter
-dnstap_responses_nxdomain 72
-# HELP dnstap_responses_servfail Number of SERVFAIL answers
-# TYPE dnstap_responses_servfail counter
-dnstap_responses_servfail 0
-# HELP dnstap_responses_refused Number of REFUSED answers
-# TYPE dnstap_responses_refused counter
-dnstap_responses_refused 0
-# HELP dnstap_latency0_1 Number of queries answered in less than 1ms
-# TYPE dnstap_latency0_1 counter
-dnstap_latency0_1 380
-# HELP dnstap_latency1_10 Number of queries answered in 1-10 ms
-# TYPE dnstap_latency1_10 counter
-dnstap_latency1_10 37
-# HELP dnstap_latency10_50 Number of queries answered in 10-50 ms
-# TYPE dnstap_latency10_50 counter
-dnstap_latency10_50 592
-# HELP dnstap_latency50_100 Number of queries answered in 50-100 ms
-# TYPE dnstap_latency50_100 counter
-dnstap_latency50_100 334
-# HELP dnstap_latency100_1000 Number of queries answered in 100-1000 ms
-# TYPE dnstap_latency100_1000 counter
-dnstap_latency100_1000 71
-# HELP dnstap_latency_slow Number of queries answered in more than 1 second
-# TYPE dnstap_latency_slow counter
-dnstap_latency_slow 0
+# HELP dnstap_pps_total Number of packets per second received
+# TYPE dnstap_pps_total gauge
+dnstap_pps_total 0
+# HELP dnstap_qps_total Number of queries per second received
+# TYPE dnstap_qps_total gauge
+dnstap_qps_total 0
+# HELP dnstap_rps_total Number of responses per second received
+# TYPE dnstap_rps_total gauge
+dnstap_rps_total 0
+# HELP dnstap_domains_total Number of domains asked
+# TYPE dnstap_domains_total counter
+dnstap_domains_total 112
+# HELP dnstap_clients_total Number of clients asked
+# TYPE dnstap_clients_total counter
+dnstap_clients_total 8
+# HELP dnstap_queries_total Number of queries received
+# TYPE dnstap_queries_total counter
+dnstap_queries_total 1402
+# HELP dnstap_queries_udp_total Number of UDP queries received
+# TYPE dnstap_queries_udp_total counter
+dnstap_queries_udp_total 1402
+# HELP dnstap_queries_tcp_total Number of TCP queries received
+# TYPE dnstap_queries_tcp_total counter
+dnstap_queries_tcp_total 0
+# HELP dnstap_queries_inet_total Number of IPv4 queries received
+# TYPE dnstap_queries_inet_total counter
+dnstap_queries_inet_total 1402
+# HELP dnstap_queries_inet6_total Number of IPv6 queries received
+# TYPE dnstap_queries_inet6_total counter
+dnstap_queries_inet6_total 0
+# HELP dnstap_queries_a_total Number of A queries received
+# TYPE dnstap_queries_a_total counter
+dnstap_queries_a_total 808
+# HELP dnstap_queries_aaaa_total Number of AAAA queries received
+# TYPE dnstap_queries_aaaa_total counter
+dnstap_queries_aaaa_total 592
+# HELP dnstap_queries_svr_total Number of SVR queries received
+# TYPE dnstap_queries_svr_total counter
+dnstap_queries_svr_total 0
+# HELP dnstap_responses_total Number of responses received
+# TYPE dnstap_responses_total counter
+dnstap_responses_total 1414
+# HELP dnstap_response_udp_total Number of UDP responses received
+# TYPE dnstap_response_udp_total counter
+dnstap_response_udp_total 1414
+# HELP dnstap_responses_tcp_total Number of TCP responses received
+# TYPE dnstap_response_tcp_total counter
+dnstap_response_tcp_total 0
+# HELP dnstap_response_inet_total Number of IPv4 responses received
+# TYPE dnstap_response_inet_total counter
+dnstap_response_inet_total 1414
+# HELP dnstap_response_inet6_total Number of IPv6 responses received
+# TYPE dnstap_response_inet6_total counter
+dnstap_response_inet6_total 0
+# HELP dnstap_responses_noerror_total Number of NOERROR answers
+# TYPE dnstap_responses_noerror_total counter
+dnstap_responses_noerror_total 1342
+# HELP dnstap_responses_nxdomain_total Number of NXDOMAIN answers
+# TYPE dnstap_responses_nxdomain_total counter
+dnstap_responses_nxdomain_total 72
+# HELP dnstap_responses_servfail_total Number of SERVFAIL answers
+# TYPE dnstap_responses_servfail_total counter
+dnstap_responses_servfail_total 0
+# HELP dnstap_responses_refused_total Number of REFUSED answers
+# TYPE dnstap_responses_refused_total counter
+dnstap_responses_refused_total 0
+# HELP dnstap_latency0_1_total Number of queries answered in less than 1ms
+# TYPE dnstap_latency0_1_total counter
+dnstap_latency0_1_total 380
+# HELP dnstap_latency1_10_total Number of queries answered in 1-10 ms
+# TYPE dnstap_latency1_10_total counter
+dnstap_latency1_10_total 37
+# HELP dnstap_latency10_50_total Number of queries answered in 10-50 ms
+# TYPE dnstap_latency10_50_total counter
+dnstap_latency10_50_total 592
+# HELP dnstap_latency50_100_total Number of queries answered in 50-100 ms
+# TYPE dnstap_latency50_100_total counter
+dnstap_latency50_100_total 334
+# HELP dnstap_latency100_1000_total Number of queries answered in 100-1000 ms
+# TYPE dnstap_latency100_1000_total counter
+dnstap_latency100_1000_total 71
+# HELP dnstap_latency_slow_total Number of queries answered in more than 1 second
+# TYPE dnstap_latency_slow_total counter
+dnstap_latency_slow_total 0
 # HELP dnstap_queries_bytes_total Total number of bytes for queries of this dnstap identity
 # TYPE dnstap_queries_bytes_total counter
 # HELP dnstap_responses_bytes_total Total number of bytes for responses of this dnstap identity
