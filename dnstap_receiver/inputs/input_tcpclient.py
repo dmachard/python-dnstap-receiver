@@ -81,10 +81,10 @@ async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
     except asyncio.CancelledError:
         clogger.debug(f'Input handler: {peername} - closing connection.')
         writer.close()
-        await writer.wait_closed()
     except asyncio.IncompleteReadError:
         clogger.debug(f'Input handler: {peername} - disconnected')
     finally:
+        writer.close()
         clogger.debug(f'Input handler: {peername} - closed')
         
 async def start_tcpclient(cfg, queues_list, stats, geoip_reader, cache):
