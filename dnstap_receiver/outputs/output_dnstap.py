@@ -87,7 +87,7 @@ async def dnstap_client(output_cfg, queue):
             dnstap.message.response_address = socket.inet_pton(socket.AF_INET6, tap["response-ip"])
             
         dnstap.message.query_port = tap["query-port"]
-        dnstap.message.query_port = tap["response-port"]
+        dnstap.message.response_port = tap["response-port"]
 
         # convert to dnstap message
         data = fstrm_handler.encode(ctrl=fstrm.FSTRM_DATA_FRAME, payload=dnstap.SerializeToString())
