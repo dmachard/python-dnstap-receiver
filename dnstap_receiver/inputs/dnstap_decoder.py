@@ -153,4 +153,4 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
         
     # append the dnstap message to the queue
     for q in queues_list:
-        q.put_nowait(tap)
+        q.put_nowait(tap.copy())
