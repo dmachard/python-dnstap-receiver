@@ -121,7 +121,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # common params
     if dns_qdcount:
         qname, qtype = dns_parser.decode_question(dns_payload)
-        tap["qname"] = qname.decode()
+        tap["qname"] = qname.decode(errors="ignore")
         tap["rrtype"] = dns_rdatatypes.RDATATYPES[qtype]
         
     tap["rcode"] = dns_rcodes.RCODES[dns_rcode]
