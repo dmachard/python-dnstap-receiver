@@ -89,8 +89,13 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # decode dns message
     dns_payload = dm.query_message if (dm.type % 2 ) == 1 else dm.response_message
     tap["payload"] = dns_payload
-    dns_id, dns_rcode, dns_qdcount = dns_parser.decode_dns(dns_payload)
     
+    if len(dns_payload) >= dns_parser.DNS_LEN:
+        dns_id, dns_rcode, dns_qdcount = dns_parser.decode_dns(dns_payload)
+    else:
+        clogger.error('Dnstap decoder - dns payload too short: %s' % dns_payload)
+        return
+        
     if (dm.type % 2 ) == 1 :               
         tap["length"] = len(dm.query_message)
         tap["timestamp"] = dm.query_time_sec + round(dm.query_time_nsec )*1e-9
