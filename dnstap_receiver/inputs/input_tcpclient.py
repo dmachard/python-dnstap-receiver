@@ -23,7 +23,7 @@ def checking_conf(cfg):
             
     return valid_conf
     
-async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
+async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache, start_shutdown):
     host, port = cfg_input["remote-address"], cfg_input["remote-port"]
     clogger.debug("Input handler: connection to %s:%s" % (host,port) )
     reader, tcp_writer = await asyncio.open_connection(host, port)
@@ -39,8 +39,22 @@ async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
         ctrl_ready = fstrm_handler.encode(ctrl=fstrm.FSTRM_CONTROL_READY, ct=[content_type])
         tcp_writer.write(ctrl_ready)
         
+        shutdown_wait_task = asyncio.create_task(start_shutdown.wait())
+
         while True:
-            data = await reader.read(fstrm_handler.pending_nb_bytes())
+            read_task = asyncio.create_task(reader.read(fstrm_handler.pending_nb_bytes()))
+            done, pending = await asyncio.wait(
+                [shutdown_wait_task, read_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            if shutdown_wait_task in done:
+                read_task.cancel()
+                return
+            else:
+                shutdown_wait_task.cancel()
+                data = await read_task
+
             if not len(data):
                 break
             fstrm_handler.append(data=data)
@@ -59,7 +73,18 @@ async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
         running = True
         while running:
             # read bytes
-            data = await reader.read(fstrm_handler.pending_nb_bytes()) 
+            read_task = asyncio.create_task(reader.read(fstrm_handler.pending_nb_bytes()))
+            done, pending = await asyncio.wait(
+                [shutdown_wait_task, read_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            if shutdown_wait_task in done:
+                read_task.cancel()
+                return
+            else:
+                data = await read_task
+
             if not len(data):
                 running = False
                 break
@@ -87,15 +112,15 @@ async def tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache):
         writer.close()
         clogger.debug(f'Input handler: {peername} - closed')
         
-async def start_tcpclient(cfg, queues_list, stats, geoip_reader, cache):
+async def start_tcpclient(cfg, queues_list, stats, geoip_reader, cache, start_shutdown):
     """start input tcp client"""
     server_address = (cfg_input["remote-address"], cfg_input["remote-port"])
     loop = asyncio.get_event_loop()
     
     clogger.debug("Input handler: TCP client enabled")
-    while True:
+    while not start_shutdown.is_set():
         try:
-            await tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache)
+            await tcp_client(cfg, cfg_input, queues_list, stats, geoip_reader, cache, start_shutdown)
         except ConnectionRefusedError:
             clogger.error('Input handler: connection to remote dns server failed!')
         except TimeoutError:

@@ -31,13 +31,13 @@ def setup_logger(cfg):
     
     file_logger.addHandler(lh)
     
-async def handle(output_cfg, queue, metrics):
+async def handle(output_cfg, queue, metrics, start_shutdown):
     """stdout output handler"""
 
     # init output logger
     setup_logger(output_cfg)
     
-    while True:
+    while not start_shutdown.is_set():
         # read item from queue
         tapmsg = await queue.get()
         

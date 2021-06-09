@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import sys
 
@@ -24,15 +25,18 @@ def setup_logger():
     
     tap_logger.addHandler(lh)
     
-async def handle(output_cfg, queue, metrics):
+async def handle(output_cfg, queue, metrics, start_shutdown):
     """stdout output handler"""
     
     # init logger
     setup_logger()
     
-    while True:
+    while not start_shutdown.is_set():
         # read item from queue
-        tapmsg = await queue.get()
+        try:
+            tapmsg = await asyncio.wait_for(queue.get(), timeout=0.5)
+        except asyncio.TimeoutError:
+            continue
         
         # convert dnstap message
         msg = transform.convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)

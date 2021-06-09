@@ -7,9 +7,9 @@ import re
 from tlds import tld_set
 
 # watcher for compute qps
-async def watcher(statistics):
+async def watcher(statistics, start_shutdown):
     """watcher for statistics"""
-    while True:
+    while not start_shutdown.is_set():
         # sleep during one second
         await asyncio.sleep(1)
         

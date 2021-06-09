@@ -21,14 +21,14 @@ def checking_conf(cfg):
             
     return valid_conf
     
-async def syslog_tcpclient(output_cfg, queue):
+async def syslog_tcpclient(output_cfg, queue, start_shutdown):
     host, port = output_cfg["remote-address"], output_cfg["remote-port"]
     clogger.debug("Output handler: connection to %s:%s" % (host,port) )
     reader, tcp_writer = await asyncio.open_connection(host, port)
     clogger.debug("Output handler: connected")
     
     # consume queue
-    while True:
+    while not start_shutdown.is_set():
         # read item from queue
         tapmsg = await queue.get()
         
@@ -47,9 +47,10 @@ async def syslog_tcpclient(output_cfg, queue):
         queue.task_done()
         
     # something 
-    clogger.error("Output handler: connection lost")
+    if not start_shutdown.is_set():
+        clogger.error("Output handler: connection lost")
  
-async def handle(output_cfg, queue, metrics):
+async def handle(output_cfg, queue, metrics, start_shutdown):
     """handle output"""
     server_address = (output_cfg["remote-address"], output_cfg["remote-port"])
     loop = asyncio.get_event_loop()
@@ -57,9 +58,9 @@ async def handle(output_cfg, queue, metrics):
     # syslog tcp
     if output_cfg["transport"] == "tcp":
         clogger.debug("Output handler: syslog TCP enabled")
-        while True:
+        while not start_shutdown.is_set():
             try:
-                await syslog_tcpclient(output_cfg, queue)
+                await syslog_tcpclient(output_cfg, queue, start_shutdown)
             except ConnectionRefusedError:
                 clogger.error('Output handler: connection to syslog server failed!')
             except asyncio.TimeoutError:
@@ -68,7 +69,8 @@ async def handle(output_cfg, queue, metrics):
                 clogger.error('Output handler: connection to server is closed.')
                 
             clogger.debug("'Output handler: retry to connect every %ss" % output_cfg["retry"])
-            await asyncio.sleep(output_cfg["retry"])
+            if not start_shutdown.is_set():
+                await asyncio.sleep(output_cfg["retry"])
     
     # syslog udp
     else:
@@ -77,7 +79,7 @@ async def handle(output_cfg, queue, metrics):
                                                             remote_addr=server_address)
 
         # consume the queue
-        while True:
+        while not start_shutdown.is_set():
             # read item from queue
             tapmsg = await queue.get()
             
