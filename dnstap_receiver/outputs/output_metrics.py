@@ -32,12 +32,12 @@ def setup_logger(cfg):
     metrics_logger.addHandler(lh)
     
     
-async def handle(cfg, queue, metrics):
+async def handle(cfg, queue, metrics, start_shutdown):
     """stdout output handler"""
     # init logger
     setup_logger(cfg)
     
-    while True:
+    while not start_shutdown.is_set():
         await asyncio.sleep(cfg["interval"])
         
         # clear queue
