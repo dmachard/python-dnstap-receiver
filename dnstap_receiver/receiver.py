@@ -27,6 +27,7 @@ from dnstap_receiver.outputs import output_syslog
 from dnstap_receiver.outputs import output_tcp
 from dnstap_receiver.outputs import output_metrics
 from dnstap_receiver.outputs import output_dnstap
+from dnstap_receiver.outputs import output_kafka
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
@@ -160,6 +161,12 @@ def setup_outputs(cfg, stats, start_shutdown):
         queue_dnstap = asyncio.Queue()
         queues_list.append(queue_dnstap)
         loop.create_task(output_dnstap.handle(conf["dnstap"], queue_dnstap, stats, start_shutdown))
+
+    if conf["kafka"]["enable"]:
+        if not output_kafka.checking_conf(cfg=conf["kafka"]): return
+        queue_kafka = asyncio.Queue()
+        queues_list.append(queue_kafka)
+        loop.create_task(output_kafka.handle(conf["kafka"], queue_kafka, stats, start_shutdown))
 
     return queues_list
     
