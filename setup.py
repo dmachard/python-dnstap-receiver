@@ -40,5 +40,8 @@ setuptools.setup(
         "tlds",
         "cachetools",
         "fstrm"
-    ]
+    ],
+    extras_require={
+        "kafka": ["confluent-kafka"],
+    }
 )
