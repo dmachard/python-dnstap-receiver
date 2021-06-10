@@ -212,7 +212,6 @@ async def watch_buffer(cfg, q, queues_list, stats, cache):
             qhash = hashlib.sha1(hash_payload.encode()).hexdigest()
             if qhash in cache: tap["latency"] = round(tap["timestamp"]-cache[qhash],3)
           
-        tap["bytes"] = dns_payload
         tap["length"] = len(dns_payload)
         
         tap["rcode"] = dns_rcodes.RCODES[int.from_bytes(dns_payload[2:4], "big") & 15]
