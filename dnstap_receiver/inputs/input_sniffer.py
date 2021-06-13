@@ -52,10 +52,10 @@ def decode_question(dns_tap, data):
     dns_tap["qname"] = b".".join(qname) + b"."
     dns_tap["qname"] = dns_tap["qname"].decode()
     
-async def watch_buffer(cfg, q, queues_list, stats, cache, start_shutdown):
+async def watch_buffer(cfg, q, queues_list, stats, cache):
     loop = asyncio.get_event_loop()
     
-    while not start_shutdown.is_set():
+    while True:
         p = await q.get()
         data, ancdata, addr = p
         
@@ -227,7 +227,7 @@ async def watch_buffer(cfg, q, queues_list, stats, cache, start_shutdown):
         for q_out in queues_list:
             q_out.put_nowait(tap)
             
-def start_input(cfg, queue_sniffer, start_shutdown):
+def start_input(cfg, queue_sniffer, running):
     clogger.debug("Input handler: sniffer")
 
     # prepare the socket
@@ -236,7 +236,7 @@ def start_input(cfg, queue_sniffer, start_shutdown):
     # read data
     bufsize = 65535
     
-    while not start_shutdown.is_set():
+    while len(running):
         try:
             raw_data, ancdata, _, address = s.recvmsg(bufsize, 1024)
         except BlockingIOError:

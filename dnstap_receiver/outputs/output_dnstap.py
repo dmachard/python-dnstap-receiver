@@ -24,7 +24,7 @@ def checking_conf(cfg):
             
     return valid_conf
     
-async def dnstap_client(output_cfg, queue, start_shutdown):
+async def dnstap_client(output_cfg, queue):
     host, port = output_cfg["remote-address"], output_cfg["remote-port"]
     clogger.debug("Output handler: connection to %s:%s" % (host,port) )
     reader, tcp_writer = await asyncio.open_connection(host, port)
@@ -38,7 +38,7 @@ async def dnstap_client(output_cfg, queue, start_shutdown):
     ctrl_ready = fstrm_handler.encode(ctrl=fstrm.FSTRM_CONTROL_READY, ct=[content_type])
     tcp_writer.write(ctrl_ready)
     
-    while not start_shutdown.is_set():
+    while True:
         data = await reader.read(fstrm_handler.pending_nb_bytes())
         if not len(data):
             break
@@ -54,11 +54,8 @@ async def dnstap_client(output_cfg, queue, start_shutdown):
                 tcp_writer.write(ctrl_start)
                 break
 
-    if start_shutdown.is_set():
-        return
-
     # consume queue and send data frames
-    while not start_shutdown.is_set():
+    while True:
         # read item from queue
         tap = await queue.get()
         
@@ -102,22 +99,19 @@ async def dnstap_client(output_cfg, queue, start_shutdown):
         
         # done continue to next item
         queue.task_done()
-
-    if start_shutdown.is_set():
-        return
         
     # something 
     clogger.error("Output handler: connection lost")
  
-async def handle(output_cfg, queue, metrics, start_shutdown):
+async def handle(output_cfg, queue, metrics):
     """handle output"""
     server_address = (output_cfg["remote-address"], output_cfg["remote-port"])
     loop = asyncio.get_event_loop()
     
     clogger.debug("Output handler: DNS tap enabled")
-    while not start_shutdown.is_set():
+    while True:
         try:
-            await dnstap_client(output_cfg, queue, start_shutdown)
+            await dnstap_client(output_cfg, queue)
         except ConnectionRefusedError:
             clogger.error('Output handler: connection to remote dnstap receiver failed!')
         except TimeoutError:
@@ -126,5 +120,4 @@ async def handle(output_cfg, queue, metrics, start_shutdown):
             clogger.error('Output handler: connection to remote dnstap receiver is closed.')
             
         clogger.debug("Output handler: retry to connect every %ss" % output_cfg["retry"])
-        if not start_shutdown.is_set():
-            await asyncio.sleep(output_cfg["retry"])
+        await asyncio.sleep(output_cfg["retry"])
