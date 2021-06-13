@@ -24,13 +24,13 @@ def setup_logger():
     
     tap_logger.addHandler(lh)
     
-async def handle(output_cfg, queue, metrics):
+async def handle(output_cfg, queue, metrics, start_shutdown):
     """stdout output handler"""
     
     # init logger
     setup_logger()
     
-    while True:
+    while not start_shutdown.is_set():
         # read item from queue
         tapmsg = await queue.get()
         
