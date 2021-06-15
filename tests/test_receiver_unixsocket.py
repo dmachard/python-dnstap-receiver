@@ -11,7 +11,7 @@ DNS_SERVER_IP = os.getenv('DNS_SERVER_IP')
 
 my_resolver = dns.resolver.Resolver(configure=False)
 my_resolver.nameservers = ['127.0.0.1']
-my_resolver.port = 53
+my_resolver.port = 5553
 
 # overwrite settings with environment variables
 if DNS_SERVER_PORT is not None:
