@@ -2,7 +2,6 @@ import argparse
 import logging
 import asyncio
 import yaml
-import signal
 import sys
 
 import ssl
@@ -27,7 +26,6 @@ from dnstap_receiver.outputs import output_syslog
 from dnstap_receiver.outputs import output_tcp
 from dnstap_receiver.outputs import output_metrics
 from dnstap_receiver.outputs import output_dnstap
-from dnstap_receiver.outputs import output_kafka
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
@@ -121,7 +119,7 @@ def setup_logger(cfg):
     
     clogger.addHandler(lh)
     
-def setup_outputs(cfg, stats, start_shutdown):
+def setup_outputs(cfg, stats):
     """setup outputs"""
     conf = cfg["output"]
 
@@ -130,47 +128,41 @@ def setup_outputs(cfg, stats, start_shutdown):
         if not output_syslog.checking_conf(cfg=conf["syslog"]): return
         queue_syslog = asyncio.Queue()
         queues_list.append(queue_syslog)
-        loop.create_task(output_syslog.handle(conf["syslog"], queue_syslog, stats, start_shutdown))
+        loop.create_task(output_syslog.handle(conf["syslog"], queue_syslog, stats))    
 
     if conf["tcp-socket"]["enable"]:
         if not output_tcp.checking_conf(cfg=conf["tcp-socket"]): return
         queue_tcpsocket = asyncio.Queue()
         queues_list.append(queue_tcpsocket)
-        loop.create_task(output_tcp.handle(conf["tcp-socket"], queue_tcpsocket, stats, start_shutdown))
+        loop.create_task(output_tcp.handle(conf["tcp-socket"], queue_tcpsocket, stats))
                                                
     if conf["file"]["enable"]:
         if not output_file.checking_conf(cfg=conf["file"]): return
         queue_file = asyncio.Queue()
         queues_list.append(queue_file)
-        loop.create_task(output_file.handle(conf["file"], queue_file, stats, start_shutdown))
+        loop.create_task(output_file.handle(conf["file"], queue_file, stats))
                                               
     if conf["stdout"]["enable"]:
         if not output_stdout.checking_conf(cfg=conf["stdout"]): return
         queue_stdout = asyncio.Queue()
         queues_list.append(queue_stdout)
-        loop.create_task(output_stdout.handle(conf["stdout"], queue_stdout, stats, start_shutdown))
+        loop.create_task(output_stdout.handle(conf["stdout"], queue_stdout, stats))
 
     if conf["metrics"]["enable"]:
         if not output_metrics.checking_conf(cfg=conf["metrics"]): return
         queue_metrics = asyncio.Queue()
         queues_list.append(queue_metrics)
-        loop.create_task(output_metrics.handle(conf["metrics"], queue_metrics, stats, start_shutdown))
+        loop.create_task(output_metrics.handle(conf["metrics"], queue_metrics, stats))
 
     if conf["dnstap"]["enable"]:
         if not output_dnstap.checking_conf(cfg=conf["dnstap"]): return
         queue_dnstap = asyncio.Queue()
         queues_list.append(queue_dnstap)
-        loop.create_task(output_dnstap.handle(conf["dnstap"], queue_dnstap, stats, start_shutdown))
-
-    if conf["kafka"]["enable"]:
-        if not output_kafka.checking_conf(cfg=conf["kafka"]): return
-        queue_kafka = asyncio.Queue()
-        queues_list.append(queue_kafka)
-        loop.create_task(output_kafka.handle(conf["kafka"], queue_kafka, stats, start_shutdown))
-
+        loop.create_task(output_dnstap.handle(conf["dnstap"], queue_dnstap, stats))
+        
     return queues_list
     
-def setup_inputs(cfg, queues_outputs, stats, geoip_reader, start_shutdown):
+def setup_inputs(cfg, queues_outputs, stats, geoip_reader, running):
     """setup inputs"""
     cache = cachetools.TTLCache(maxsize=1000000, ttl=60)
     cfg_input = cfg["input"]
@@ -182,8 +174,8 @@ def setup_inputs(cfg, queues_outputs, stats, geoip_reader, start_shutdown):
     # sniffer
     elif cfg_input["sniffer"]["enable"]:
         queue_sniffer = asyncio.Queue()
-        loop.create_task(input_sniffer.watch_buffer(cfg_input["sniffer"], queue_sniffer, queues_outputs, stats, cache, start_shutdown))
-        loop.run_in_executor(None, input_sniffer.start_input, cfg_input["sniffer"], queue_sniffer, start_shutdown)
+        loop.create_task(input_sniffer.watch_buffer(cfg_input["sniffer"], queue_sniffer, queues_outputs, stats, cache))
+        loop.run_in_executor(None, input_sniffer.start_input, cfg_input["sniffer"], queue_sniffer, running)
     
     # tcp client input
     elif cfg_input["tcp-client"]["enable"]:
@@ -213,25 +205,7 @@ def setup_geoip(cfg):
         clogger.error("geoip setup: %s" % e)
         
     return reader
-
-
-async def shutdown(signal, loop, start_shutdown):
-    """perform graceful shutdown"""
-
-    clogger.info("starting shutting down process")
-    start_shutdown.set()
-
-    tasks = [
-        task for task in asyncio.all_tasks()
-        if task is not asyncio.current_task()
-    ]
-    clogger.info("waiting for all tasks to exit")
-    await asyncio.gather(*tasks)
-
-    clogger.debug("all tasks have exited, stopping loop")
-    loop.stop()
-
-
+    
 def start_receiver():
     """start dnstap receiver"""
     # Handle command-line arguments.
@@ -246,24 +220,20 @@ def start_receiver():
     # setup geoip if enabled 
     geoip_reader = setup_geoip(cfg=cfg["geoip"])
     
-    # prepare shutdown handling
-    start_shutdown = asyncio.Event()
-    for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown(sig, loop, start_shutdown)))
-
     # add debug message if external config is used
     if args.c: clogger.debug("External config file loaded")
     
     # start receiver
     clogger.debug("Start receiver...")
     stats = statistics.Statistics(cfg=cfg["statistics"])
-    loop.create_task(statistics.watcher(stats, start_shutdown))
+    loop.create_task(statistics.watcher(stats))
     
     # prepare outputs
-    queues_outputs = setup_outputs(cfg, stats, start_shutdown)
-
+    queues_outputs = setup_outputs(cfg, stats)
+    
     # prepare inputs
-    setup_inputs(cfg, queues_outputs, stats, geoip_reader, start_shutdown)
+    running = ["running"]
+    setup_inputs(cfg, queues_outputs, stats, geoip_reader, running)
 
     # start the http api
     setup_webserver(cfg, stats)
@@ -271,10 +241,9 @@ def start_receiver():
     # run event loop 
     try:
        loop.run_forever()
-    finally:
-        clogger.info("exiting, please wait..")
-        loop.close()
-        clogger.debug("shut down eventloop")
+    except KeyboardInterrupt:
+        clogger.debug("exiting, please wait..")
+        running.clear()
 
     # close geoip
     if geoip_reader is not None: geoip_reader.close()
