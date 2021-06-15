@@ -3,9 +3,20 @@ import time
 import unittest
 import subprocess
 import dns.resolver
+import os
+
+DNS_SERVER_PORT = os.getenv('DNS_SERVER_PORT')
+DNS_SERVER_IP = os.getenv('DNS_SERVER_IP')
 
 my_resolver = dns.resolver.Resolver(configure=False)
 my_resolver.nameservers = ['127.0.0.1']
+my_resolver.port = 53
+
+# overwrite settings with environment variables
+if DNS_SERVER_PORT is not None:
+    my_resolver.port = int(DNS_SERVER_PORT)
+if DNS_SERVER_IP is not None:
+    my_resolver.nameservers= [DNS_SERVER_IP]
 
 class TestTcpSocket(unittest.TestCase):
     def test1_listening(self):

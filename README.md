@@ -47,6 +47,7 @@ in JSON, YAML or one line text format and more.
     * [NLnet Labs - unbound](#unbound)
     * [CoreDNS](#coredns)
 * [Benchmark](#benchmark)
+* [Development](#development)
 * [About](#about)
 
 ## Installation
@@ -948,6 +949,22 @@ Result:
 | Memory usage | ~100Mo |
 | Network usage | ~5.7Mb |
 
+
+# Development
+
+## Run 
+
+the dnstap receiver from source
+
+```bash
+python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -v
+```
+
+## Testunits
+
+```bash
+python3 -m unittest tests.test_receiver_tcpsocket -v
+```
 
 # About
 
