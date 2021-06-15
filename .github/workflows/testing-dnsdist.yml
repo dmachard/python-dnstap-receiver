@@ -24,7 +24,6 @@ jobs:
     - name: Deploy dnsdist docker image
       run: |
         sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/dnsdist.conf:/etc/dnsdist/conf.d/dnsdist.conf:ro powerdns/dnsdist-16
-        sudo docker logs dnsdist
         sudo netstat -anp |grep 5553
     - name: Run Python tests 
       run: |

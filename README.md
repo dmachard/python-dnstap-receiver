@@ -716,7 +716,7 @@ Note: TCP stream are only supported with a recent version of libfstrm.
  
 ### dnsdist
 
-![dnsdist 1.4.0](https://img.shields.io/badge/1.4.0-tested-green) ![dnsdist 1.5.0](https://img.shields.io/badge/1.5.0-tested-green)
+![dnsdist 1.6](https://img.shields.io/badge/1.6-tested-green) ![dnsdist 1.5](https://img.shields.io/badge/1.5-tested-green) ![dnsdist 1.4](https://img.shields.io/badge/1.4.0-tested-green) 
 
 Dnstap messages supported:
  - CLIENT_QUERY
