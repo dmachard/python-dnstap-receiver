@@ -23,6 +23,7 @@ jobs:
         python-version: "3.8"
     - name: Deploy coredns docker image
       run: |
+        sudo chmod 777 $PWD/tests/coredns_tcp
         sudo docker run -d --network="host" --name=coredns -v $PWD/tests/:$PWD/tests/ coredns/coredns:1.8.4 -conf $PWD/tests/coredns_tcp
         sudo docker logs coredns > /tmp/core.out
         sudo cat /tmp/core.out
