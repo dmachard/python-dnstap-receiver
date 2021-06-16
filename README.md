@@ -877,7 +877,7 @@ dnstap:
 
 ### CoreDNS
 
-![coredns 1.8.0](https://img.shields.io/badge/1.8.0-tested-green)
+![coredns 1.8.4](https://img.shields.io/badge/1.8.4-tested-green) ![coredns 1.8.0](https://img.shields.io/badge/1.8.0-tested-green)
 
 Dnstap messages supported:
  - CLIENT_QUERY
