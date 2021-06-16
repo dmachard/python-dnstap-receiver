@@ -26,6 +26,7 @@ in JSON, YAML or one line text format and more.
     * [Syslog](#syslog)
     * [Metrics](#metrics)
     * [Dnstap](#dnstap)
+    * [Kafka](#kafka)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -426,6 +427,28 @@ This output enables to send dnstap messages to a remote dnstap receiver. Add the
     remote-port: 6000
     # dnstap identity
     dnstap-identity: dnstap-receiver
+```
+
+### Kafka
+
+This output enables to send dnstap messages to a Kafka topic.
+
+```yaml
+  # forward to a Kafka topic
+  kafka:
+    # enable or disable
+    enable: false
+    # format available text|json|yaml
+    format: json
+    # configuration object to pass to librdkafka
+    rdkafka-config:
+      "bootstrap.servers": null
+      "security.protocol": null
+      "sasl.mechanism": null
+      "sasl.username": null
+      "sasl.password": null
+    # Kafka topic to forward messages to
+    topic: null
 ```
 
 ## More options
