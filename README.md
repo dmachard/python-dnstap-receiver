@@ -433,6 +433,14 @@ This output enables to send dnstap messages to a remote dnstap receiver. Add the
 
 This output enables to send dnstap messages to a Kafka topic.
 
+Install extra python library for kafka
+
+```python
+pip install dnstap_receiver [kafka]
+```
+
+Configuration
+
 ```yaml
   # forward to a Kafka topic
   kafka:
