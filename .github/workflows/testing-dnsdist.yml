@@ -1,4 +1,4 @@
-name: Testing E2E dnsdist
+name: Testing E2E - dnsdist
 
 on:
   push:
@@ -30,7 +30,6 @@ jobs:
     - name: Deploy dnsdist docker image
       run: |
         sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/dnsdist.conf:/etc/dnsdist/conf.d/dnsdist.conf:ro -v /tmp/dnsdist:/tmp/dnsdist powerdns/dnsdist-16
-        sudo netstat -anp |grep 5553
     - name: Run Python tests 
       run: |
         sudo python3 -m pip install dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm
