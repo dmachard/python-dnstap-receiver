@@ -22,7 +22,7 @@ if DNS_SERVER_IP is not None:
 class TestUnixSocket(unittest.TestCase):
     def test1_listening(self):
         """test listening unix socket"""
-        cmd = 'sudo -u pdns python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v'
+        cmd = 'sudo -u pdns -s /bin/bash -c \'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v\''
 
         args = shlex.split(cmd)
 
@@ -36,7 +36,7 @@ class TestUnixSocket(unittest.TestCase):
         
     def test2_incoming_dnstap(self):
         """test to receive dnstap message"""
-        cmd = 'sudo -u pdns python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v'
+        cmd = 'sudo -u pdns -s /bin/bash -c \'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v\''
 
         args = shlex.split(cmd)
         
