@@ -31,4 +31,3 @@ jobs:
         sudo python3 -m pip install dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm
         sudo python3 -m pip install --upgrade dnspython protobuf
         sudo -E python3 -m unittest tests.test_receiver_tcpsocket -v
-        sudo -E python3 -m unittest tests.test_receiver_unixsocket -v
