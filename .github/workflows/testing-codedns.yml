@@ -24,6 +24,8 @@ jobs:
     - name: Deploy coredns docker image
       run: |
         sudo docker run -d --network="host" --name=coredns -v $PWD/tests/:$PWD/tests/ coredns/coredns:1.8.4 -conf $PWD/tests/coredns_tcp
+        sudo docker logs coredns > /tmp/core.out
+        sudo cat /tmp/core.out
     - name: Run Python tests 
       run: |
         sudo python3 -m pip install dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm
