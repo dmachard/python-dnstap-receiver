@@ -10,7 +10,7 @@ from dnstap_receiver.inputs import dnstap_decoder
 clogger = logging.getLogger("dnstap_receiver.console")
 
 
-async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip_reader, cache):
+async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip_reader, cache, start_shutdown):
     """callback when a connection is established"""
     # get peer name
     peername = writer.get_extra_info('peername')
@@ -49,7 +49,20 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
         running = True
         while running:
             # read bytes
-            data = await reader.read(fstrm_handler.pending_nb_bytes()) 
+            shutdown_wait_task = asyncio.create_task(start_shutdown.wait())
+            read_task = asyncio.create_task(reader.read(fstrm_handler.pending_nb_bytes()))
+            done, pending = await asyncio.wait(
+                [shutdown_wait_task, read_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            if shutdown_wait_task in done:
+                read_task.cancel()
+                return
+            else:
+                shutdown_wait_task.cancel()
+                data = await read_task
+
             if not len(data):
                 running = False
                 break
@@ -106,13 +119,13 @@ async def cb_onconnect(reader, writer, cfg, cfg_input, queues_list, stats, geoip
     finally:
         clogger.debug(f'Input handler: {peername} - closed')
 
-def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache):
+def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache, start_shutdown):
     clogger.debug("Input handler: tcp socket")
     loop = asyncio.get_event_loop()
     cfg_input = cfg["input"]["tcp-socket"]
     
     # define callback on new connection
-    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, cfg_input, queues_list, stats, geoip_reader, cache)
+    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, cfg_input, queues_list, stats, geoip_reader, cache, start_shutdown)
     
     ssl_context = None
     if cfg_input["tls-support"]:
@@ -125,14 +138,14 @@ def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache):
                                   ssl=ssl_context, loop=loop)
     return server
     
-def start_unixsocket(cfg, queues_list, stats, geoip_reader, cache):
+def start_unixsocket(cfg, queues_list, stats, geoip_reader, cache, start_shutdown):
     clogger.debug("Input handler: unix socket")
     cfg_input = cfg["input"]["unix-socket"]
     
     loop = asyncio.get_event_loop()
     
     # define callback on new connection
-    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, cfg_input, queues_list, stats, geoip_reader, cache)
+    cb_lambda = lambda r, w: cb_onconnect(r, w, cfg, cfg_input, queues_list, stats, geoip_reader, cache, start_shutdown)
     
     # asynchronous unix socket
     clogger.debug("Input handler: listening on %s" % cfg_input["path"])

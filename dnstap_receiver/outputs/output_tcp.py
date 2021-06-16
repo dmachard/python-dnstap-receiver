@@ -22,14 +22,14 @@ def checking_conf(cfg):
             
     return valid_conf
     
-async def plaintext_tcpclient(output_cfg, queue):
+async def plaintext_tcpclient(output_cfg, queue, start_shutdown):
     host, port = output_cfg["remote-address"], output_cfg["remote-port"]
     clogger.debug("Output handler: connection to %s:%s" % (host,port) )
     reader, tcp_writer = await asyncio.open_connection(host, port)
     clogger.debug("Output handler: connected")
     
     # consume queue
-    while True:
+    while not start_shutdown.is_set():
         # read item from queue
         tapmsg = await queue.get()
         
@@ -47,17 +47,18 @@ async def plaintext_tcpclient(output_cfg, queue):
         queue.task_done()
         
     # something 
-    clogger.error("Output handler: connection lost")
+    if not start_shutdown.is_set():
+        clogger.error("Output handler: connection lost")
 
-async def handle(output_cfg, queue, metrics):
+async def handle(output_cfg, queue, metrics, start_shutdown):
     """tcp reconnect"""
     server_address = (output_cfg["remote-address"], output_cfg["remote-port"])
     loop = asyncio.get_event_loop()
 
     clogger.debug("Output handler: TCP enabled")
-    while True:
+    while not start_shutdown.is_set():
         try:
-            await plaintext_tcpclient(output_cfg, queue)
+            await plaintext_tcpclient(output_cfg, queue, start_shutdown)
         except ConnectionRefusedError:
             clogger.error('Output handler: connection to tcp server failed!')
         except asyncio.TimeoutError:
@@ -66,5 +67,5 @@ async def handle(output_cfg, queue, metrics):
             clogger.error('Output handler: connection to tcp is closed.')
             
         clogger.debug("'Output handler: retry to connect every %ss" % output_cfg["retry"])
-        await asyncio.sleep(output_cfg["retry"])
-
+        if not start_shutdown.is_set():
+            await asyncio.sleep(output_cfg["retry"])
