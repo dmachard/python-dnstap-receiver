@@ -1,4 +1,4 @@
-name: Testing dnsdist
+name: Testing E2E dnsdist
 
 on:
   push:
@@ -21,12 +21,19 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: "3.8"
+    - name: add pdns user
+      run: |
+        sudo addgroup --system --gid 953 pdns
+        sudo adduser --system --disabled-password --no-create-home -uid 953 --gid 953 pdns
+        sudo mkdir /tmp/dnsdist
+        sudo chown -R pdns:pdns /tmp/dnsdist
     - name: Deploy dnsdist docker image
       run: |
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/dnsdist.conf:/etc/dnsdist/conf.d/dnsdist.conf:ro powerdns/dnsdist-16
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/dnsdist.conf:/etc/dnsdist/conf.d/dnsdist.conf:ro -v /tmp/dnsdist:/tmp/dnsdist powerdns/dnsdist-16
         sudo netstat -anp |grep 5553
     - name: Run Python tests 
       run: |
         sudo python3 -m pip install dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm
         sudo python3 -m pip install --upgrade dnspython protobuf
         sudo -E python3 -m unittest tests.test_receiver_tcpsocket -v
+        sudo -E python3 -m unittest tests.test_receiver_unixsocket -v

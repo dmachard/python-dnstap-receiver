@@ -1,4 +1,4 @@
-name: Testing
+name: Testing - Base
 
 on:
   push:
@@ -17,24 +17,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: "3.7"
-    - name: Install dnsdist
-      run: |
-        sudo apt-get install -y dnsdist net-tools
-    - name: Configure dnsdist to activate dnstap
-      run: |
-        sudo systemctl stop dnsdist
-        sudo cp -rf tests/dnsdist.conf /etc/dnsdist/
-        sudo cat /etc/dnsdist/dnsdist.conf
-        sudo mkdir -p /var/run/dnsdist
-        sudo chown _dnsdist._dnsdist /var/run/dnsdist/
-        sudo systemctl start dnsdist
-        sudo systemctl status dnsdist
-        sudo netstat -anp | grep dnsdist
     - name: Run Python tests 
       run: |
         sudo python3 -m pip install dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm
         sudo python3 -m pip install --upgrade dnspython protobuf
-        sudo python3 -m unittest tests.test_receiver_tcpsocket -v
-        sudo python3 -m unittest tests.test_receiver_unixsocket -v
         sudo python3 -m unittest tests.test_external_config -v
         sudo python3 -m unittest tests.test_api_server -v
