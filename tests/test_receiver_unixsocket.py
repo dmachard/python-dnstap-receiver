@@ -51,7 +51,7 @@ class TestUnixSocket(unittest.TestCase):
         print(o)
 
         # assert output
-        self.assertRegex(o, "listening on /tmp/tap/dnstap.sock")
+        self.assertRegex(o, "listening on /tmp/dnsdist/dnstap.sock")
 
         
     def test2_incoming_dnstap(self):
