@@ -10,6 +10,7 @@ import signal
 
 DNS_SERVER_PORT = os.getenv('DNS_SERVER_PORT')
 DNS_SERVER_IP = os.getenv('DNS_SERVER_IP')
+DNS_USER = os.getenv('DNS_USER')
 
 my_resolver = dns.resolver.Resolver(configure=False)
 my_resolver.nameservers = ['127.0.0.1']
@@ -25,7 +26,7 @@ class TestUnixSocket(unittest.TestCase):
     def test1_listening(self):
         """test listening unix socket"""
         # prepare command to execute
-        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/tap/dnstap.sock -v > /tmp/test1.out'
+        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test1.out'
         #args = shlex.split(cmd)
 
         # start receiver
@@ -55,7 +56,7 @@ class TestUnixSocket(unittest.TestCase):
         
     def test2_incoming_dnstap(self):
         """test to receive dnstap message"""
-        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/tap/dnstap.sock -v > /tmp/test2.out'
+        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test2.out'
 
         #args = shlex.split(cmd)
         
