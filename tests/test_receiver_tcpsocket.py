@@ -53,5 +53,5 @@ class TestTcpSocket(unittest.TestCase):
             
             o = proc.stdout.read()
             print(o)
-        self.assertRegex(o, b"CLIENT_RESPONSE")
+        self.assertRegex(o, b"_RESPONSE")
         
