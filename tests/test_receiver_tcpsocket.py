@@ -45,6 +45,7 @@ class TestTcpSocket(unittest.TestCase):
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
             print("run dns resolution to generate dnstap message")
             for i in range(10):
+                print("make dns resolution %s" % i)
                 r = my_resolver.resolve('www.github.com', 'a')
                 time.sleep(1)
 
@@ -52,5 +53,5 @@ class TestTcpSocket(unittest.TestCase):
             
             o = proc.stdout.read()
             print(o)
-        self.assertRegex(o, b"dnsdist-tcp CLIENT_RESPONSE")
+        self.assertRegex(o, b"CLIENT_RESPONSE")
         

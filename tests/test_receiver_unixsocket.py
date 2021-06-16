@@ -83,5 +83,5 @@ class TestUnixSocket(unittest.TestCase):
             o = f.read()
         print(o)
 
-        self.assertRegex(o, "dnsdist-unix CLIENT_RESPONSE")
+        self.assertRegex(o, "CLIENT_RESPONSE")
         
