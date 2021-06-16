@@ -5,6 +5,8 @@ import subprocess
 import shlex
 import dns.resolver
 import os
+import sys
+import signal
 
 DNS_SERVER_PORT = os.getenv('DNS_SERVER_PORT')
 DNS_SERVER_IP = os.getenv('DNS_SERVER_IP')
@@ -22,32 +24,64 @@ if DNS_SERVER_IP is not None:
 class TestUnixSocket(unittest.TestCase):
     def test1_listening(self):
         """test listening unix socket"""
-        cmd = 'sudo -u pdns -s /bin/bash -c \'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v\''
+        # prepare command to execute
+        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test1.out'
+        #args = shlex.split(cmd)
 
-        args = shlex.split(cmd)
+        # start receiver
+        p = subprocess.Popen(cmd, shell=True)
+        time.sleep(2)
 
-        with subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
-            time.sleep(2)
-            proc.terminate()
-            
-            o = proc.stdout.read()
-            print(o)
-        self.assertRegex(o, b"listening on /tmp/dnsdist/dnstap.sock")
+        # kill properly child processes
+        output = subprocess.check_output("pgrep -P %s" % p.pid, shell=True, text=True)
+        child_p = int(output)
+        os.system("sudo pkill -9 -P %s" % child_p)
+
+        # kill the main process
+        try:
+            p.communicate(timeout=2)
+        except subprocess.TimeoutExpired:
+            p.terminate()
+            p.kill()
+        
+        # read output
+        with open("/tmp/test1.out") as f:
+            o = f.read()
+        print(o)
+
+        # assert output
+        self.assertRegex(o, "listening on /tmp/dnsdist/dnstap.sock")
+
         
     def test2_incoming_dnstap(self):
         """test to receive dnstap message"""
-        cmd = 'sudo -u pdns -s /bin/bash -c \'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v\''
+        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test2.out'
 
-        args = shlex.split(cmd)
+        #args = shlex.split(cmd)
         
-        with subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
-            for i in range(10):
-                r = my_resolver.resolve('www.github.com', 'a')
-                time.sleep(1)
+        p = subprocess.Popen(cmd, shell=True)
 
-            proc.terminate()
-            
-            o = proc.stdout.read()
-            print(o)
-        self.assertRegex(o, b"dnsdist-unix CLIENT_RESPONSE")
+        for i in range(10):
+            print("make dns resolution %s" % i)
+            r = my_resolver.resolve('www.github.com', 'a')
+            time.sleep(1)
+
+        # kill properly child processes
+        output = subprocess.check_output("pgrep -P %s" % p.pid, shell=True, text=True)
+        child_p = int(output)
+        os.system("sudo pkill -9 -P %s" % child_p)
+
+        # kill the main process
+        try:
+            p.communicate(timeout=2)
+        except subprocess.TimeoutExpired:
+            p.terminate()
+            p.kill()
+
+        # read output
+        with open("/tmp/test2.out") as f:
+            o = f.read()
+        print(o)
+
+        self.assertRegex(o, "dnsdist-unix CLIENT_RESPONSE")
         
