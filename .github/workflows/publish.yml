@@ -9,20 +9,22 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - name: Setup Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.7"
+    - uses: actions/setup-python@v2
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        pip install twine
+        pip install twine jinja2
+
     - name: Build Python package
       run: |
+        python setup_init.py ${{ github.event.release.tag_name }}
         python setup.py sdist bdist_wheel
+
     - name: Twine check
       run: |
         twine check dist/*
+
     - name: Upload to PyPI
       run: |
         twine upload dist/* -u ${{ secrets.PYPI_LOGIN }} -p ${{ secrets.PYPI_PASSWORD }}
@@ -31,17 +33,18 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
+
     - name: Build the Docker image
       run: |
         docker build . --file Dockerfile -t dnstap-receiver
+
     - name: Tag image
       run: |
-        VERSION=$(cat ./dnstap_receiver/__init__.py | tr '"' $'\n' | sed -n 2p)
-        docker tag dnstap-receiver dmachard/dnstap-receiver:${VERSION}
+        docker tag dnstap-receiver dmachard/dnstap-receiver:${{ github.event.release.tag_name }}
         docker tag dnstap-receiver dmachard/dnstap-receiver:latest
+
     - name: Upload to DockerHub
       run: |
         docker login -u ${{ secrets.DOCKERHUB_LOGIN }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
-        VERSION=$(cat ./dnstap_receiver/__init__.py | tr '"' $'\n' | sed -n 2p)
         docker push dmachard/dnstap-receiver:latest
-        docker push dmachard/dnstap-receiver:${VERSION}
+        docker push dmachard/dnstap-receiver:${{ github.event.release.tag_name }}
