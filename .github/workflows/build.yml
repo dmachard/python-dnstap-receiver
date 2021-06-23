@@ -3,7 +3,7 @@ name: Build
 on:
   workflow_run:
     workflows:
-      - Testing
+      - Testing Module
     types:
       - completed
 
