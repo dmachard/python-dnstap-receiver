@@ -13,10 +13,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - name: Setup Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.7"
+    - uses: actions/setup-python@v2
+
     - name: Run Python tests 
       run: |
         sudo python3 -m pip install dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm
