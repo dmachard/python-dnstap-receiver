@@ -6,6 +6,7 @@ DNS_LEN = 12
 unpack_dns = struct.Struct("!6H").unpack
 
 def decode_question(data):
+    """minimalist decoder for dns question"""
     buf = data[DNS_LEN:]
     qname = []
 
@@ -17,9 +18,13 @@ def decode_question(data):
         qname.append(buf[1:length+1])
         buf = buf[length+1:]
 
-    qtype, qclass  = struct.unpack('!HH', buf[1:5])    
-    # qtype = q[0]
-    # qclass = q[1]
+    # requires a buffer of 4 bytes 
+    # fix issue #35, invalid packet but some abuser sends it
+    if len(buf) <= 4:
+        qtype = 0 # set to None
+    else:
+        # decode qtype and qclass 
+        qtype, qclass  = struct.unpack('!HH', buf[1:5])    
     return (b".".join(qname)+ b".", qtype) 
 
 def decode_dns(data):
