@@ -219,8 +219,7 @@ def start_shutdown_task(signal, loop, start_shutdown):
     global shutdown_task
     if not shutdown_task:
         shutdown_task = asyncio.create_task(
-            shutdown(signal, loop, start_shutdown),
-            name='shutdown',
+            shutdown(signal, loop, start_shutdown)
         )
 
 async def shutdown(signal, loop, start_shutdown):
