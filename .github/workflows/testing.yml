@@ -1,4 +1,4 @@
-name: Testing Module
+name: Testing
 
 on:
   push:

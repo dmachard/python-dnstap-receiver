@@ -4,6 +4,7 @@ import unittest
 import requests
 import subprocess
 import shlex
+import signal
 
 api_url = "http://127.0.0.1:8080/tables"
 api_key = "changeme"
@@ -12,19 +13,21 @@ class TestApiServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """start the receiver"""
-        print("starting receiver")
+        print("starting receiver...")
         cmd = 'python3 -c "from dnstap_receiver.receiver '
-        cmd += 'import start_receiver; start_receiver()"'
+        cmd += 'import start_receiver; start_receiver()" -v'
         cls.proc = subprocess.Popen(shlex.split(cmd), 
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT)
         time.sleep(2)
+        
     @classmethod
     def tearDownClass(cls):
         """kill the process"""
         print("stop receiver")
-        cls.proc.kill()
-        
+        # simulate SIGINT to terminate
+        cls.proc.send_signal(signal.SIGINT)
+    
     def test1_authvalid(self):
         """test valid authentication"""
         r = requests.get(url=api_url, timeout=1,
