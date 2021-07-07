@@ -20,13 +20,15 @@ class TestApiServer(unittest.TestCase):
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT)
         time.sleep(2)
-        
+
     @classmethod
     def tearDownClass(cls):
         """kill the process"""
         print("stop receiver")
         # simulate SIGINT to terminate
         cls.proc.send_signal(signal.SIGINT)
+        o = cls.proc.stdout.read()
+        print(o)
     
     def test1_authvalid(self):
         """test valid authentication"""
