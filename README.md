@@ -436,7 +436,7 @@ This output enables to send dnstap messages to a Kafka topic.
 Install extra python library for kafka
 
 ```python
-pip install dnstap_receiver [kafka]
+pip install dnstap_receiver[kafka]
 ```
 
 Configuration
