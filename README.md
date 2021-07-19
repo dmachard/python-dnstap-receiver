@@ -27,7 +27,7 @@ in JSON, YAML or one line text format and more.
     * [Metrics](#metrics)
     * [Dnstap](#dnstap)
     * [Kafka](#kafka)
-    * [PostgreSQL](#pgsql)
+    * [PostgreSQL](#postgresql)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
