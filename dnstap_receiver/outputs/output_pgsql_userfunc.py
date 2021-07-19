@@ -1,7 +1,7 @@
 '''
 This file contains the default functions of pgsql_init and pgsql_main.
 If you feel like replace them, 
-  1) copy this file and edit it as you like,
+  1) copy this file and edit it as you like (but keep function names),
   2) then designate it in the `userfuncefile` in the configuration.
      (See outputs: pgsql: section in ../dnstap.conf)
 '''
