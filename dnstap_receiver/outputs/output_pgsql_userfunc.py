@@ -1,3 +1,11 @@
+'''
+This file contains the default functions of pgsql_init and pgsql_main.
+If you feel like replace them, 
+  1) copy this file and edit it as you like,
+  2) then designate it in the `userfuncefile` in the configuration.
+     (See outputs: pgsql: section in ../dnstap.conf)
+'''
+
 async def pgsql_init(conn):
     '''
     pgsql_init is a function which is executed once just after
