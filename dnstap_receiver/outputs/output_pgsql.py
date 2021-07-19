@@ -72,7 +72,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
             from .output_pgsql_userfunc import pgsql_init, pgsql_main
 
     # create connection pool to PostgreSQL server.
-    async with asyncpg.create_pool(dsn=dsn, passfile=passfile, min_size=min_size, max_size=max_size) as pool:
+    async with asyncpg.create_pool(dsn=dsn, passfile=passfile, min_size=min_size, max_size=max_size, timeout=15) as pool:
         clogger.debug("Output handler: pgsql connected")
 
         # acquire a connection and execute pgsql_init()

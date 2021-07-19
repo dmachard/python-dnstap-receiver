@@ -48,3 +48,10 @@ class TestExternalConfig(unittest.TestCase):
         o = execute_dnstap(cmd)
         
         self.assertRegex(o, b"Output handler: tcp")
+
+    def test5_output_pgsql_enable(self):
+        """test to enable pgsql output¥nwill take 1 minute or so on."""
+        cmd = 'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -c ./tests/dnstap_pgsql.conf'
+        o = execute_dnstap(cmd)
+        
+        self.assertRegex(o, b"Output handler: pgsql")
