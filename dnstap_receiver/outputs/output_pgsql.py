@@ -41,6 +41,18 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
     busy_wait = float(output_cfg["busy_wait"])
     userfuncfile = output_cfg["userfuncfile"]
 
+    # importing functions to handle PostgreSQL.
+    # pgsql_init shall be executed once just after connection pool
+    # to PostgreSQL. Ususally it should contain "CREATE TABLE IF NOT
+    # EXISTS..."
+    # pgsql_main shall be executed on receiving every DNS queries.
+    # Usually it should be "INSERT INTO..."
+    # dnstap_receiver has default functions to fall back to, or 
+    # user can define his/her own function in the 'userfuncfile'.
+    # For example,
+    # $ cp output_pgsql_userfunc.py output_pgsql_myfunc.py
+    # $ vi output_pgsql_myfunc.py
+    # and make 'userfuncfile: /path/to/output_pgsql_myfunc.py' in dnstap.conf
     if userfuncfile is None:
         clogger.debug(f"Output handler: pgsql: loading default userfuncfile.")
         from .output_pgsql_userfunc import pgsql_init, pgsql_main
@@ -59,10 +71,12 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
             clogger.info("Output handler: pgsql faild to load userfunc. fallback to default.")
             from .output_pgsql_userfunc import pgsql_init, pgsql_main
 
+    # create connection pool to PostgreSQL server.
     async with asyncpg.create_pool(dsn=dsn, passfile=passfile, min_size=min_size, max_size=max_size) as pool:
         clogger.debug("Output handler: pgsql connected")
 
-        ### CREATE TABLE IF NOT EXISTS
+        # acquire a connection and execute pgsql_init()
+	# such as "CREATE TABLE IF NOT EXISTS..."
         async with pool.acquire() as conn:
             async with conn.transaction():
                 await pgsql_init(output_cfg, conn, start_shutdown)
@@ -70,6 +84,10 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
         # consume queue
         while not start_shutdown.is_set():
             #clogger.debug(f'Output handler: pgsql receiving tapmsg from queue.')
+	    # 'tapmsg = await queue.get()' will block start_shutdown_task
+	    # to gracefully shutdown dnstap_receiver itself.
+	    # 'queue.get_nowait()' can solve the problem but introduces
+	    # busy-wait-loop instead. which do yo like?
             try:
                 tapmsg = queue.get_nowait()
             except asyncio.QueueEmpty as e:
@@ -82,6 +100,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
             else:
                 clogger.debug(f'Output handler: pgsql received tapmsg: {tapmsg}.')
 
+            # acquire a connection and send 'INSERT...' to PostgreSQL server.
             async with pool.acquire() as conn:
                 async with conn.transaction():
                     await pgsql_main(tapmsg, output_cfg, conn, start_shutdown)
