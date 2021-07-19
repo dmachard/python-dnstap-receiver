@@ -466,6 +466,8 @@ This output enables to send dnstap messages to a PostgreSQL.
 
 Install extra python library for PostgreSQL (asyncpg).
 
+See [output_pgsql_userfunc.py](./dnstap_receiver/outputs/output_pgsql_userfunc.py) to replace table definition and data insertion.
+
 ```python
 pip install dnstap_receiver[pgsql]
 ```
