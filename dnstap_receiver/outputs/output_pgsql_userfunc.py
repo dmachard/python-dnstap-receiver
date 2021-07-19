@@ -1,5 +1,12 @@
-async def pgsql_init(output_cfg, conn, start_shutdown):
+async def pgsql_init(conn):
+    '''
+    pgsql_init is a function which is executed once just after
+    creation of asyncpg connection pool (nearly equals to every time 
+    when the dnstap_receiver being started).
+    It is expected to do something like "CREATE TABLE IF NOT EXISTS..." here.
 
+    `conn` is a connection to PostgreSQL server acquired from pool.
+    '''
     return await conn.execute("""
         CREATE TABLE IF NOT EXISTS dnstap_receiver (
             message     TEXT        -- "AUTH_QUERY"
@@ -13,7 +20,14 @@ async def pgsql_init(output_cfg, conn, start_shutdown):
         )
     """)
 
-async def pgsql_main(tapmsg, output_cfg, conn, start_shutdown):
+async def pgsql_main(conn, tapmsg):
+    '''
+    pgsql_main is a function which is executed on each dnstap data delivered.
+    It is expected to do something like "INSERT INTO..." here.
+
+    `conn` is a connection to PostgreSQL server acquired from pool.
+    `tapmsg` is a dict that contains dnstap data delivered.
+    '''
     return await conn.execute("""
         INSERT INTO dnstap_receiver VALUES
             ($1, $2, to_timestamp($3), $4, $5, $6, $7, $8)

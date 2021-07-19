@@ -79,14 +79,14 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
         # such as "CREATE TABLE IF NOT EXISTS..."
         async with pool.acquire() as conn:
             async with conn.transaction():
-                await pgsql_init(output_cfg, conn, start_shutdown)
+                await pgsql_init(conn)
 
         # consume queue
         while not start_shutdown.is_set():
             #clogger.debug(f'Output handler: pgsql receiving tapmsg from queue.')
             # 'tapmsg = await queue.get()' will block start_shutdown_task
             # to gracefully shutdown dnstap_receiver itself.
-            # 'queue.get_nowait()' can solve the problem but introduces
+            # 'queue.get_nowait()' won't block but introduces
             # busy-wait-loop instead. which do yo like?
             try:
                 tapmsg = queue.get_nowait()
@@ -103,7 +103,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
             # acquire a connection and send 'INSERT...' to PostgreSQL server.
             async with pool.acquire() as conn:
                 async with conn.transaction():
-                    await pgsql_main(tapmsg, output_cfg, conn, start_shutdown)
+                    await pgsql_main(conn, tapmsg)
                     clogger.debug('Output handler: pgsql INSERT dispached.')
     
             # done continue to next item
