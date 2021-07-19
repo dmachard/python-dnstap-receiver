@@ -1,5 +1,5 @@
 
-async def pgsql_pre_loop_userfunc(output_cfg, conn, start_shutdown):
+async def pgsql_init(output_cfg, conn, start_shutdown):
 
     return await conn.execute("""
         CREATE TABLE IF NOT EXISTS dnstap_receiver (
@@ -14,7 +14,7 @@ async def pgsql_pre_loop_userfunc(output_cfg, conn, start_shutdown):
         )
     """)
 
-async def pgsql_main_loop_userfunc(tapmsg, output_cfg, conn, start_shutdown):
+async def pgsql_main(tapmsg, output_cfg, conn, start_shutdown):
     return await conn.execute("""
         INSERT INTO dnstap_receiver VALUES
             ($1, $2, to_timestamp($3), $4, $5, $6, $7, $8)

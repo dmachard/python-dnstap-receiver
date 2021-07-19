@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from os.path import abspath,expanduser,expandvars
+from os.path import abspath,realpath,expanduser,expandvars
 from importlib.util import spec_from_file_location, module_from_spec
 
 try:
@@ -38,23 +38,26 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
     passfile = output_cfg["passfile"]
     min_size = output_cfg["min_size"]
     max_size = output_cfg["max_size"]
+    busy_wait = float(output_cfg["busy_wait"])
     userfuncfile = output_cfg["userfuncfile"]
 
     if userfuncfile is None:
         clogger.debug(f"Output handler: pgsql: loading default userfuncfile.")
-        from .output_pgsql_userfunc import pgsql_pre_loop_userfunc, pgsql_main_loop_userfunc
+        from .output_pgsql_userfunc import pgsql_init, pgsql_main
     else:
         try:
-            userfuncfile = abspath(expandvars(expanduser(userfuncfile)))
-            clogger.debug(f"Output handler: pgsql: loading userfuncfile={userfuncfile}.")
+            userfuncfile = abspath(realpath(expandvars(expanduser(userfuncfile))))
+	    # Should check process euid == file owner ?
+
             spec = spec_from_file_location('userfunc', userfuncfile)
             userfunc = module_from_spec(spec)
             spec.loader.exec_module(userfunc)
-            pgsql_pre_loop_userfunc  = userfunc.pgsql_pre_loop_userfunc
-            pgsql_main_loop_userfunc = userfunc.pgsql_main_loop_userfunc
+            pgsql_init = userfunc.pgsql_init
+            pgsql_main = userfunc.pgsql_main
+            clogger.debug(f"Output handler: pgsql: loaded userfunc in {userfuncfile}.")
         except:
             clogger.info("Output handler: pgsql faild to load userfunc. fallback to default.")
-            from .output_pgsql_userfunc import pgsql_pre_loop_userfunc, pgsql_main_loop_userfunc
+            from .output_pgsql_userfunc import pgsql_init, pgsql_main
 
     async with asyncpg.create_pool(dsn=dsn, passfile=passfile, min_size=min_size, max_size=max_size) as pool:
         clogger.debug("Output handler: pgsql connected")
@@ -62,11 +65,11 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
         ### CREATE TABLE IF NOT EXISTS
         async with pool.acquire() as conn:
             async with conn.transaction():
-                await pgsql_pre_loop_userfunc(output_cfg, conn, start_shutdown)
+                await pgsql_init(output_cfg, conn, start_shutdown)
 
         # consume queue
         while not start_shutdown.is_set():
-            clogger.debug(f'Output handler: pgsql receiving tapmsg from queue.')
+            #clogger.debug(f'Output handler: pgsql receiving tapmsg from queue.')
             try:
                 tapmsg = queue.get_nowait()
             except asyncio.QueueEmpty as e:
@@ -74,14 +77,14 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
                     clogger.debug('Output handler: pgsql shutting down. ')
                     break
                 else:
-                    await asyncio.sleep(3.0)
+                    await asyncio.sleep(busy_wait)
                     continue
             else:
                 clogger.debug(f'Output handler: pgsql received tapmsg: {tapmsg}.')
 
             async with pool.acquire() as conn:
                 async with conn.transaction():
-                    await pgsql_main_loop_userfunc(tapmsg, output_cfg, conn, start_shutdown)
+                    await pgsql_main(tapmsg, output_cfg, conn, start_shutdown)
                     clogger.debug('Output handler: pgsql INSERT dispached.')
     
             # done continue to next item
@@ -95,8 +98,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
 
 async def handle(output_cfg, queue, metrics, start_shutdown):
     """pgsql reconnect"""
-    loop = asyncio.get_event_loop()
-    loop.set_debug(True)
+    loop = asyncio.get_event_loop() # do we need this?
 
     clogger.debug("Output handler: PostgreSQL enabled")
 
