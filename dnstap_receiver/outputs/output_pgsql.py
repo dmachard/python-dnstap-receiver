@@ -59,7 +59,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
     else:
         try:
             userfuncfile = abspath(realpath(expandvars(expanduser(userfuncfile))))
-	    # Should check process euid == file owner ?
+            # Should check process euid == file owner ?
 
             spec = spec_from_file_location('userfunc', userfuncfile)
             userfunc = module_from_spec(spec)
@@ -76,7 +76,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
         clogger.debug("Output handler: pgsql connected")
 
         # acquire a connection and execute pgsql_init()
-	# such as "CREATE TABLE IF NOT EXISTS..."
+        # such as "CREATE TABLE IF NOT EXISTS..."
         async with pool.acquire() as conn:
             async with conn.transaction():
                 await pgsql_init(output_cfg, conn, start_shutdown)
@@ -84,10 +84,10 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
         # consume queue
         while not start_shutdown.is_set():
             #clogger.debug(f'Output handler: pgsql receiving tapmsg from queue.')
-	    # 'tapmsg = await queue.get()' will block start_shutdown_task
-	    # to gracefully shutdown dnstap_receiver itself.
-	    # 'queue.get_nowait()' can solve the problem but introduces
-	    # busy-wait-loop instead. which do yo like?
+            # 'tapmsg = await queue.get()' will block start_shutdown_task
+            # to gracefully shutdown dnstap_receiver itself.
+            # 'queue.get_nowait()' can solve the problem but introduces
+            # busy-wait-loop instead. which do yo like?
             try:
                 tapmsg = queue.get_nowait()
             except asyncio.QueueEmpty as e:

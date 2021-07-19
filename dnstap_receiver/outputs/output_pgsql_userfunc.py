@@ -1,4 +1,3 @@
-
 async def pgsql_init(output_cfg, conn, start_shutdown):
 
     return await conn.execute("""
