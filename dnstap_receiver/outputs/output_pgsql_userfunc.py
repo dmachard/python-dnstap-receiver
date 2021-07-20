@@ -15,7 +15,7 @@ async def pgsql_init(conn, clogger):
 
     `conn` is a connection to PostgreSQL server acquired from pool.
     '''
-    clogger.info("pgsql_init: createing table.")
+    clogger.info("pgsql_init: createing table if not exists.")
     return await conn.execute("""
         CREATE TABLE IF NOT EXISTS dnstap_receiver (
             message     TEXT        -- "AUTH_QUERY"
