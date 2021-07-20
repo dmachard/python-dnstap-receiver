@@ -6,7 +6,10 @@ If you feel like replace them,
      (See outputs: pgsql: section in ../dnstap.conf)
 '''
 
-async def pgsql_init(conn, clogger):
+import logging
+clogger = logging.getLogger("dnstap_receiver.console")
+
+async def pgsql_init(conn):
     '''
     pgsql_init is a function which is executed once just after
     creation of asyncpg connection pool (nearly equals to every time 
@@ -29,7 +32,7 @@ async def pgsql_init(conn, clogger):
         )
     """)
 
-async def pgsql_main(tapmsg, conn, clogger):
+async def pgsql_main(tapmsg, conn):
     '''
     pgsql_main is a function which is executed on each dnstap data delivered.
     It is expected to do something like "INSERT INTO..." here.
