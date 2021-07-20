@@ -79,7 +79,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
         # such as "CREATE TABLE IF NOT EXISTS..."
         async with pool.acquire() as conn:
             async with conn.transaction():
-                await pgsql_init(conn)
+                await pgsql_init(conn, clogger)
 
         # consume queue
         while not start_shutdown.is_set():
@@ -103,7 +103,7 @@ async def plaintext_pgclient(output_cfg, queue, start_shutdown):
             # acquire a connection and send 'INSERT...' to PostgreSQL server.
             async with pool.acquire() as conn:
                 async with conn.transaction():
-                    await pgsql_main(conn, tapmsg)
+                    await pgsql_main(tapmsg, conn, clogger)
                     clogger.debug('Output handler: pgsql INSERT dispached.')
     
             # done continue to next item
