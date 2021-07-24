@@ -27,6 +27,7 @@ in JSON, YAML or one line text format and more.
     * [Metrics](#metrics)
     * [Dnstap](#dnstap)
     * [Kafka](#kafka)
+    * [PostgreSQL](#postgresql)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -458,6 +459,47 @@ Configuration
     # Kafka topic to forward messages to
     topic: null
 ```
+
+### PostgreSQL
+
+This output enables to send dnstap messages to a PostgreSQL.
+
+Install extra python library for PostgreSQL (asyncpg).
+
+See [output_pgsql_userfunc.py](./dnstap_receiver/outputs/output_pgsql_userfunc.py) to replace table definition and data insertion.
+
+```python
+pip install dnstap_receiver[pgsql]
+```
+
+Configuration
+
+```yaml
+  # forward to postgresql server
+  pgsql:
+    # enable or disable
+    enable: false
+    # retry interval in seconds to connect
+    retry: 1
+    # dsn := postgres://user@host:port/database
+    # To explicitly write passwd in dsn is not recommended though possible.
+    # Instead use passfile below.
+    dsn: postgres://postgres@localhost:5432/postgres
+    # passfile := /path/to/.pgpass
+    # https://www.postgresql.org/docs/12/libpq-connect.html#LIBPQ-CONNECT-PASSFILE
+    passfile: ~/.pgpass
+    # min_size: minimum number of connections in the pool
+    min_size: 5
+    # max_size: maximum number of connections in the pool
+    max_size: 10
+    # busy_wait: wait this amount of seconds in the busy loop to write to PostgreSQL.
+    busy_wait: 1.0
+    # timeout: wait this amount of seconds to re-create the connection pool to PostgreSQL after it failed.
+    timeout: 60
+    # filename including user defined functions
+    userfuncfile: null
+```
+
 
 ## More options
 
