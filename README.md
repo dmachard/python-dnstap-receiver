@@ -10,7 +10,7 @@ Input streams can be a unix, tcp or raw socket.
 The output is printed directly on stdout or sent to remote tcp address 
 in JSON, YAML or one line text format and more. 
 
-**If you want better performance, please to use the [dnscollector](https://github.com/dmachard/go-dnscollector) tool writen in Go.**
+If you want better performance, please to use the [dnscollector](https://github.com/dmachard/go-dnscollector) tool writen in Go.
 
 ## Table of contents
 * [Installation](#installation)
