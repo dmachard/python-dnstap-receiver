@@ -28,6 +28,7 @@ from dnstap_receiver.outputs import output_tcp
 from dnstap_receiver.outputs import output_metrics
 from dnstap_receiver.outputs import output_dnstap
 from dnstap_receiver.outputs import output_kafka
+from dnstap_receiver.outputs import output_pgsql
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
@@ -168,6 +169,12 @@ def setup_outputs(cfg, stats, start_shutdown):
         queue_kafka = asyncio.Queue()
         queues_list.append(queue_kafka)
         loop.create_task(output_kafka.handle(conf["kafka"], queue_kafka, stats, start_shutdown))
+
+    if conf["pgsql"]["enable"]:
+        if not output_pgsql.checking_conf(cfg=conf["pgsql"]): return
+        queue_pgsql = asyncio.Queue()
+        queues_list.append(queue_pgsql)
+        loop.create_task(output_pgsql.handle(conf["pgsql"], queue_pgsql, stats, start_shutdown))
 
     return queues_list
     
