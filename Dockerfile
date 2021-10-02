@@ -13,7 +13,7 @@ RUN true \
     && apk update \
     && apk add gcc musl-dev \
     && adduser -D dnstap \
-    && pip install --no-cache-dir dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm\
+    && pip install --no-cache-dir -r requirements.txt\
     && apk del gcc musl-dev \
     && cd /home/dnstap \
     && mkdir -p /home/dnstap/logs/ \

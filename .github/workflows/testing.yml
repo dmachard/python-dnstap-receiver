@@ -21,7 +21,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Run Python tests 
       run: |
-        sudo python3 -m pip install dnstap_pb pyyaml aiohttp geoip2 tlds cachetools fstrm
+        sudo python3 -m pip install -r requirements.txt
         sudo python3 -m pip install --upgrade dnspython protobuf
         sudo python3 -m unittest tests.test_external_config -v
         sudo python3 -m unittest tests.test_api_server -v
