@@ -13,23 +13,32 @@ env:
   DNS_SERVER_PORT: "5553"
 
 jobs:
-  dnsdist16:
+  dnsdist:
     runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        dnsdist: [ '16', '17' ]
+        python: [ '3.8', '3.9' ]
+
     steps:
     - uses: actions/checkout@v2
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: "3.8"
+        python-version: ${{ matrix.python }}
+
     - name: add pdns user
       run: |
         sudo addgroup --system --gid 953 pdns
         sudo adduser --system --disabled-password --no-create-home -uid 953 --gid 953 pdns
         sudo mkdir /tmp/dnsdist
         sudo chown -R pdns:pdns /tmp/dnsdist/
+
     - name: Deploy dnsdist docker image
       run: |
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/dnsdist.conf:/etc/dnsdist/conf.d/dnsdist.conf:ro -v /tmp/dnsdist/:/tmp/dnsdist/ powerdns/dnsdist-16
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/dnsdist.conf:/etc/dnsdist/conf.d/dnsdist.conf:ro -v /tmp/dnsdist/:/tmp/dnsdist/ powerdns/dnsdist-${{ matrix.dnsdist }}
+    
     - name: Run Python tests 
       run: |
         sudo python3 -m pip install -r requirements.txt
