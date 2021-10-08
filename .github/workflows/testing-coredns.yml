@@ -23,14 +23,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: {{ $matrix.python }}
+        python-version: ${{ matrix.python }}
 
     - name: Deploy coredns docker image
       run: |
-        sudo docker run -d --network="host" --name=coredns -v $PWD/tests/:$PWD/tests/ coredns/coredns:{{ $matrix.coredns }} -conf $PWD/tests/coredns-tcp
+        sudo docker run -d --network="host" --name=coredns -v $PWD/tests/:$PWD/tests/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/tests/coredns-tcp
         sudo docker logs coredns > /tmp/core.out
         sudo cat /tmp/core.out
         
