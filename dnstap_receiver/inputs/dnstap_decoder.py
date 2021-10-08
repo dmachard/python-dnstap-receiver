@@ -127,6 +127,9 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     if dns_qdcount:
         qname, qtype = dns_parser.decode_question(dns_payload)
         tap["qname"] = qname.decode(errors="ignore")
+        if qtype > len(dns_rdatatypes.RDATATYPES):
+            clogger.error('Dnstap decoder - invalid qtype in question: %s' % qtype)
+            return
         tap["rrtype"] = dns_rdatatypes.RDATATYPES[qtype]
         
     tap["rcode"] = dns_rcodes.RCODES[dns_rcode]
