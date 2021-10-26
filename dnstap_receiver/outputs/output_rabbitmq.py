@@ -79,31 +79,28 @@ class RabbitMQ:
 
     def publish(self, msg) -> None:
         """publish msg to the channel"""
-        try:
-            self.init_connection()
-            self.channel.basic_publish(
-                            exchange=self.cfg["exchange"],
-                            routing_key=self.cfg["routing_key"],
-                            body=msg
-            )
-        except (pika.exceptions.ConnectionClosed,
-                pika.exceptions.StreamLostError,
-                pika.exceptions.ChannelWrongStateError,
-                ConnectionResetError
-                ) as connection_error:
-            clogger.debug("Publish failed, trying to reconnect")
-            time.sleep(0.5)
-            self.init_connection()
-            self.channel.basic_publish(
-                            exchange=self.cfg["exchange"],
-                            routing_key=self.cfg["routing_key"],
-                            body=msg
-            )
-        except Exception as pika_e:
-            clogger.error('pika_e')
-            clogger.error(str(pika_e))
-            traceback.print_exc()
-            clogger.error("Output handler: rabbitmq: connection failed!!!")
+        for attempt in range(self.cfg['retry-count']):
+            try:
+                self.init_connection()
+                clogger.debug("RabbitMQ publish")
+                self.channel.basic_publish(
+                                exchange=self.cfg["exchange"],
+                                routing_key=self.cfg["routing_key"],
+                                body=msg
+                )
+            except (pika.exceptions.ConnectionClosed,
+                    pika.exceptions.StreamLostError,
+                    pika.exceptions.ChannelWrongStateError,
+                    ConnectionResetError
+                    ) as connection_error:
+                clogger.debug(connection_error)
+                clogger.debug(f"Publish failed, trying to reconnect, attepmt {attempt +1}")
+                time.sleep(self.cfg['retry-delay'])
+            else:
+                break
+        else:
+            clogger.error(f"Publish failed. Connection error after {self.cfg['retry-count']}")
+
 
     def close_connection(self):
         """properly close the connection"""
@@ -123,7 +120,6 @@ async def handle(output_cfg: dict, queue: asyncio.Queue, _metrics: statistics.St
         except asyncio.TimeoutError:
             continue
         msg = transform.convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
-        clogger.debug("RabbitMQ pushing")
         rabbitmq.publish(msg)
         queue.task_done()
 
