@@ -1,6 +1,12 @@
 import asyncio
 import logging
+import time
+import traceback
+
+from pika.adapters.blocking_connection import BlockingChannel
+from pika.spec import Channel
 from dnstap_receiver.outputs import transform
+from dnstap_receiver import statistics
 
 try:
     import pika
@@ -11,7 +17,7 @@ except:
 clogger = logging.getLogger("dnstap_receiver.console")
 
 
-def checking_conf(cfg):
+def checking_conf(cfg: dict) -> bool:
     """validate the config"""
     clogger.debug("Output handler: rabbitmq")
 
@@ -35,35 +41,81 @@ def checking_conf(cfg):
     return valid_conf
 
 
-async def handle(output_cfg, queue, _metrics, start_shutdown):
+class RabbitMQ:
+    """Class to handle RabbitMQ connections and channel push"""
+
+    connection: pika.BlockingConnection = None
+    channel: BlockingChannel = None
+    def __init__(self, output_cfg: dict) -> None:
+        self.cfg = output_cfg
+        self.cfg["routing_key"] = output_cfg.get("routing_key", output_cfg["queue"]["queue"])
+        self.credentials = pika.PlainCredentials(
+                                self.cfg["connection"]["username"],
+                                self.cfg["connection"]["password"]
+        )
+        self.connection_params = pika.ConnectionParameters(
+                                host=self.cfg["connection"]["host"],
+                                port=self.cfg["connection"]["port"],
+                                credentials=self.credentials
+        )
+        self.init_connection()
+
+    def init_connection(self) -> None:
+        """init connection and channel"""
+        if self.connection and self.connection.is_open:
+            return
+
+        self.connection = pika.BlockingConnection(self.connection_params)
+
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(
+                    queue       =   self.cfg["queue"]["queue"],
+                    passive     =   self.cfg["queue"]["passive"],
+                    durable     =   self.cfg["queue"]["durable"],
+                    exclusive   =   self.cfg["queue"]["exclusive"],
+                    auto_delete =   self.cfg["queue"]["auto_delete"]
+        )
+
+
+    def publish(self, msg) -> None:
+        """publish msg to the channel"""
+        try:
+            self.init_connection()
+            self.channel.basic_publish(
+                            exchange=self.cfg["exchange"],
+                            routing_key=self.cfg["routing_key"],
+                            body=msg
+            )
+        except (pika.exceptions.ConnectionClosed,
+                pika.exceptions.StreamLostError,
+                pika.exceptions.ChannelWrongStateError,
+                ConnectionResetError
+                ) as connection_error:
+            clogger.debug("Publish failed, trying to reconnect")
+            time.sleep(0.5)
+            self.init_connection()
+            self.channel.basic_publish(
+                            exchange=self.cfg["exchange"],
+                            routing_key=self.cfg["routing_key"],
+                            body=msg
+            )
+        except Exception as pika_e:
+            clogger.error('pika_e')
+            clogger.error(str(pika_e))
+            traceback.print_exc()
+            clogger.error("Output handler: rabbitmq: connection failed!!!")
+
+    def close_connection(self):
+        """properly close the connection"""
+        if self.connection and self.connection.is_open:
+            self.connection.close()
+
+
+
+async def handle(output_cfg: dict, queue: asyncio.Queue, _metrics: statistics.Statistics, start_shutdown: asyncio.Event):
     """Connect to rabbit and push the messages from the queue"""
-    credentials = pika.PlainCredentials(
-                            output_cfg["connection"]["username"],
-                            output_cfg["connection"]["password"]
-    )
-    connection_params = pika.ConnectionParameters(
-                            host=output_cfg["connection"]["host"],
-                            port=output_cfg["connection"]["port"],
-                            credentials=credentials
-    )
-    try:
-        connection = pika.BlockingConnection(connection_params)
-    except Exception as pika_e:
-        clogger.error(str(pika_e))
-        clogger.error("Output handler: rabbitmq: connection failed!!!")
-        return
 
-    channel = connection.channel()
-    channel.queue_declare(
-                queue=output_cfg["queue"]["queue"],
-                passive=output_cfg["queue"]["passive"],
-                durable=output_cfg["queue"]["durable"],
-                exclusive=output_cfg["queue"]["exclusive"],
-                auto_delete=output_cfg["queue"]["auto_delete"]
-    )
-
-    routing_key = output_cfg.get("routing_key", output_cfg["queue"]["queue"])
-
+    rabbitmq = RabbitMQ(output_cfg=output_cfg)
     clogger.info("Output handler: rabbitmq: Enabled")
     while not start_shutdown.is_set():
         try:
@@ -72,13 +124,9 @@ async def handle(output_cfg, queue, _metrics, start_shutdown):
             continue
         msg = transform.convert_dnstap(fmt=output_cfg["format"], tapmsg=tapmsg)
         clogger.debug("RabbitMQ pushing")
-        channel.basic_publish(
-                        exchange=output_cfg["exchange"],
-                        routing_key=routing_key,
-                        body=msg
-        )
-
+        rabbitmq.publish(msg)
         queue.task_done()
 
     # tell producer to shut down
     clogger.info("Output handler: rabbitmq: Triggering producer shutdown")
+    rabbitmq.close_connection()
