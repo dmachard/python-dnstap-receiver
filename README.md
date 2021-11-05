@@ -12,6 +12,8 @@ in JSON, YAML or one line text format and more.
 
 If you want better performance, please to use the [dnscollector](https://github.com/dmachard/go-dnscollector) tool written in Go.
 
+If you want to use the **dnstap** feature of your dns server, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
+
 ## Table of contents
 * [Installation](#installation)
     * [PyPI](#pypi)
