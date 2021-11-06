@@ -31,6 +31,7 @@ If you want to use the **dnstap** feature of your dns server, please to read the
     * [Metrics](#metrics)
     * [Dnstap](#dnstap)
     * [Kafka](#kafka)
+    * [RabbitMQ](#rabbitmq)
     * [PostgreSQL](#postgresql)
 * [More options](#more-options)
     * [External config file](#external-config-file)
