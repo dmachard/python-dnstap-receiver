@@ -457,6 +457,49 @@ Configuration
     topic: null
 ```
 
+### RabbitMQ
+
+This output enables to send dnstap messages to a RabbitMQ queue.
+
+Install extra python library for rabbitmq
+
+```python
+pip install dnstap_receiver[rabbitmq]
+```
+
+Configuration
+
+```yaml
+  # forward to a RabbitMQ queue
+  rabbitmq:
+    # enable or disable
+    enable: false
+    # format available text|json|yaml
+    format: json
+    # connection configuration
+    connection:
+      username: null
+      password: null
+      host: 127.0.0.1
+      port: 5672
+    # Queue to forward messages to
+    queue:
+      queue: null
+      passive: false
+      durable: true
+      exclusive: false
+      auto_delete: false
+    # Exchange, default ''
+    exchange: ""
+    # Routing key, default = queue
+    routing-key: null
+    # Retries to connect/publish
+    retry-count: 2
+    # Retry delay seconds
+    retry-delay: 0.5
+```
+
+
 ### PostgreSQL
 
 This output enables to send dnstap messages to a PostgreSQL.

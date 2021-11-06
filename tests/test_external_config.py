@@ -55,3 +55,10 @@ class TestExternalConfig(unittest.TestCase):
         o = execute_dnstap(cmd)
         
         self.assertRegex(o, b"Output handler: pgsql")
+
+    def test5_output_rabbitmq_enable(self):
+        """test to enable rabbitmq output"""
+        cmd = 'python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -c ./tests/dnstap_rabbitmq.conf'
+        o = execute_dnstap(cmd)
+
+        self.assertRegex(o, b"Output handler: rabbitmq")

@@ -29,6 +29,7 @@ from dnstap_receiver.outputs import output_metrics
 from dnstap_receiver.outputs import output_dnstap
 from dnstap_receiver.outputs import output_kafka
 from dnstap_receiver.outputs import output_pgsql
+from dnstap_receiver.outputs import output_rabbitmq
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
@@ -175,6 +176,12 @@ def setup_outputs(cfg, stats, start_shutdown):
         queue_pgsql = asyncio.Queue()
         queues_list.append(queue_pgsql)
         loop.create_task(output_pgsql.handle(conf["pgsql"], queue_pgsql, stats, start_shutdown))
+
+    if conf["rabbitmq"]["enable"]:
+        if not output_rabbitmq.checking_conf(cfg=conf["rabbitmq"]): return
+        queue_rabbitmq = asyncio.Queue()
+        queues_list.append(queue_rabbitmq)
+        loop.create_task(output_rabbitmq.handle(conf["rabbitmq"], queue_rabbitmq, stats, start_shutdown))
 
     return queues_list
     
