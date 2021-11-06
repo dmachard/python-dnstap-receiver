@@ -1,10 +1,7 @@
 import asyncio
 import logging
 import time
-import traceback
 
-from pika.adapters.blocking_connection import BlockingChannel
-from pika.spec import Channel
 from dnstap_receiver.outputs import transform
 from dnstap_receiver import statistics
 
@@ -44,11 +41,13 @@ def checking_conf(cfg: dict) -> bool:
 class RabbitMQ:
     """Class to handle RabbitMQ connections and channel push"""
 
-    connection: pika.BlockingConnection = None
-    channel: BlockingChannel = None
     def __init__(self, output_cfg: dict) -> None:
         self.cfg = output_cfg
         self.cfg["routing_key"] = output_cfg.get("routing_key", output_cfg["queue"]["queue"])
+
+        self.connection: pika.BlockingConnection = None
+        self.channel: pika.adapters.blocking_connection.BlockingChannel = None
+
         self.credentials = pika.PlainCredentials(
                                 self.cfg["connection"]["username"],
                                 self.cfg["connection"]["password"]
