@@ -1,5 +1,7 @@
 # Dnstap streams receiver
 
+**If you want better performance and more features, please to use the [dnscollector](https://github.com/dmachard/go-dnscollector) tool written in Go.**
+
 ![Testing](https://github.com/dmachard/dnstap_receiver/workflows/Testing/badge.svg) ![Build](https://github.com/dmachard/dnstap_receiver/workflows/Build/badge.svg) ![Pypi](https://github.com/dmachard/dnstap_receiver/workflows/PyPI/badge.svg) ![Dockerhub](https://github.com/dmachard/dnstap_receiver/workflows/DockerHub/badge.svg) 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,8 +11,6 @@ This Python module acts as a [dnstap](https://dnstap.info/) streams receiver for
 Input streams can be a unix, tcp or raw socket.
 The output is printed directly on stdout or sent to remote tcp address 
 in JSON, YAML or one line text format and more. 
-
-**If you want better performance, please to use the [dnscollector](https://github.com/dmachard/go-dnscollector) tool written in Go.**
 
 If you want to use the **dnstap** feature of your dns server, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
 
