@@ -30,6 +30,7 @@ from dnstap_receiver.outputs import output_dnstap
 from dnstap_receiver.outputs import output_kafka
 from dnstap_receiver.outputs import output_pgsql
 from dnstap_receiver.outputs import output_rabbitmq
+from dnstap_receiver.outputs import output_elasticsearch
 
 from dnstap_receiver import api_server
 from dnstap_receiver import statistics
@@ -182,6 +183,12 @@ def setup_outputs(cfg, stats, start_shutdown):
         queue_rabbitmq = asyncio.Queue()
         queues_list.append(queue_rabbitmq)
         loop.create_task(output_rabbitmq.handle(conf["rabbitmq"], queue_rabbitmq, stats, start_shutdown))
+
+    if conf["elasticsearch"]["enable"]:
+        if not output_elasticsearch.checking_conf(cfg=conf["elasticsearch"]): return
+        queue_elasticsearch = asyncio.Queue()
+        queues_list.append(queue_elasticsearch)
+        loop.create_task(output_elasticsearch.handle(conf["elasticsearch"], queue_elasticsearch, stats, start_shutdown))
 
     return queues_list
     

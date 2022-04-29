@@ -33,6 +33,7 @@ If you want to use the **dnstap** feature of your dns server, please to read the
     * [Kafka](#kafka)
     * [RabbitMQ](#rabbitmq)
     * [PostgreSQL](#postgresql)
+    * [Elasticsearch](#elasticsearch)
 * [More options](#more-options)
     * [External config file](#external-config-file)
     * [Verbose mode](#verbose-mode)
@@ -206,6 +207,7 @@ Outputs handler can be configured to forward messages in several modes.
 - [TCP](#tcp)
 - [Syslog](#syslog)
 - [Dnstap](#dnstap)
+- [Elasticsearch](#elasticsearch)
 
 ### Stdout
 
@@ -539,6 +541,19 @@ Configuration
     timeout: 60
     # filename including user defined functions
     userfuncfile: null
+```
+
+### Elasticsearch
+
+This output enables to send dnstap messages to Elasticsearch.
+
+```yaml
+output:
+  elasticsearch:
+    # enable or disable
+    enable: true
+    # url of the elasticsearch
+    url: text
 ```
 
 
