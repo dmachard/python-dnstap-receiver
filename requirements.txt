@@ -3,5 +3,5 @@ pyyaml==6.0
 aiohttp==3.8.1
 geoip2==4.5.0
 tlds==2022043000
-cachetools==5.0.0
+cachetools==5.1.0
 fstrm==0.4.0
