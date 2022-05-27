@@ -73,7 +73,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # decode query address
     qaddr = dm.query_address
     if len(qaddr) and dm.socket_family == 1:
-        qaddr = qaddr[12:] if len(qaddr) == 16 else qaddr # condition for coredns, address is 16 bytes long so keept only 4 bytes
+        qaddr = qaddr[12:] if len(qaddr) == 16 else qaddr # condition for coredns, address is 16 bytes long so kept only 4 bytes
         tap["query-ip"] = socket.inet_ntop(socket.AF_INET, qaddr) # socket.inet_ntoa(qaddr)
     if len(qaddr) and dm.socket_family == 2: tap["query-ip"] = socket.inet_ntop(socket.AF_INET6, qaddr)
     if dm.query_port > 0: tap["query-port"] = dm.query_port
@@ -81,7 +81,7 @@ async def cb_ondnstap(dnstap_decoder, payload, cfg, queues_list, stats, geoip_re
     # decode response address
     raddr = dm.response_address
     if len(raddr) and dm.socket_family == 1:
-        raddr = raddr[12:] if len(raddr) == 16 else raddr # condition for coredns, address is 16 bytes long so keept only 4 bytes
+        raddr = raddr[12:] if len(raddr) == 16 else raddr # condition for coredns, address is 16 bytes long so kept only 4 bytes
         tap["response-ip"] = socket.inet_ntop(socket.AF_INET, raddr) # socket.inet_ntoa(qaddr)
     if len(raddr) and dm.socket_family == 2: tap["response-ip"] = socket.inet_ntop(socket.AF_INET6, raddr)
     if dm.response_port > 0: tap["response-port"] = dm.response_port
