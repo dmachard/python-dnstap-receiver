@@ -2,6 +2,6 @@ dnstap_pb==0.6.0
 pyyaml==6.0
 aiohttp==3.8.1
 geoip2==4.5.0
-tlds==2022052800
+tlds==2022060400
 cachetools==5.2.0
 fstrm==0.4.0
