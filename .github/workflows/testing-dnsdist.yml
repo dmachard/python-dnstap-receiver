@@ -14,7 +14,7 @@ env:
 
 jobs:
   dnsdist:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -22,9 +22,9 @@ jobs:
         python: [ '3.8', '3.9', '3.10' ]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
 
