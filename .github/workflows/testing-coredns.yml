@@ -14,12 +14,12 @@ env:
 
 jobs:
   coredns:
-    runs-on: ubuntu:20.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
         coredns: [ '1.8.7', '1.9.3' ]
-        python: [ "3.9", "3.10" ]
+        python-version: [ "3.9", "3.10" ]
 
     steps:
     - uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python }}
+        python-version: ${{ matrix.python-version }}
 
     - name: Deploy coredns docker image
       run: |
@@ -36,8 +36,8 @@ jobs:
         
     - name: Run Python tests 
       run: |
-        sudo python3 --version
-        sudo python --version
+        python3 --version
+        python --version
         sudo python3 -m pip install -r requirements.txt
         sudo python3 -m pip install --upgrade dnspython protobuf
         sudo -E python3 -m unittest tests.test_receiver_tcpsocket -v
