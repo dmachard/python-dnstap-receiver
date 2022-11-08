@@ -26,7 +26,7 @@ class TestUnixSocket(unittest.TestCase):
     def test1_listening(self):
         """test listening unix socket"""
         # prepare command to execute
-        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test1.out'
+        cmd = 'sudo -u pdns -s python -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test1.out'
         #args = shlex.split(cmd)
 
         # start receiver
@@ -56,7 +56,7 @@ class TestUnixSocket(unittest.TestCase):
         
     def test2_incoming_dnstap(self):
         """test to receive dnstap message"""
-        cmd = 'sudo -u pdns -s python3 -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test2.out'
+        cmd = 'sudo -u pdns -s python -c "from dnstap_receiver.receiver import start_receiver; start_receiver()" -u /tmp/dnsdist/dnstap.sock -v > /tmp/test2.out'
 
         #args = shlex.split(cmd)
         
