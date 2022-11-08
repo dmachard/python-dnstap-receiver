@@ -26,7 +26,7 @@ print("--")
 class TestTcpSocket(unittest.TestCase):
     def test1_listening(self):
         """test listening tcp socket"""
-        cmd = ["python3", "-c", 
+        cmd = ["python", "-c", 
                "from dnstap_receiver.receiver import start_receiver; start_receiver()",
                "-v"]
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
