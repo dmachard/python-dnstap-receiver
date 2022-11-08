@@ -36,6 +36,8 @@ jobs:
         
     - name: Run Python tests 
       run: |
+        sudo python3 --version
+        sudo python --version
         sudo python3 -m pip install -r requirements.txt
         sudo python3 -m pip install --upgrade dnspython protobuf
         sudo -E python3 -m unittest tests.test_receiver_tcpsocket -v
