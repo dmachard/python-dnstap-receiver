@@ -135,7 +135,7 @@ def start_tcpsocket(cfg, queues_list, stats, geoip_reader, cache, start_shutdown
         
     clogger.debug("Input handler: listening on %s:%s" % (cfg_input["local-address"],cfg_input["local-port"])), 
     server = asyncio.start_server(cb_lambda, cfg_input["local-address"],cfg_input["local-port"],
-                                  ssl=ssl_context, loop=loop)
+                                  ssl=ssl_context)
     return server
     
 def start_unixsocket(cfg, queues_list, stats, geoip_reader, cache, start_shutdown):
@@ -149,6 +149,6 @@ def start_unixsocket(cfg, queues_list, stats, geoip_reader, cache, start_shutdow
     
     # asynchronous unix socket
     clogger.debug("Input handler: listening on %s" % cfg_input["path"])
-    server = asyncio.start_unix_server(cb_lambda, path=cfg_input["path"], loop=loop)
+    server = asyncio.start_unix_server(cb_lambda, path=cfg_input["path"])
                                                   
     return server
