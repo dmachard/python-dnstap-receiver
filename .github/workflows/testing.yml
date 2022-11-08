@@ -24,7 +24,8 @@ jobs:
         
     - name: Run Python tests 
       run: |
-        python3 -m pip install -r requirements.txt
-        python3 -m pip install --upgrade dnspython protobuf
-        python3 -m unittest tests.test_external_config -v
-        python3 -m unittest tests.test_api_server -v
+        python --version
+        python -m pip install -r requirements.txt
+        python -m pip install --upgrade dnspython protobuf
+        python -m unittest tests.test_external_config -v
+        python -m unittest tests.test_api_server -v
