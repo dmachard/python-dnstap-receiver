@@ -45,4 +45,6 @@ jobs:
         sudo python3 -m pip install -r requirements.txt
         sudo python3 -m pip install --upgrade dnspython protobuf
         sudo -E python3 -m unittest tests.test_receiver_tcpsocket -v
+        sudo -u pdns -s python3 -m pip install -r requirements.txt
+        sudo -u pdns -s python3 -m pip install --upgrade dnspython protobuf
         sudo -E python3 -m unittest tests.test_receiver_unixsocket -v
