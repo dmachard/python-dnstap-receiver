@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         dnsdist: [ '16', '17' ]
-        python: [ '3.10' ]
+        python: [ '3.9', '3.10' ]
 
     steps:
     - uses: actions/checkout@v3
@@ -42,9 +42,7 @@ jobs:
         
     - name: Run Python tests 
       run: |
-        sudo python -m pip install -r requirements.txt
-        sudo python -m pip install --upgrade dnspython protobuf
-        sudo -E python -m unittest tests.test_receiver_tcpsocket -v
-        sudo -u pdns -s python -m pip install -r requirements.txt
-        sudo -u pdns -s python -m pip install --upgrade dnspython protobuf
-        sudo -E python -m unittest tests.test_receiver_unixsocket -v
+        python -m pip install -r requirements.txt
+        python -m pip install --upgrade dnspython protobuf
+        python -m unittest tests.test_receiver_tcpsocket -v
+        python -m unittest tests.test_receiver_unixsocket -v
