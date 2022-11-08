@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         dnsdist: [ '16', '17' ]
-        python: [ '3.8', '3.9', '3.10' ]
+        python: [ '3.10' ]
 
     steps:
     - uses: actions/checkout@v3
